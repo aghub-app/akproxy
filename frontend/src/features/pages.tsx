@@ -25,10 +25,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { toastManager } from "@/components/ui/toast";
 import { AccountsPanel } from "@/features/accounts";
 import { AboutTab } from "@/features/about";
-import { OpenAIDraftCard } from "@/features/editors";
-import { ProviderEmpty } from "@/features/provider-empty";
-import { beginManualUpdateCheck, finishManualUpdateCheck } from "@/features/update-dialog";
-import { api, errorText, type OpenAIDraft, type ServiceSettings } from "@/lib/desktop";
+import { api, errorText, type ServiceSettings } from "@/lib/desktop";
 
 const strategies = [
   { value: "round-robin", label: "轮询" },
