@@ -15,7 +15,6 @@ akproxy 用户需要在应用里看到软件是谁、什么版本、从哪来，
 - 检查更新按钮，以及上次自动或手动检查的时间和结果（如「已是最新」「检查失败」「发现 vX.Y.Z」）。
 - 平台与架构（如 macOS arm64）。
 - 链接：README、LICENSE、问题反馈（Issues）。
-- 开源许可说明：Wails（MIT）、CLIProxyAPI（MIT）。
 
 ## 更新偏好语义
 

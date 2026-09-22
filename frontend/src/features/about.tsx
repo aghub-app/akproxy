@@ -68,10 +68,10 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
       <div className="flex items-center gap-4">
         <img src={appIcon} alt="akproxy 图标" className="size-16" />
         <div className="flex flex-col gap-1">
-          <span className="text-lg font-medium">
-            akproxy
-            {version ? <span className="text-muted-foreground ml-2 text-sm font-normal">{version}</span> : null}
-          </span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-medium">akproxy</span>
+            {version ? <span className="text-muted-foreground text-sm">{version}</span> : null}
+          </div>
           <span className="text-muted-foreground text-sm">{current.platform}</span>
         </div>
       </div>
@@ -137,7 +137,6 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
             问题反馈
           </a>
         </div>
-        <p>本应用使用 Wails（MIT）与 CLIProxyAPI（MIT）构建。</p>
       </div>
     </div>
   );
