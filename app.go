@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 
 	"akproxy/internal/desktop"
 
@@ -40,7 +41,7 @@ func (a *App) ServiceShutdown() error {
 
 func (a *App) ready() error {
 	if a.desktop == nil {
-		return errNotReady
+		return errors.New("应用还没有准备好")
 	}
 	return nil
 }
