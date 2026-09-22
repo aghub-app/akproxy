@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -292,6 +293,7 @@ func (r *Runtime) Login(provider string) error {
 	select {
 	case result = <-done:
 	case <-ctx.Done():
+		unblockCallbackLogin(loginProvider)
 		release()
 		return fmt.Errorf("登录已取消")
 	}
@@ -335,6 +337,35 @@ func (r *Runtime) CancelLogin() {
 	r.loginMu.Unlock()
 	if cancel != nil {
 		cancel()
+	}
+}
+
+// callbackLoginPorts maps providers whose authenticators wait on a local HTTP
+// callback and ignore context cancellation. Cancelling leaves that callback
+// server bound until its own timeout; a synthetic error callback makes the
+// authenticator return at once and release the port for the next login.
+var callbackLoginPorts = map[string]struct {
+	port int
+	path string
+}{
+	"codex":       {port: 1455, path: "/auth/callback"},
+	"claude":      {port: 54545, path: "/callback"},
+	"antigravity": {port: 51121, path: "/oauth-callback"},
+}
+
+func unblockCallbackLogin(provider string) {
+	target, ok := callbackLoginPorts[provider]
+	if !ok {
+		return
+	}
+	url := fmt.Sprintf("http://127.0.0.1:%d%s?error=login_cancelled", target.port, target.path)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	if err != nil {
+		return
+	}
+	resp, err := (&http.Client{Timeout: 2 * time.Second}).Do(req)
+	if err == nil {
+		_ = resp.Body.Close()
 	}
 }
 

@@ -3,6 +3,11 @@ package desktop
 import (
 	"context"
 	"errors"
+	"net"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -57,6 +62,61 @@ func TestCancelLoginFreesSlotWhileSDKStillBlocking(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("first login did not return after cancel")
 	}
+}
+
+// Cancelling a codex login must send a synthetic error callback to the
+// authenticator's local callback server so it stops and frees the port.
+func TestCancelLoginUnblocksCallbackServer(t *testing.T) {
+	var hits atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		if r.URL.Query().Get("error") == "" {
+			t.Errorf("callback query missing error param: %s", r.URL.RawQuery)
+		}
+	}))
+	defer server.Close()
+
+	r, err := NewRuntime(nil)
+	if err != nil {
+		t.Fatalf("NewRuntime: %v", err)
+	}
+	_, portStr, _ := net.SplitHostPort(server.Listener.Addr().String())
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		t.Fatalf("parse test server port: %v", err)
+	}
+	previous := callbackLoginPorts["codex"]
+	callbackLoginPorts["codex"] = struct {
+		port int
+		path string
+	}{port: port, path: "/auth/callback"}
+	defer func() { callbackLoginPorts["codex"] = previous }()
+
+	blocked := make(chan struct{})
+	r.runLogin = func(ctx context.Context, provider string) (*coreauth.Auth, error) {
+		close(blocked)
+		<-ctx.Done()
+		time.Sleep(300 * time.Millisecond)
+		return nil, context.Canceled
+	}
+
+	go func() { _ = r.Login("codex") }()
+	select {
+	case <-blocked:
+	case <-time.After(2 * time.Second):
+		t.Fatal("runLogin was never called")
+	}
+
+	r.CancelLogin()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if hits.Load() > 0 {
+			return
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	t.Fatal("synthetic error callback was never delivered")
 }
 
 func TestLoginMapsSDKErrorAndEmitsDone(t *testing.T) {
