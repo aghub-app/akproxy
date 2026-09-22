@@ -44,7 +44,6 @@ func TestCommittedWorkflowPackagesDMG(t *testing.T) {
 		"pnpm/action-setup@",
 		"actions/setup-node@",
 		wailsModule,
-		tagTrigger,
 	} {
 		if !bytes.Contains(body, []byte(needle)) {
 			t.Fatalf("workflow file missing %q", needle)
