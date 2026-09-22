@@ -82,13 +82,6 @@ export function Login(provider: string): $CancellablePromise<void> {
 }
 
 /**
- * OpenAIProviders returns the custom OpenAI page.
- */
-export function OpenAIProviders(): $CancellablePromise<desktop$0.OpenAIDraft[] | null> {
-    return $Call.ByID(2656883483);
-}
-
-/**
  * ProviderKeys returns API keys for codex, grok, claude, or gemini.
  */
 export function ProviderKeys(provider: string): $CancellablePromise<desktop$0.KeyDraft[] | null> {
@@ -107,13 +100,6 @@ export function Restart(): $CancellablePromise<void> {
  */
 export function SaveKimi(drafts: desktop$0.OpenAIDraft[] | null): $CancellablePromise<void> {
     return $Call.ByID(1631049426, drafts);
-}
-
-/**
- * SaveOpenAI writes the custom OpenAI page.
- */
-export function SaveOpenAI(drafts: desktop$0.OpenAIDraft[] | null): $CancellablePromise<void> {
-    return $Call.ByID(1787159926, drafts);
 }
 
 /**

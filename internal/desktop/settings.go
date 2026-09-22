@@ -134,33 +134,11 @@ func ApplyKimi(cfg *config.Config, drafts []OpenAIDraft, authDir string) error {
 	if cfg == nil {
 		return fmt.Errorf("没有配置")
 	}
-	cleaned, err := cleanOpenAI(drafts, true)
+	cleaned, err := cleanOpenAI(drafts)
 	if err != nil {
 		return err
 	}
 	cfg.OpenAICompatibility = mergeOwnedOpenAI(cfg.OpenAICompatibility, cleaned, true)
-	cfg.AuthDir = authDir
-	return nil
-}
-
-// ReadOpenAI returns custom OpenAI-compatible entries.
-func ReadOpenAI(cfg *config.Config) []OpenAIDraft {
-	if cfg == nil {
-		return nil
-	}
-	return filterOpenAI(cfg.OpenAICompatibility, false)
-}
-
-// ApplyOpenAI replaces custom OpenAI-compatible entries and leaves Kimi names in place.
-func ApplyOpenAI(cfg *config.Config, drafts []OpenAIDraft, authDir string) error {
-	if cfg == nil {
-		return fmt.Errorf("没有配置")
-	}
-	cleaned, err := cleanOpenAI(drafts, false)
-	if err != nil {
-		return err
-	}
-	cfg.OpenAICompatibility = mergeOwnedOpenAI(cfg.OpenAICompatibility, cleaned, false)
 	cfg.AuthDir = authDir
 	return nil
 }
@@ -422,7 +400,7 @@ func openAIToDraft(item config.OpenAICompatibility) OpenAIDraft {
 	return OpenAIDraft{Name: item.Name, BaseURL: item.BaseURL, APIKeys: keys, Models: models}
 }
 
-func cleanOpenAI(drafts []OpenAIDraft, kimiPage bool) ([]OpenAIDraft, error) {
+func cleanOpenAI(drafts []OpenAIDraft) ([]OpenAIDraft, error) {
 	out := make([]OpenAIDraft, 0, len(drafts))
 	seen := map[string]struct{}{}
 	for _, draft := range drafts {
@@ -450,11 +428,8 @@ func cleanOpenAI(drafts []OpenAIDraft, kimiPage bool) ([]OpenAIDraft, error) {
 		if draft.Name == "" || draft.BaseURL == "" || len(keys) == 0 || len(models) == 0 {
 			return nil, fmt.Errorf("OpenAI 兼容上游要有名称、地址、密钥和至少一个模型")
 		}
-		if kimiPage && !kimiOwned(draft.Name) {
+		if !kimiOwned(draft.Name) {
 			return nil, fmt.Errorf("Kimi 页只能保存 kimi 和 kimi-ai")
-		}
-		if !kimiPage && kimiOwned(draft.Name) {
-			return nil, fmt.Errorf("kimi 和 kimi-ai 属于 Kimi 页")
 		}
 		if _, ok := seen[draft.Name]; ok {
 			return nil, fmt.Errorf("上游名称不能重复")

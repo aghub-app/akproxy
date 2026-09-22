@@ -127,22 +127,6 @@ func (r *Runtime) SaveKimi(drafts []OpenAIDraft) error {
 	})
 }
 
-// OpenAIProviders returns the custom OpenAI page.
-func (r *Runtime) OpenAIProviders() ([]OpenAIDraft, error) {
-	cfg, err := loadConfig(r.paths.Config)
-	if err != nil {
-		return nil, err
-	}
-	return ReadOpenAI(cfg), nil
-}
-
-// SaveOpenAI writes the custom OpenAI page.
-func (r *Runtime) SaveOpenAI(drafts []OpenAIDraft) error {
-	return r.edit(func(cfg *config.Config) error {
-		return ApplyOpenAI(cfg, drafts, r.paths.Auth)
-	})
-}
-
 // Start binds the saved config.
 func (r *Runtime) Start() error {
 	r.mu.Lock()

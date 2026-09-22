@@ -24,10 +24,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { toastManager } from "@/components/ui/toast";
 import { AccountsPanel } from "@/features/accounts";
-import { OpenAIDraftCard } from "@/features/editors";
-import { ProviderEmpty } from "@/features/provider-empty";
 import { beginManualUpdateCheck, finishManualUpdateCheck } from "@/features/update-dialog";
-import { api, errorText, type OpenAIDraft, type ServiceSettings } from "@/lib/desktop";
+import { api, errorText, type ServiceSettings } from "@/lib/desktop";
 
 const strategies = [
   { value: "round-robin", label: "轮询" },
@@ -371,124 +369,6 @@ export const KimiPage: FC = () => {
         { id: "kimi-ai", label: "添加 Kimi 国际站账号" },
       ]}
     />
-  );
-};
-
-function blankOpenAI(row: OpenAIDraft) {
-  const keys = row.apiKeys.some((key) => key.trim() !== "");
-  const models = row.models.some((model) => model.name.trim() !== "" || model.alias.trim() !== "");
-  return row.name.trim() === "" && row.baseUrl.trim() === "" && !keys && !models;
-}
-
-function completeOpenAI(row: OpenAIDraft) {
-  const keys = row.apiKeys.some((key) => key.trim() !== "");
-  const named = row.models.some((model) => model.name.trim() !== "");
-  const aliasWithoutName = row.models.some(
-    (model) => model.alias.trim() !== "" && model.name.trim() === "",
-  );
-  return row.name.trim() !== "" && row.baseUrl.trim() !== "" && keys && named && !aliasWithoutName;
-}
-
-export const OpenAIPage: FC = () => {
-  const query = useQuery({ queryKey: ["openai"], queryFn: api.openai });
-  if (query.isError && !query.data) {
-    return (
-      <div role="alert" className="flex flex-col items-start gap-3">
-        <p>{errorText(query.error)}</p>
-        <Button variant="outline" onClick={() => void query.refetch()}>重试</Button>
-      </div>
-    );
-  }
-  if (!query.data) {
-    return <p className="text-muted-foreground text-sm">正在读取自定义上游…</p>;
-  }
-  return <OpenAIForm key={JSON.stringify(query.data)} initial={query.data} />;
-};
-
-const OpenAIForm: FC<{ initial: OpenAIDraft[] }> = ({ initial }) => {
-  const [rows, setRows] = useState(initial);
-  const latest = useRef(initial);
-  const seq = useRef(0);
-  const timer = useRef<number | null>(null);
-  const saved = useRef(JSON.stringify(initial.filter(completeOpenAI)));
-
-  function persist(next: OpenAIDraft[], immediate: boolean) {
-    latest.current = next;
-    if (next.some((row) => !blankOpenAI(row) && !completeOpenAI(row))) {
-      return;
-    }
-    const payload = next.filter(completeOpenAI);
-    const encoded = JSON.stringify(payload);
-    if (encoded === saved.current) {
-      return;
-    }
-    if (timer.current !== null) {
-      window.clearTimeout(timer.current);
-      timer.current = null;
-    }
-    const run = () => {
-      timer.current = null;
-      const current = latest.current;
-      if (current.some((row) => !blankOpenAI(row) && !completeOpenAI(row))) {
-        return;
-      }
-      const ready = current.filter(completeOpenAI);
-      const body = JSON.stringify(ready);
-      if (body === saved.current) {
-        return;
-      }
-      const id = ++seq.current;
-      void api.saveOpenAI(ready).then(
-        () => {
-          if (id === seq.current) {
-            saved.current = body;
-          }
-        },
-        (error: unknown) => {
-          if (id === seq.current) {
-            notifyError(error);
-          }
-        },
-      );
-    };
-    if (immediate) {
-      run();
-      return;
-    }
-    timer.current = window.setTimeout(run, 300);
-  }
-
-  function edit(next: OpenAIDraft[], immediate = false) {
-    latest.current = next;
-    setRows(next);
-    persist(next, immediate);
-  }
-  function addRow() {
-    edit([...latest.current, { name: "", baseUrl: "", apiKeys: [], models: [{ name: "", alias: "" }] }]);
-  }
-  if (rows.length === 0) {
-    return (
-      <ProviderEmpty page="openai">
-        <Button onClick={addRow}>添加上游</Button>
-      </ProviderEmpty>
-    );
-  }
-  return (
-    <div className="flex flex-col gap-4">
-      {rows.map((row, index) => (
-        <OpenAIDraftCard
-          key={`${row.name}-${index}`}
-          draft={row}
-          onChange={(draft) =>
-            edit(latest.current.map((item, itemIndex) => (itemIndex === index ? draft : item)))
-          }
-          onRemove={() => edit(latest.current.filter((_, itemIndex) => itemIndex !== index), true)}
-        />
-      ))}
-      <Button variant="outline" className="self-start" onClick={addRow}>
-        添加上游
-      </Button>
-    </div>
   );
 };
 

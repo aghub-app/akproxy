@@ -101,22 +101,6 @@ func (a *App) SaveKimi(drafts []desktop.OpenAIDraft) error {
 	return a.desktop.SaveKimi(drafts)
 }
 
-// OpenAIProviders returns the custom OpenAI page.
-func (a *App) OpenAIProviders() ([]desktop.OpenAIDraft, error) {
-	if err := a.ready(); err != nil {
-		return nil, err
-	}
-	return a.desktop.OpenAIProviders()
-}
-
-// SaveOpenAI writes the custom OpenAI page.
-func (a *App) SaveOpenAI(drafts []desktop.OpenAIDraft) error {
-	if err := a.ready(); err != nil {
-		return err
-	}
-	return a.desktop.SaveOpenAI(drafts)
-}
-
 // Start binds the saved config.
 func (a *App) Start() error {
 	if err := a.ready(); err != nil {

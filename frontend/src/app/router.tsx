@@ -3,7 +3,6 @@ import {
   DevinPage,
   KimiPage,
   NativeProviderPage,
-  OpenAIPage,
   ServicePage,
 } from "@/features/pages";
 import { HomePage } from "@/features/home";
@@ -39,7 +38,7 @@ export const router = createHashRouter([
       { path: "gemini", element: <GeminiRoute /> },
       { path: "kimi", element: <KimiPage /> },
       { path: "devin", element: <DevinPage /> },
-      { path: "openai", element: <OpenAIPage /> },
+      { path: "openai", element: <Navigate to="/" replace /> },
       { path: "yaml", element: <Navigate to="/settings" replace /> },
     ],
   },

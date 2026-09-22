@@ -11,18 +11,6 @@ export type ServiceSettings = {
   debug: boolean;
 };
 
-export type ModelDraft = {
-  name: string;
-  alias: string;
-};
-
-export type OpenAIDraft = {
-  name: string;
-  baseUrl: string;
-  apiKeys: string[];
-  models: ModelDraft[];
-};
-
 export type Account = {
   id: string;
   provider: string;
@@ -73,10 +61,6 @@ export const api = {
   },
   service: async () => normalizeService(await app.ServiceSettings()),
   saveService: (input: ServiceSettings) => app.SaveService(input),
-  openai: async (): Promise<OpenAIDraft[]> => ((await app.OpenAIProviders()) ?? []).map(
-    (row) => ({ ...row, apiKeys: row.apiKeys ?? [], models: row.models ?? [] }),
-  ),
-  saveOpenAI: (drafts: OpenAIDraft[]) => app.SaveOpenAI(drafts),
   start: () => app.Start(),
   stop: () => app.Stop(),
   restart: () => app.Restart(),

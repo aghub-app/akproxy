@@ -139,15 +139,13 @@ func TestKimiAndCustomOpenAIStayApart(t *testing.T) {
 		t.Fatal("empty alias was not defaulted")
 	}
 
-	err := ApplyOpenAI(cfg, []OpenAIDraft{{
-		Name: kimiName, BaseURL: "https://example.test", APIKeys: []string{"x"}, Models: []ModelDraft{{Name: "m"}},
-	}}, "/auth")
-	if err == nil {
-		t.Fatal("custom page accepted a kimi name")
+	if err := ApplyKimi(cfg, []OpenAIDraft{{
+		Name: "openrouter", BaseURL: "https://example.test", APIKeys: []string{"x"}, Models: []ModelDraft{{Name: "m"}},
+	}}, "/auth"); err == nil {
+		t.Fatal("kimi save accepted a custom name")
 	}
-	custom := ReadOpenAI(cfg)
-	if len(custom) != 1 || custom[0].Name != "openrouter" {
-		t.Fatalf("custom read = %+v", custom)
+	if cfg.OpenAICompatibility[0].Name != "openrouter" || cfg.OpenAICompatibility[0].APIKeyEntries[0].APIKey != "or-key" {
+		t.Fatal("rejected kimi save rewrote the custom entry")
 	}
 	if len(ReadKimi(cfg)) != 1 {
 		t.Fatal("kimi entry missing")
