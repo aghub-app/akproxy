@@ -34,7 +34,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 默认入口为 `/` 首页。无上游登录账号或非空上游 API key 时展示 provider 导航卡片；存在任意上游凭据时展示 models、chat completions、responses 三个可复制 curl 示例。客户端密钥不算上游凭据。
 - 首页示例使用第一把客户端密钥（默认遮挡，复制为真实值）和当前客户端地址；模型读取失败或服务停止时使用明确的模型占位符，不自动启动服务。详见 `docs/prd/home.md`。
 
-- 侧边栏依次为「首页」、Codex、Grok、Claude、Gemini、Kimi、Devin、「自定义 OpenAI」和「设置」。「设置」在最下面。没有原始配置编辑页。
+- 侧边栏依次为「首页」、Codex、Grok、Claude、Gemini、Kimi、Devin、「自定义 OpenAI」。「设置」固定在侧边栏底部，不随上面的导航滚动。没有原始配置编辑页。
 - 导航栏右侧只有一个服务控制。未运行时为「启动」；运行中且已写入监听等于已绑定监听时为「停止」；运行中且二者不同时为「重启」，并提示可以考虑重启。
 - 设置和自定义 OpenAI 在可以写入时立即写入。没有保存按钮，也没有未保存离开拦截。启动、停止和重启只使用已经写入的配置。
 - 成功写入的配置至少包含一把客户端密钥，且账号目录是应用自己的账号目录。违反任一条的写入不改文件，也不改变正在运行的服务。

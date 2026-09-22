@@ -6,7 +6,7 @@ export const ProviderEmpty: FC<{ page: string; children: ReactNode }> = ({ page,
   const meta = providerPages.find((item) => item.to === `/${page}`);
   const Icon = meta?.icon;
   return (
-    <Empty>
+    <Empty className="-translate-y-8">
       <EmptyHeader>
         <EmptyMedia>{Icon ? <Icon size={40} /> : null}</EmptyMedia>
         <EmptyTitle>{meta?.label ?? page}</EmptyTitle>

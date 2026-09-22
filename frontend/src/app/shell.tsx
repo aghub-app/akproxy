@@ -14,11 +14,31 @@ const SettingsIcon: FC<{ size?: number }> = ({ size }) => (
   <HardDrivesIcon size={size} weight="duotone" />
 );
 
-const pages = [
+const mainPages = [
   { to: "/", label: "首页", icon: HouseIcon },
   ...providerPages,
-  { to: "/settings", label: "设置", icon: SettingsIcon },
 ];
+
+const settingsPage = { to: "/settings", label: "设置", icon: SettingsIcon };
+
+function SideLink({ item }: { item: typeof settingsPage }) {
+  const Icon = item.icon;
+  return (
+    <NavLink
+      to={item.to}
+      end={item.to === "/"}
+      className={({ isActive }) =>
+        cn(
+          "flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm",
+          isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
+        )
+      }
+    >
+      <Icon size={16} />
+      {item.label}
+    </NavLink>
+  );
+}
 
 const actionLabel = { start: "启动", stop: "停止", restart: "重启" } as const;
 
@@ -99,26 +119,15 @@ export const AppLayout: FC = () => {
         </Button>
       </header>
       <div className="flex min-h-0 flex-1">
-        <nav className="flex w-56 shrink-0 flex-col gap-1 border-r p-3">
-          {pages.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === "/"}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm",
-                    isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
-                  )
-                }
-              >
-                <Icon size={16} />
-                {item.label}
-              </NavLink>
-            );
-          })}
+        <nav className="flex w-56 shrink-0 flex-col border-r">
+          <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-3">
+            {mainPages.map((item) => (
+              <SideLink key={item.to} item={item} />
+            ))}
+          </div>
+          <div className="shrink-0 p-3 pt-0">
+            <SideLink item={settingsPage} />
+          </div>
         </nav>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <ScrollArea className="h-full" stretch>
