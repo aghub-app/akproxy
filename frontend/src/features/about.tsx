@@ -58,7 +58,7 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
 
   const current = status.data;
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <div className="flex items-center gap-4">
         <img src={appIcon} alt="akproxy 图标" className="size-16" />
         <div className="flex flex-col gap-1">
@@ -66,7 +66,7 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
           <span className="text-muted-foreground text-sm">{current.platform}</span>
         </div>
       </div>
-      <div className="flex flex-col gap-4 border-t pt-4">
+      <div className="flex flex-col gap-5">
         <PrefSwitch
           label="自动更新"
           description={version ? `当前 ${version}。自动检查发现新版本后直接下载，下载完成再询问是否重启。关闭时只提示，不下载。` : "自动检查发现新版本后直接下载，下载完成再询问是否重启。关闭时只提示，不下载。"}
@@ -88,7 +88,7 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
           disabled={!current.prefs.autoCheck}
           onChange={(hours) => save.mutate({ ...current.prefs, checkIntervalHours: hours })}
         />
-        <div className="flex items-center justify-between border-t pt-4">
+        <div className="flex items-center justify-between">
           <span className="text-muted-foreground text-sm">
             {current.lastCheckAt
               ? `上次检查 ${current.lastCheckAt} · ${current.lastCheckResult || "检查完成"}`
@@ -106,18 +106,18 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
           </Button>
         </div>
       </div>
-      <div className="flex flex-col gap-3 border-t pt-4">
+      <div className="text-muted-foreground flex flex-col gap-2 text-sm">
         <a
-          className="flex items-center gap-2 text-sm underline-offset-4 hover:underline"
+          className="flex items-center gap-2 underline-offset-4 hover:underline"
           href="https://github.com/aghub-app/akproxy"
           target="_blank"
           rel="noreferrer"
         >
           <GithubLogoIcon size={16} />
           github.com/aghub-app/akproxy
-          <ArrowSquareOutIcon size={14} className="text-muted-foreground" />
+          <ArrowSquareOutIcon size={14} />
         </a>
-        <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
           <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy#readme" target="_blank" rel="noreferrer">
             README
           </a>
@@ -128,9 +128,7 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
             问题反馈
           </a>
         </div>
-        <p className="text-muted-foreground text-sm">
-          本应用使用 Wails（MIT）与 CLIProxyAPI（MIT）构建。
-        </p>
+        <p>本应用使用 Wails（MIT）与 CLIProxyAPI（MIT）构建。</p>
       </div>
     </div>
   );
