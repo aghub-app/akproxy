@@ -20,9 +20,14 @@ type ProgressNotice = { written?: number; total?: number };
 type FailureNotice = { stage?: string; message?: string };
 
 let manualCheck = false;
+let reshowAvailable: ((notice: ReleaseNotice) => void) | null = null;
 
 export function beginManualUpdateCheck() {
   manualCheck = true;
+}
+
+export function showNewRelease(notice: ReleaseNotice) {
+  reshowAvailable?.(notice);
 }
 
 export function finishManualUpdateCheck() {
@@ -49,6 +54,7 @@ export const UpdateDialog: FC = () => {
   const [failure, setFailure] = useState("");
   const [applying, setApplying] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [failedAfterDownload, setFailedAfterDownload] = useState(false);
 
   useEffect(() => {
     function showAvailable(body: unknown) {
@@ -58,8 +64,10 @@ export const UpdateDialog: FC = () => {
       setFailure("");
       setProgress(0);
       setDismissed(false);
+      setFailedAfterDownload(false);
       setPhase("available");
     }
+    reshowAvailable = showAvailable;
 
     const offNewRelease = Events.On("updates:new-release", (event) => {
       showAvailable(eventBody(event));
@@ -115,9 +123,11 @@ export const UpdateDialog: FC = () => {
       manualCheck = false;
       setFailure(notice.message || "更新失败");
       setDismissed(false);
+      setFailedAfterDownload(phase === "downloading" || phase === "verifying" || phase === "installing");
       setPhase("failed");
     });
     return () => {
+      reshowAvailable = null;
       offNewRelease();
       offAvailable();
       offDownload();
@@ -176,7 +186,7 @@ export const UpdateDialog: FC = () => {
           </div>
         ) : null}
         {phase !== "downloading" && notes ? (
-          <p className="max-h-40 overflow-auto px-6 text-sm whitespace-pre-wrap">{notes}</p>
+          <p className="max-h-40 overflow-auto px-6 pb-2 text-sm whitespace-pre-wrap">{notes}</p>
         ) : null}
         <DialogFooter>
           <Button variant="outline" onClick={() => setDismissed(true)}>
@@ -191,11 +201,40 @@ export const UpdateDialog: FC = () => {
                 void api.downloadPendingUpdate().catch((error: unknown) => {
                   setApplying(false);
                   setFailure(errorText(error));
+                  setFailedAfterDownload(true);
                   setPhase("failed");
                 });
               }}
             >
               立即下载
+            </Button>
+          ) : null}
+          {phase === "failed" ? (
+            <Button
+              loading={applying}
+              onClick={() => {
+                setApplying(true);
+                setFailure("");
+                if (failedAfterDownload) {
+                  setPhase("downloading");
+                  void api.downloadPendingUpdate().catch((error: unknown) => {
+                    setApplying(false);
+                    setFailure(errorText(error));
+                    setPhase("failed");
+                  });
+                } else {
+                  beginManualUpdateCheck();
+                  setPhase("downloading");
+                  void api.checkUpdates().catch((error: unknown) => {
+                    setApplying(false);
+                    finishManualUpdateCheck();
+                    setFailure(errorText(error));
+                    setPhase("failed");
+                  });
+                }
+              }}
+            >
+              重试
             </Button>
           ) : null}
           {phase === "ready" ? (

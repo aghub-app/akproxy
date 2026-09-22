@@ -3,7 +3,13 @@ import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import {
+  NumberField,
+  NumberFieldDecrement,
+  NumberFieldGroup,
+  NumberFieldIncrement,
+  NumberFieldInput,
+} from "@/components/ui/number-field";
 import {
   Select,
   SelectItem,
@@ -14,7 +20,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toastManager } from "@/components/ui/toast";
 import appIcon from "@/assets/images/appicon.png";
-import { beginManualUpdateCheck, finishManualUpdateCheck } from "@/features/update-dialog";
+import { beginManualUpdateCheck, finishManualUpdateCheck, showNewRelease } from "@/features/update-dialog";
 import { api, errorText } from "@/lib/desktop";
 
 const intervalPresets = [
@@ -64,7 +70,7 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
 
   const current = status.data;
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-10">
       <div className="flex items-center gap-4">
         <img src={appIcon} alt="akproxy 图标" className="size-16" />
         <div className="flex flex-col gap-1">
@@ -73,6 +79,32 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
             {version ? <span className="text-muted-foreground text-sm">{version}</span> : null}
           </div>
           <span className="text-muted-foreground text-sm">{current.platform}</span>
+          <div className="flex items-center gap-3">
+            {current.latestVersion ? (
+              <button
+                type="button"
+                className="text-primary text-sm underline-offset-4 hover:underline"
+                onClick={() => showNewRelease({ version: current.latestVersion })}
+              >
+                发现新版本 v{current.latestVersion}，查看详情
+              </button>
+            ) : current.lastCheckAt ? (
+              <span className="text-muted-foreground text-sm">
+                {current.lastCheckResult || "检查完成"} · 上次检查 {current.lastCheckAt}
+              </span>
+            ) : null}
+            <Button
+              variant="outline"
+              size="sm"
+              loading={check.isPending}
+              onClick={() => {
+                beginManualUpdateCheck();
+                check.mutate();
+              }}
+            >
+              检查更新
+            </Button>
+          </div>
         </div>
       </div>
       <div className="flex flex-col gap-5">
@@ -97,23 +129,6 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
           disabled={!current.prefs.autoCheck}
           onChange={(hours) => save.mutate({ ...current.prefs, checkIntervalHours: hours })}
         />
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground text-sm">
-            {current.lastCheckAt
-              ? `上次检查 ${current.lastCheckAt} · ${current.lastCheckResult || "检查完成"}`
-              : "还没有检查记录"}
-          </span>
-          <Button
-            variant="outline"
-            loading={check.isPending}
-            onClick={() => {
-              beginManualUpdateCheck();
-              check.mutate();
-            }}
-          >
-            检查更新
-          </Button>
-        </div>
       </div>
       <div className="text-muted-foreground flex flex-col gap-2 text-sm">
         <a
@@ -124,7 +139,6 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
         >
           <GithubMark size={16} />
           github.com/aghub-app/akproxy
-          <ArrowSquareOutIcon size={14} />
         </a>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy#readme" target="_blank" rel="noreferrer">
@@ -164,57 +178,59 @@ const IntervalField: FC<{
 }> = ({ hours, disabled, onChange }) => {
   const matched = intervalPresets.some((item) => item.value === String(hours));
   const [customMode, setCustomMode] = useState(matched ? false : true);
-  const [custom, setCustom] = useState(matched ? "" : String(hours));
   const preset = matched && !customMode ? String(hours) : "custom";
   return (
     <Field>
       <FieldLabel>检查间隔</FieldLabel>
-      <Select
-        value={preset}
-        onValueChange={(value) => {
-          if (value === "custom") {
-            setCustomMode(true);
-            setCustom(String(hours));
-            return;
-          }
-          setCustomMode(false);
-          const next = Number(value);
-          if (Number.isFinite(next)) {
-            onChange(next);
-          }
-        }}
-      >
-        <SelectTrigger disabled={disabled}>
-          <SelectValue>
-            {(value) => (typeof value === "string" ? presetLabels[value] ?? value : null)}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectPopup>
-          {intervalPresets.map((item) => (
-            <SelectItem key={item.value} value={item.value}>
-              {item.label}
-            </SelectItem>
-          ))}
-        </SelectPopup>
-      </Select>
-      {preset === "custom" ? (
-        <Input
-          type="number"
-          min={1}
-          max={720}
-          step={1}
-          placeholder="24"
-          value={custom}
-          onChange={(event) => {
-            const raw = event.target.value;
-            setCustom(raw);
-            const hours = Number(raw);
-            if (raw !== "" && Number.isInteger(hours) && hours >= 1 && hours <= 720) {
-              onChange(hours);
+      <div className="flex items-center gap-2">
+        <Select
+          value={preset}
+          onValueChange={(value) => {
+            if (value === "custom") {
+              setCustomMode(true);
+              return;
+            }
+            setCustomMode(false);
+            const next = Number(value);
+            if (Number.isFinite(next)) {
+              onChange(next);
             }
           }}
-        />
-      ) : null}
+        >
+          <SelectTrigger disabled={disabled} className="w-auto min-w-28">
+            <SelectValue>
+              {(value) => (typeof value === "string" ? presetLabels[value] ?? value : null)}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectPopup>
+            {intervalPresets.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectPopup>
+        </Select>
+        {preset === "custom" ? (
+          <NumberField
+            value={hours}
+            min={1}
+            max={720}
+            step={1}
+            disabled={disabled}
+            onValueChange={(value) => {
+              if (value !== null && Number.isInteger(value)) {
+                onChange(value);
+              }
+            }}
+          >
+            <NumberFieldGroup className="w-24">
+              <NumberFieldDecrement className="px-1.5" />
+              <NumberFieldInput className="px-1" />
+              <NumberFieldIncrement className="px-1.5" />
+            </NumberFieldGroup>
+          </NumberField>
+        ) : null}
+      </div>
       <FieldDescription>
         {preset === "custom"
           ? "填写 1 到 720 之间的小时数。"
