@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="build/appicon.png" width="128" height="128" alt="akproxy">
+  <img src="build/icon.png" width="128" height="128" alt="akproxy">
 </p>
 
 <p align="center">
