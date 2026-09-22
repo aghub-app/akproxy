@@ -13,7 +13,7 @@ var assets embed.FS
 
 func windowBackground(dark bool) application.RGBA {
 	if dark {
-		return application.NewRGB(22, 22, 22)
+		return application.NewRGB(15, 15, 15)
 	}
 	return application.NewRGB(255, 255, 255)
 }
