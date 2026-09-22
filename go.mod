@@ -5,6 +5,7 @@ go 1.26.0
 require (
 	github.com/router-for-me/CLIProxyAPI/v7 v7.3.12
 	github.com/wailsapp/wails/v2 v2.12.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -97,7 +98,6 @@ require (
 	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 // replace github.com/wailsapp/wails/v2 v2.12.0 => /Users/akrc/go/pkg/mod

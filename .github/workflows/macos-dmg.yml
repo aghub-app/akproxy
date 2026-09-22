@@ -1,0 +1,49 @@
+name: macos-dmg
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6.1.0
+        with:
+          version: "12.5.1"
+          package_json_file: frontend/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Setup Go
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+
+      - name: Build
+        run: wails build
+
+      - name: Package DMG
+        run: bash scripts/package-dmg.sh build/bin/akproxy.dmg
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: akproxy-dmg
+          path: build/bin/akproxy.dmg
+          if-no-files-found: error
