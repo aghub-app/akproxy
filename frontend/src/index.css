@@ -270,3 +270,15 @@ body {
     @apply font-sans font-mono;
     }
 }
+
+.sh-code {
+  --sh-identifier: var(--foreground);
+  --sh-class: var(--info-foreground);
+  --sh-keyword: var(--info-foreground);
+  --sh-entity: var(--info-foreground);
+  --sh-string: var(--success-foreground);
+  --sh-sign: var(--muted-foreground);
+  --sh-comment: var(--muted-foreground);
+  --sh-property: var(--foreground);
+  --sh-jsxliterals: var(--foreground);
+}

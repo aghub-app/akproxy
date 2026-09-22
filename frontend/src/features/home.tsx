@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toastManager } from "@/components/ui/toast";
 import { curlCommands } from "@/lib/curl";
+import { highlightCommand } from "@/lib/highlight-command";
 import { errorText } from "@/lib/desktop";
 import { providerPages } from "@/lib/providers";
 import { homeModelsQueryOptions, homeQueryOptions } from "@/requests/home";
@@ -81,7 +82,7 @@ export const HomePage: FC = () => {
         <h2 className="text-sm font-medium">{title}</h2>
         <Button variant="outline" size="sm" aria-label={`复制${title}命令`} onClick={() => void copy(command)}>复制</Button>
       </div>
-      <pre className="overflow-x-auto p-4 text-xs leading-relaxed"><code>{displayed[index].command}</code></pre>
+      <pre className="sh-code overflow-x-auto p-4 text-xs leading-relaxed"><code dangerouslySetInnerHTML={{ __html: highlightCommand(displayed[index].command) }} /></pre>
     </Card>)}
   </section>;
 };
