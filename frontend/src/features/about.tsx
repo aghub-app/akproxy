@@ -89,7 +89,7 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
                 发现新版本 v{current.latestVersion}，查看详情
               </button>
             ) : current.lastCheckAt ? (
-              <span className="text-muted-foreground text-sm">
+              <span className="text-muted-foreground text-xs tabular-nums">
                 {current.lastCheckResult || "检查完成"} · 上次检查 {current.lastCheckAt}
               </span>
             ) : null}
