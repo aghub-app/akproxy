@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toastManager } from "@/components/ui/toast";
 import { api, errorText, type Status } from "@/lib/desktop";
 import { cn } from "@/lib/utils";
-import { serviceBarNotice } from "./service-bar";
+import { controlSuccessToast, serviceBarNotice } from "./service-bar";
 
 const SettingsIcon: FC<{ size?: number }> = ({ size }) => (
   <HardDrivesIcon size={size} weight="duotone" />
@@ -62,8 +62,12 @@ export const AppLayout: FC = () => {
       }
       await api.start();
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, ran) => {
       await client.invalidateQueries({ queryKey: ["status"] });
+      const started = controlSuccessToast(ran);
+      if (started) {
+        toastManager.add({ ...started, type: "success" });
+      }
     },
     onError: (error) => {
       toastManager.add({ title: errorText(error), type: "error" });

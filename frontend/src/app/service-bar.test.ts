@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Status } from "../lib/desktop.ts";
-import { serviceBarNotice } from "./service-bar.ts";
+import { controlSuccessToast, serviceBarNotice } from "./service-bar.ts";
 
 function status(patch: Partial<Status>): Status {
   return {
@@ -26,6 +26,15 @@ test("restart names the address in use and the address after restart", () => {
     serviceBarNotice(status({ running: true, action: "restart", restartRequired: true })),
     "客户端仍使用 http://127.0.0.1:8317。重启后改为 http://127.0.0.1:9000。",
   );
+});
+
+test("only a successful start says the service started and where to connect", () => {
+  assert.deepEqual(controlSuccessToast("start"), {
+    title: "服务已启动",
+    description: "可以到首页看接入方式",
+  });
+  assert.equal(controlSuccessToast("stop"), null);
+  assert.equal(controlSuccessToast("restart"), null);
 });
 
 test("a failure replaces the restart line", () => {
