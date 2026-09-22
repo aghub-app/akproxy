@@ -19,14 +19,13 @@ Built on [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI). Sign in th
 ## Features
 
 - 🖥️ **Desktop app** — macOS, Windows, and Linux. The interface follows the system light or dark theme
-- 🚀 **Start and stop** — one button in the window. Change the listen address or port, and that button becomes Restart
-- 🔐 **Browser sign-in** — Codex, Grok, Claude, Gemini, Kimi (kimi.com and kimi.ai), and Devin. Tokens never show up in the UI
+- 🚀 **Start and stop** — one button. The service starts and stops when you say so
+- 🔐 **Browser sign-in** — Codex, Grok, Claude, Gemini, Kimi (kimi.com and kimi.ai), and Devin
 - 👥 **Multiple accounts** — sign in more than once per provider. Requests go out round-robin
-- ⚡ **Live config** — client keys, the outbound proxy, and routing apply without stopping. A new listen address waits for restart
-- 🔌 **Point your tool at it** — once the service is running, Home gives you a `.env` (`OPENAI_API_KEY`, `OPENAI_BASE_URL`) and examples for the OpenAI SDKs, the AI SDK, and LangChain
-- 🧪 **Try a request** — the Test tab has three curl commands. Copy stays off until the service is running
-- 🔄 **Updates** — release builds check, download, and verify in the background, then install when you restart
-- 💾 **Its own data** — config and accounts stay in this app's directory. It does not take over a CLI config you already use
+- ⚡ **Live config** — client keys, the outbound proxy, and routing apply as soon as you change them
+- 🔌 **Point your tool at it** — Home gives you a `.env` and examples for the OpenAI SDKs, the AI SDK, and LangChain
+- 🧪 **Try a request** — the Test tab has three curl commands. Try one yourself and you'll see how smooth it is
+- 💾 **Its own data** — config and accounts stay in this app's directory
 
 ## Installation
 
