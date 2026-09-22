@@ -37,6 +37,7 @@ export type Status = {
   restartRequired: boolean;
   savedAddress: string;
   error: string;
+  loginActive: boolean;
 };
 
 export function errorText(error: unknown): string {

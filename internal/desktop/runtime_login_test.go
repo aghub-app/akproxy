@@ -130,18 +130,24 @@ func TestLoginMapsSDKErrorAndEmitsDone(t *testing.T) {
 		}
 		return &coreauth.Auth{ID: "a@x.com", Provider: "claude"}, nil
 	}
-	events := make(chan string, 1)
+	events := make(chan string, 8)
 	r.emit = func(event string, _ any) { events <- event }
 
 	if err := r.Login("claude"); err != nil {
 		t.Fatalf("Login: %v", err)
 	}
-	select {
-	case event := <-events:
-		if event != "login:done" {
-			t.Fatalf("event = %q, want login:done", event)
+	var sawLoginDone bool
+	for i := 0; i < 8; i++ {
+		select {
+		case event := <-events:
+			if event == "login:done" {
+				sawLoginDone = true
+			}
+		case <-time.After(time.Second):
+			break
 		}
-	case <-time.After(time.Second):
+	}
+	if !sawLoginDone {
 		t.Fatal("login:done not emitted")
 	}
 

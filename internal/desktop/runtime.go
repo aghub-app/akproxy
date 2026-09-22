@@ -62,6 +62,9 @@ func (r *Runtime) Status() (Status, error) {
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.loginMu.Lock()
+	loginActive := r.loginCancel != nil
+	r.loginMu.Unlock()
 	action := ControlAction(r.running, r.bound, saved)
 	shown := saved
 	if r.running {
@@ -76,6 +79,7 @@ func (r *Runtime) Status() (Status, error) {
 		RestartRequired: action == "restart",
 		SavedAddress:    savedAddress,
 		Error:           r.runError,
+		LoginActive:     loginActive,
 	}, nil
 }
 
@@ -255,12 +259,14 @@ func (r *Runtime) Login(provider string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
 	r.loginCancel = cancel
 	r.loginMu.Unlock()
+	r.emit("server:status", mustStatus(r))
 
 	release := func() {
 		cancel()
 		r.loginMu.Lock()
 		r.loginCancel = nil
 		r.loginMu.Unlock()
+		r.emit("server:status", mustStatus(r))
 	}
 
 	type outcome struct {

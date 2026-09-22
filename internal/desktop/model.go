@@ -48,6 +48,7 @@ type Status struct {
 	RestartRequired bool   `json:"restartRequired"`
 	SavedAddress    string `json:"savedAddress"`
 	Error           string `json:"error"`
+	LoginActive     bool   `json:"loginActive"`
 }
 
 // Listen is the host, port, and TLS actually bound or saved.

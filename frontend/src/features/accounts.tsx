@@ -98,7 +98,8 @@ export const AccountsPanel: FC<{
 }> = ({ page, logins, filledExtra }) => {
   const client = useQueryClient();
   const [pendingDelete, setPendingDelete] = useState<Account | null>(null);
-  const [loggingIn, setLoggingIn] = useState<string | null>(null);
+  const status = useQuery({ queryKey: ["status"], queryFn: api.status, refetchInterval: 2000 });
+  const loginActive = status.data?.loginActive ?? false;
   const accounts = useQuery({
     queryKey: ["accounts", page],
     queryFn: () => api.accounts(page),
@@ -115,15 +116,12 @@ export const AccountsPanel: FC<{
   const usageByID = new Map((usage.data ?? []).map((item) => [item.id, item]));
 
   async function login(id: string) {
-    setLoggingIn(id);
     try {
       await api.login(id);
       await client.invalidateQueries({ queryKey: ["accounts", page] });
       toastManager.add({ title: "登录完成", type: "success" });
     } catch (error) {
       toastManager.add({ title: errorText(error), type: "error" });
-    } finally {
-      setLoggingIn(null);
     }
   }
 
@@ -143,14 +141,13 @@ export const AccountsPanel: FC<{
       {logins.map((item) => (
         <Button
           key={item.id}
-          loading={loggingIn === item.id}
-          disabled={loggingIn !== null && loggingIn !== item.id}
+          disabled={loginActive}
           onClick={() => void login(item.id)}
         >
           {item.label}
         </Button>
       ))}
-      {loggingIn ? (
+      {loginActive ? (
         <Button variant="outline" onClick={() => void api.cancelLogin()}>
           取消登录
         </Button>

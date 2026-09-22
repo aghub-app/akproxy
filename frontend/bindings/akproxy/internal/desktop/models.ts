@@ -79,6 +79,7 @@ export interface Status {
     "restartRequired": boolean;
     "savedAddress": string;
     "error": string;
+    "loginActive": boolean;
 }
 
 /**
