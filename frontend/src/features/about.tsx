@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
@@ -130,7 +129,7 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
           onChange={(hours) => save.mutate({ ...current.prefs, checkIntervalHours: hours })}
         />
       </div>
-      <div className="text-muted-foreground flex flex-col gap-2 text-sm">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         <a
           className="flex items-center gap-2 underline-offset-4 hover:underline"
           href="https://github.com/aghub-app/akproxy"
@@ -140,17 +139,15 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
           <GithubMark size={16} />
           github.com/aghub-app/akproxy
         </a>
-        <div className="flex flex-wrap gap-x-4 gap-y-1">
-          <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy#readme" target="_blank" rel="noreferrer">
-            README
-          </a>
-          <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy/blob/main/LICENSE" target="_blank" rel="noreferrer">
-            LICENSE
-          </a>
-          <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy/issues" target="_blank" rel="noreferrer">
-            问题反馈
-          </a>
-        </div>
+        <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy#readme" target="_blank" rel="noreferrer">
+          README
+        </a>
+        <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy/blob/main/LICENSE" target="_blank" rel="noreferrer">
+          LICENSE
+        </a>
+        <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy/issues" target="_blank" rel="noreferrer">
+          问题反馈
+        </a>
       </div>
     </div>
   );
