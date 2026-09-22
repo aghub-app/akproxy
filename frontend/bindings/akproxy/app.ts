@@ -29,6 +29,13 @@ export function Accounts(page: string): $CancellablePromise<desktop$0.Account[] 
 }
 
 /**
+ * ApplyUpdate restarts into a downloaded release. It does not restart the proxy.
+ */
+export function ApplyUpdate(): $CancellablePromise<void> {
+    return $Call.ByID(4175318290);
+}
+
+/**
  * CancelLogin stops the login that is waiting.
  */
 export function CancelLogin(): $CancellablePromise<void> {
@@ -44,6 +51,20 @@ export function CheckUpdates(): $CancellablePromise<void> {
  */
 export function DeleteAccount(id: string): $CancellablePromise<void> {
     return $Call.ByID(436436941, id);
+}
+
+/**
+ * Home returns the setup state and client-facing connection details.
+ */
+export function Home(): $CancellablePromise<desktop$0.HomeSnapshot> {
+    return $Call.ByID(630154502);
+}
+
+/**
+ * HomeModels reads models from the running local proxy.
+ */
+export function HomeModels(): $CancellablePromise<string[] | null> {
+    return $Call.ByID(3195542688);
 }
 
 /**

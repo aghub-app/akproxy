@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useState } from "react";
 import { ToastProvider } from "@/components/ui/toast";
+import { UpdateDialog } from "@/features/update-dialog";
 import { api } from "@/lib/desktop";
 import { playInteractionSound } from "@/lib/ui-sounds";
 import { Events } from "@wailsio/runtime";
@@ -41,7 +42,10 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={client}>
-      <ToastProvider position="bottom-center">{children}</ToastProvider>
+      <ToastProvider position="bottom-center">
+        {children}
+        <UpdateDialog />
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

@@ -24,6 +24,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { toastManager } from "@/components/ui/toast";
 import { AccountsPanel } from "@/features/accounts";
 import { OpenAIDraftCard } from "@/features/editors";
+import { beginManualUpdateCheck, finishManualUpdateCheck } from "@/features/update-dialog";
 import { api, errorText, type OpenAIDraft, type ServiceSettings } from "@/lib/desktop";
 
 const strategies = [
@@ -57,7 +58,13 @@ function canPersistService(next: ServiceSettings) {
 export const ServicePage: FC = () => {
   const query = useQuery({ queryKey: ["service"], queryFn: api.service });
   const version = useQuery({ queryKey: ["version"], queryFn: api.version });
-  const update = useMutation({ mutationFn: api.checkUpdates, onError: notifyError });
+  const update = useMutation({
+    mutationFn: api.checkUpdates,
+    onError: (error) => {
+      finishManualUpdateCheck();
+      notifyError(error);
+    },
+  });
   if (!query.data) {
     return <p className="text-muted-foreground text-sm">正在读取设置…</p>;
   }
@@ -66,7 +73,14 @@ export const ServicePage: FC = () => {
       <ServiceForm key={JSON.stringify(query.data)} initial={query.data} />
       <div className="flex items-center justify-between border-t pt-4">
         <span className="text-sm text-muted-foreground">akproxy {version.data}</span>
-        <Button variant="outline" loading={update.isPending} onClick={() => update.mutate()}>
+        <Button
+          variant="outline"
+          loading={update.isPending}
+          onClick={() => {
+            beginManualUpdateCheck();
+            update.mutate();
+          }}
+        >
           检查更新
         </Button>
       </div>

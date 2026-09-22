@@ -20,6 +20,15 @@ export interface AccountUsage {
 }
 
 /**
+ * HomeSnapshot contains client-facing setup data, never upstream secrets.
+ */
+export interface HomeSnapshot {
+    "hasCredentials": boolean;
+    "clientKey": string;
+    "status": Status;
+}
+
+/**
  * KeyDraft is one upstream API key edited on a provider page.
  */
 export interface KeyDraft {

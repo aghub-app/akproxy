@@ -11,6 +11,13 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+func windowBackground(dark bool) application.RGBA {
+	if dark {
+		return application.NewRGB(22, 22, 22)
+	}
+	return application.NewRGB(255, 255, 255)
+}
+
 func main() {
 	service := NewApp()
 	app := application.New(application.Options{
@@ -29,10 +36,13 @@ func main() {
 		Height:           760,
 		MinWidth:         880,
 		MinHeight:        640,
-		BackgroundColour: application.NewRGB(250, 250, 249),
+		BackgroundColour: windowBackground(app.Env.IsDarkMode()),
 		URL:              "/",
 	})
 	window.OnWindowEvent(events.Common.WindowClosing, func(_ *application.WindowEvent) { app.Quit() })
+	app.Event.OnApplicationEvent(events.Common.ThemeChanged, func(_ *application.ApplicationEvent) {
+		window.SetBackgroundColour(windowBackground(app.Env.IsDarkMode()))
+	})
 	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(_ *application.ApplicationEvent) {
 		if version != "dev" {
 			go func() {

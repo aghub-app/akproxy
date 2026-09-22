@@ -8,6 +8,15 @@ body,
   overscroll-behavior-y: none;
 }
 
+html {
+  background: var(--background);
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
 }

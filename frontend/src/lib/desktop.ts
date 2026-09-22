@@ -62,6 +62,8 @@ export function errorText(error: unknown): string {
 }
 
 export const api = {
+  home: () => app.Home(),
+  homeModels: async () => (await app.HomeModels()) ?? [],
   status: async (): Promise<Status> => {
     const status = await app.Status();
     if (status.action !== "start" && status.action !== "stop" && status.action !== "restart") {
@@ -85,6 +87,7 @@ export const api = {
   deleteAccount: (id: string) => app.DeleteAccount(id),
   version: () => app.Version(),
   checkUpdates: () => app.CheckUpdates(),
+  applyUpdate: () => app.ApplyUpdate(),
 };
 
 function normalizeService(input: WireServiceSettings): ServiceSettings {

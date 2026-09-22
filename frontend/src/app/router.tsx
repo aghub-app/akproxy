@@ -6,6 +6,7 @@ import {
   OpenAIPage,
   ServicePage,
 } from "@/features/pages";
+import { HomePage } from "@/features/home";
 import { AppLayout } from "@/app/shell";
 
 function CodexRoute() {
@@ -29,7 +30,7 @@ export const router = createHashRouter([
     path: "/",
     element: <AppLayout />,
     children: [
-      { index: true, element: <Navigate to="/settings" replace /> },
+      { index: true, element: <HomePage /> },
       { path: "service", element: <Navigate to="/settings" replace /> },
       { path: "settings", element: <ServicePage /> },
       { path: "codex", element: <CodexRoute /> },

@@ -25,7 +25,13 @@ func configureUpdates(app *application.App) error {
 		interval = 24 * time.Hour
 	}
 	if err := app.Updater.Init(updater.Config{
-		CurrentVersion: version, Providers: []updater.Provider{p}, CheckInterval: interval,
+		CurrentVersion: version,
+		Providers:      []updater.Provider{p},
+		CheckInterval:  interval,
+		// The built-in window opens as soon as a check starts, including the
+		// startup check and the up-to-date result. The app window shows a dialog
+		// only when there is something to act on.
+		Window: updater.WindowNone,
 	}); err != nil {
 		return err
 	}
@@ -45,4 +51,12 @@ func (a *App) CheckUpdates() error {
 		return errors.New("更新正在进行中")
 	}
 	return u.CheckAndInstall(a.ctx)
+}
+
+// ApplyUpdate restarts into a downloaded release. It does not restart the proxy.
+func (a *App) ApplyUpdate() error {
+	if version == "dev" {
+		return errors.New("开发版本不执行更新，请使用正式安装包")
+	}
+	return application.Get().Updater.Restart(a.ctx)
 }

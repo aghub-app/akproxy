@@ -4,6 +4,7 @@
 export type {
     Account,
     AccountUsage,
+    HomeSnapshot,
     KeyDraft,
     ModelDraft,
     OpenAIDraft,

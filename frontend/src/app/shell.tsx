@@ -1,11 +1,5 @@
-import ClaudeColor from "@lobehub/icons/es/Claude/components/Color";
-import CodexColor from "@lobehub/icons/es/Codex/components/Color";
-import DevinColor from "@lobehub/icons/es/Devin/components/Color";
-import GeminiColor from "@lobehub/icons/es/Gemini/components/Color";
-import GrokMono from "@lobehub/icons/es/Grok/components/Mono";
-import KimiMono from "@lobehub/icons/es/Kimi/components/Mono";
-import OpenAIMono from "@lobehub/icons/es/OpenAI/components/Mono";
-import { HardDrivesIcon } from "@phosphor-icons/react";
+import { providerPages } from "@/lib/providers";
+import { HardDrivesIcon, HouseIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FC } from "react";
 import { NavLink, Outlet } from "react-router";
@@ -20,14 +14,9 @@ const SettingsIcon: FC<{ size?: number }> = ({ size }) => (
   <HardDrivesIcon size={size} weight="duotone" />
 );
 
-const pages: { to: string; label: string; icon: FC<{ size?: number }> }[] = [
-  { to: "/codex", label: "Codex", icon: CodexColor },
-  { to: "/grok", label: "Grok", icon: GrokMono },
-  { to: "/claude", label: "Claude", icon: ClaudeColor },
-  { to: "/gemini", label: "Gemini", icon: GeminiColor },
-  { to: "/kimi", label: "Kimi", icon: KimiMono },
-  { to: "/devin", label: "Devin", icon: DevinColor },
-  { to: "/openai", label: "自定义 OpenAI", icon: OpenAIMono },
+const pages = [
+  { to: "/", label: "首页", icon: HouseIcon },
+  ...providerPages,
   { to: "/settings", label: "设置", icon: SettingsIcon },
 ];
 
@@ -117,6 +106,7 @@ export const AppLayout: FC = () => {
               <NavLink
                 key={item.to}
                 to={item.to}
+                end={item.to === "/"}
                 className={({ isActive }) =>
                   cn(
                     "flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm",

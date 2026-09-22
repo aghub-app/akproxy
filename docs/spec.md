@@ -31,7 +31,10 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 
 ### 本地代理
 
-- 侧边栏只有 Codex、Grok、Claude、Gemini、Kimi、Devin、「自定义 OpenAI」和「设置」。「设置」在最下面。没有原始配置编辑页。
+- 默认入口为 `/` 首页。无上游登录账号或非空上游 API key 时展示 provider 导航卡片；存在任意上游凭据时展示 models、chat completions、responses 三个可复制 curl 示例。客户端密钥不算上游凭据。
+- 首页示例使用第一把客户端密钥（默认遮挡，复制为真实值）和当前客户端地址；模型读取失败或服务停止时使用明确的模型占位符，不自动启动服务。详见 `docs/prd/home.md`。
+
+- 侧边栏依次为「首页」、Codex、Grok、Claude、Gemini、Kimi、Devin、「自定义 OpenAI」和「设置」。「设置」在最下面。没有原始配置编辑页。
 - 导航栏右侧只有一个服务控制。未运行时为「启动」；运行中且已写入监听等于已绑定监听时为「停止」；运行中且二者不同时为「重启」，并提示可以考虑重启。
 - 设置和自定义 OpenAI 在可以写入时立即写入。没有保存按钮，也没有未保存离开拦截。启动、停止和重启只使用已经写入的配置。
 - 成功写入的配置至少包含一把客户端密钥，且账号目录是应用自己的账号目录。违反任一条的写入不改文件，也不改变正在运行的服务。
@@ -46,7 +49,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 ### 应用更新
 
 - 正式版本在启动及持续运行每 24 小时检查正式更新，忽略预发布和草稿，设置页提供手动入口及当前版本；开发版本不更新自身。
-- 采用 Wails 默认窗口及流程：自动下载校验，用户点击重启后安装，代理不自动恢复。
+- 采用 Wails 更新器自动下载和校验。检查中和已是最新不弹窗；有新版本、失败或可以重启时才提示。用户点击重启后安装，代理不自动恢复。
 - 更新不得改变配置和账号。校验信息缺失或不匹配时禁止安装。
 - tag 构建生成草稿 Release，维护者手动发布后才向客户端提供更新。
 - macOS 使用 akproxy 独立的证书、私钥和公证凭据。产品及架构见 `docs/prd/app-updates.md`、`docs/adr/wails-updater.md`。

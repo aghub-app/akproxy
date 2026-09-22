@@ -179,3 +179,19 @@ func (a *App) DeleteAccount(id string) error {
 	}
 	return a.desktop.DeleteAccount(id)
 }
+
+// Home returns the setup state and client-facing connection details.
+func (a *App) Home() (desktop.HomeSnapshot, error) {
+	if err := a.ready(); err != nil {
+		return desktop.HomeSnapshot{}, err
+	}
+	return a.desktop.Home()
+}
+
+// HomeModels reads models from the running local proxy.
+func (a *App) HomeModels() ([]string, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.desktop.HomeModels()
+}
