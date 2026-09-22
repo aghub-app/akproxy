@@ -1,5 +1,5 @@
 import { providerPages } from "@/lib/providers";
-import { HardDrivesIcon, HouseIcon } from "@phosphor-icons/react";
+import { HardDrivesIcon, HouseIcon, PlayIcon, StopIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FC } from "react";
 import { NavLink, Outlet } from "react-router";
@@ -10,12 +10,16 @@ import { api, errorText, type Status } from "@/lib/desktop";
 import { cn } from "@/lib/utils";
 import { controlSuccessToast, serviceBarNotice } from "./service-bar";
 
+const HomeIcon: FC<{ size?: number }> = ({ size }) => (
+  <HouseIcon size={size} weight="duotone" />
+);
+
 const SettingsIcon: FC<{ size?: number }> = ({ size }) => (
   <HardDrivesIcon size={size} weight="duotone" />
 );
 
 const mainPages = [
-  { to: "/", label: "首页", icon: HouseIcon },
+  { to: "/", label: "首页", icon: HomeIcon },
   ...providerPages,
 ];
 
@@ -101,6 +105,8 @@ export const AppLayout: FC = () => {
             loading={control.isPending}
             onClick={requestControl}
           >
+            {action === "stop" ? <StopIcon weight="duotone" /> : null}
+            {action === "start" ? <PlayIcon weight="duotone" /> : null}
             {actionLabel[action]}
           </Button>
         </div>

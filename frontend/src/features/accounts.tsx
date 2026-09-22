@@ -1,4 +1,4 @@
-import { DotsThreeIcon } from "@phosphor-icons/react";
+import { DotsThreeIcon, TrashIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FC, type ReactNode, useState } from "react";
 import {
@@ -200,6 +200,7 @@ export const AccountsPanel: FC<{
                           variant="destructive"
                           onClick={() => setPendingDelete(account)}
                         >
+                          <TrashIcon weight="duotone" />
                           删除
                         </MenuItem>
                       </MenuPopup>
@@ -244,6 +245,7 @@ export const AccountsPanel: FC<{
                 }
               }}
             >
+              <TrashIcon weight="duotone" />
               删除
             </Button>
           </AlertDialogFooter>
