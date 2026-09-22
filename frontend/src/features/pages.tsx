@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { type FC, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Frame } from "@/components/ui/frame";
@@ -153,14 +154,18 @@ const ClientKeysTable: FC<{
                   }
                 }}
               >
-                <TableCell className="max-w-md truncate font-mono">
-                  <button
-                    className="w-full truncate text-left"
-                    type="button"
-                    onClick={() => setVisible((current) => ({ ...current, [key]: !current[key] }))}
-                  >
-                    {visible[key] ? key : maskClientKey(key)}
-                  </button>
+                <TableCell className="max-w-md font-mono">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="icon-sm"
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setVisible((current) => ({ ...current, [key]: !current[key] }))}
+                    >
+                      {visible[key] ? <EyeIcon /> : <EyeSlashIcon />}
+                    </Button>
+                    <span className="truncate">{visible[key] ? key : maskClientKey(key)}</span>
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
