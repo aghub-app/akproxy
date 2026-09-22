@@ -14,6 +14,10 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 // @ts-ignore: Unused imports
 import * as desktop$0 from "./internal/desktop/models.js";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as $models from "./models.js";
+
 /**
  * AccountUsage reads session-limit windows for one sidebar page.
  */
@@ -51,6 +55,14 @@ export function CheckUpdates(): $CancellablePromise<void> {
  */
 export function DeleteAccount(id: string): $CancellablePromise<void> {
     return $Call.ByID(436436941, id);
+}
+
+/**
+ * DownloadPendingUpdate downloads the release found by a find-only automatic
+ * check, after the user picks 立即下载 in the new-release dialog.
+ */
+export function DownloadPendingUpdate(): $CancellablePromise<void> {
+    return $Call.ByID(639904889);
 }
 
 /**
@@ -117,6 +129,13 @@ export function SaveService($in: desktop$0.ServiceSettings): $CancellablePromise
 }
 
 /**
+ * SaveUpdatePrefs applies the 关于 tab's update preferences immediately.
+ */
+export function SaveUpdatePrefs($in: desktop$0.AppPrefs): $CancellablePromise<$models.UpdatePrefsStatus> {
+    return $Call.ByID(2750775117, $in);
+}
+
+/**
  * ServiceSettings returns the 服务 page.
  */
 export function ServiceSettings(): $CancellablePromise<desktop$0.ServiceSettings> {
@@ -142,6 +161,13 @@ export function Status(): $CancellablePromise<desktop$0.Status> {
  */
 export function Stop(): $CancellablePromise<void> {
     return $Call.ByID(4158193117);
+}
+
+/**
+ * UpdatePrefStatus returns the 关于 tab's preferences and last check result.
+ */
+export function UpdatePrefStatus(): $CancellablePromise<$models.UpdatePrefsStatus> {
+    return $Call.ByID(2284164635);
 }
 
 export function Version(): $CancellablePromise<string> {

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { type FC, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,11 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { toastManager } from "@/components/ui/toast";
 import { AccountsPanel } from "@/features/accounts";
+import { AboutTab } from "@/features/about";
+import { OpenAIDraftCard } from "@/features/editors";
+import { ProviderEmpty } from "@/features/provider-empty";
 import { beginManualUpdateCheck, finishManualUpdateCheck } from "@/features/update-dialog";
-import { api, errorText, type ServiceSettings } from "@/lib/desktop";
+import { api, errorText, type OpenAIDraft, type ServiceSettings } from "@/lib/desktop";
 
 const strategies = [
   { value: "round-robin", label: "轮询" },
@@ -45,6 +48,11 @@ function notifyError(error: unknown) {
   toastManager.add({ title: errorText(error), type: "error" });
 }
 
+const AboutTabContainer: FC = () => {
+  const version = useQuery({ queryKey: ["version"], queryFn: api.version });
+  return <AboutTab version={version.data} />;
+};
+
 function canPersistService(next: ServiceSettings) {
   if (next.port < 1 || next.port > 65535) {
     return false;
@@ -57,33 +65,12 @@ function canPersistService(next: ServiceSettings) {
 
 export const ServicePage: FC = () => {
   const query = useQuery({ queryKey: ["service"], queryFn: api.service });
-  const version = useQuery({ queryKey: ["version"], queryFn: api.version });
-  const update = useMutation({
-    mutationFn: api.checkUpdates,
-    onError: (error) => {
-      finishManualUpdateCheck();
-      notifyError(error);
-    },
-  });
   if (!query.data) {
     return <p className="text-muted-foreground text-sm">正在读取设置…</p>;
   }
   return (
     <div className="flex flex-col gap-6">
       <ServiceForm key={JSON.stringify(query.data)} initial={query.data} />
-      <div className="flex items-center justify-between border-t pt-4">
-        <span className="text-sm text-muted-foreground">akproxy {version.data}</span>
-        <Button
-          variant="outline"
-          loading={update.isPending}
-          onClick={() => {
-            beginManualUpdateCheck();
-            update.mutate();
-          }}
-        >
-          检查更新
-        </Button>
-      </div>
     </div>
   );
 };
@@ -253,6 +240,7 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
           <TabsTab value="listen">监听</TabsTab>
           <TabsTab value="clients">密钥</TabsTab>
           <TabsTab value="advanced">高级</TabsTab>
+          <TabsTab value="about">关于</TabsTab>
         </TabsList>
         <TabsPanel value="listen" className="flex flex-col gap-5">
           <Field>
@@ -347,6 +335,9 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
               <FieldLabel>调试日志</FieldLabel>
             </div>
           </Field>
+        </TabsPanel>
+        <TabsPanel value="about">
+          <AboutTabContainer />
         </TabsPanel>
       </Tabs>
     </div>

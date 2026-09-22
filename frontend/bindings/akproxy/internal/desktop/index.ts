@@ -4,6 +4,7 @@
 export type {
     Account,
     AccountUsage,
+    AppPrefs,
     HomeSnapshot,
     KeyDraft,
     ModelDraft,

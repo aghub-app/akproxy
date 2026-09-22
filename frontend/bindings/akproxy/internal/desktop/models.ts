@@ -20,6 +20,16 @@ export interface AccountUsage {
 }
 
 /**
+ * AppPrefs is the 更新偏好 owned by the 关于 page. It lives in app.json and
+ * never touches config.yaml, whose parser drops unknown fields.
+ */
+export interface AppPrefs {
+    "autoUpdate": boolean;
+    "autoCheck": boolean;
+    "checkIntervalHours": number;
+}
+
+/**
  * HomeSnapshot contains client-facing setup data, never upstream secrets.
  */
 export interface HomeSnapshot {

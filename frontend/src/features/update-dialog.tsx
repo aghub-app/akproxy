@@ -13,7 +13,7 @@ import { Progress, ProgressIndicator, ProgressTrack } from "@/components/ui/prog
 import { toastManager } from "@/components/ui/toast";
 import { api, errorText } from "@/lib/desktop";
 
-type Phase = "closed" | "downloading" | "verifying" | "installing" | "ready" | "failed";
+type Phase = "closed" | "available" | "downloading" | "verifying" | "installing" | "ready" | "failed";
 
 type ReleaseNotice = { version?: string; notes?: string };
 type ProgressNotice = { written?: number; total?: number };
@@ -51,6 +51,19 @@ export const UpdateDialog: FC = () => {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    function showAvailable(body: unknown) {
+      const notice = (body ?? {}) as ReleaseNotice;
+      setVersion(notice.version ?? "");
+      setNotes(notice.notes ?? "");
+      setFailure("");
+      setProgress(0);
+      setDismissed(false);
+      setPhase("available");
+    }
+
+    const offNewRelease = Events.On("updates:new-release", (event) => {
+      showAvailable(eventBody(event));
+    });
     function showRelease(body: unknown) {
       manualCheck = false;
       const release = (body ?? {}) as ReleaseNotice;
@@ -105,6 +118,7 @@ export const UpdateDialog: FC = () => {
       setPhase("failed");
     });
     return () => {
+      offNewRelease();
       offAvailable();
       offDownload();
       offProgress();
@@ -118,17 +132,25 @@ export const UpdateDialog: FC = () => {
 
   const open = phase !== "closed" && !dismissed;
   const title =
-    phase === "ready" ? "可以重启以完成更新" : phase === "failed" ? "更新失败" : "正在更新";
+    phase === "available"
+      ? "发现新版本"
+      : phase === "ready"
+        ? "可以重启以完成更新"
+        : phase === "failed"
+          ? "更新失败"
+          : "正在更新";
   const detail =
-    phase === "ready"
-      ? `${version ? `v${version} ` : ""}已准备好。重启后会换成新版本，代理会停止。`
-      : phase === "failed"
-        ? failure
-        : phase === "verifying"
-          ? "正在校验下载的文件。"
-          : phase === "installing"
-            ? "正在准备安装。"
-            : `正在下载${version ? ` v${version}` : ""}。`;
+    phase === "available"
+      ? `有新版本${version ? ` v${version}` : ""}可以更新。自动下载已关闭，可以现在手动下载。`
+      : phase === "ready"
+        ? `${version ? `v${version} ` : ""}已准备好。重启后会换成新版本，代理会停止。`
+        : phase === "failed"
+          ? failure
+          : phase === "verifying"
+            ? "正在校验下载的文件。"
+            : phase === "installing"
+              ? "正在准备安装。"
+              : `正在下载${version ? ` v${version}` : ""}。`;
 
   return (
     <Dialog
@@ -158,8 +180,24 @@ export const UpdateDialog: FC = () => {
         ) : null}
         <DialogFooter>
           <Button variant="outline" onClick={() => setDismissed(true)}>
-            {phase === "ready" ? "稍后" : "关闭"}
+            {phase === "ready" ? "稍后" : phase === "available" ? "忽略" : "关闭"}
           </Button>
+          {phase === "available" ? (
+            <Button
+              loading={applying}
+              onClick={() => {
+                setApplying(true);
+                setPhase("downloading");
+                void api.downloadPendingUpdate().catch((error: unknown) => {
+                  setApplying(false);
+                  setFailure(errorText(error));
+                  setPhase("failed");
+                });
+              }}
+            >
+              立即下载
+            </Button>
+          ) : null}
           {phase === "ready" ? (
             <Button
               loading={applying}

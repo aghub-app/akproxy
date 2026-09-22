@@ -46,9 +46,8 @@ func main() {
 	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(_ *application.ApplicationEvent) {
 		if version != "dev" {
 			go func() {
-				if err := service.CheckUpdates(); err != nil {
-					app.Logger.Error("检查更新失败", "error", err)
-				}
+				// The scheduler no-ops this when auto-check is off.
+				scheduler.tick()
 			}()
 		}
 	})

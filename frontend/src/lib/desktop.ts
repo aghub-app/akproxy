@@ -1,5 +1,13 @@
 import * as app from "../../bindings/akproxy/app";
-import type { ServiceSettings as WireServiceSettings } from "../../bindings/akproxy/internal/desktop/models";
+import type {
+  AppPrefs as WireAppPrefs,
+  ServiceSettings as WireServiceSettings,
+} from "../../bindings/akproxy/internal/desktop/models";
+import type { UpdatePrefsStatus as WireUpdatePrefsStatus } from "../../bindings/akproxy/models";
+
+export type AppPrefs = WireAppPrefs;
+
+export type UpdatePrefsStatus = WireUpdatePrefsStatus;
 
 export type ServiceSettings = {
   listenMode: "local" | "all" | "custom";
@@ -73,6 +81,9 @@ export const api = {
   version: () => app.Version(),
   checkUpdates: () => app.CheckUpdates(),
   applyUpdate: () => app.ApplyUpdate(),
+  updatePrefStatus: () => app.UpdatePrefStatus(),
+  saveUpdatePrefs: (input: AppPrefs) => app.SaveUpdatePrefs(input),
+  downloadPendingUpdate: () => app.DownloadPendingUpdate(),
 };
 
 function normalizeService(input: WireServiceSettings): ServiceSettings {
