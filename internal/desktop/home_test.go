@@ -24,7 +24,14 @@ func TestHomeSetupAndBoundModels(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	for _, extra := range []string{"codex-api-key:\n  - api-key: upstream\n    base-url: https://example.test\n", "claude-api-key:\n  - api-key: upstream\n    base-url: https://example.test\n", "gemini-api-key:\n  - api-key: upstream\n    base-url: https://example.test\n", "xai-api-key:\n  - api-key: upstream\n    base-url: https://example.test\n", "openai-compatibility:\n  - name: kimi\n    base-url: https://example.test\n    api-key-entries:\n      - api-key: upstream\n    base-url: https://example.test\n", "openai-compatibility:\n  - name: custom\n    base-url: https://example.test\n    api-key-entries:\n      - api-key: upstream\n    base-url: https://example.test\n"} {
+	for _, extra := range []string{
+		"codex-api-key:\n  - api-key: upstream\n    base-url: https://example.test\n",
+		"claude-api-key:\n  - api-key: upstream\n    base-url: https://example.test\n",
+		"gemini-api-key:\n  - api-key: upstream\n    base-url: https://example.test\n",
+		"xai-api-key:\n  - api-key: upstream\n    base-url: https://example.test\n",
+		"openai-compatibility:\n  - name: kimi\n    base-url: https://example.test\n    api-key-entries:\n      - api-key: upstream\n",
+		"openai-compatibility:\n  - name: custom\n    base-url: https://example.test\n    api-key-entries:\n      - api-key: upstream\n",
+	} {
 		write(extra)
 		home, err := r.Home()
 		if err != nil || !home.HasCredentials || home.ClientKey != "client-test" {

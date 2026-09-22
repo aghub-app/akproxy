@@ -1,3 +1,4 @@
+import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FC, useState } from "react";
 import {
@@ -9,8 +10,9 @@ import {
   AlertDialogPopup,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@/components/ui/menu";
 import { Progress, ProgressIndicator, ProgressTrack } from "@/components/ui/progress";
 import { toastManager } from "@/components/ui/toast";
 import { api, errorText, type Account, type AccountUsage, type UsageWindow } from "@/lib/desktop";
@@ -45,18 +47,18 @@ const UsageBars: FC<{ usage?: AccountUsage; loading: boolean; failed: boolean }>
 }) => {
   if (!usage) {
     if (loading) {
-      return <p className="px-4 text-muted-foreground text-xs">正在读取额度…</p>;
+      return <p className="px-4 pb-4 text-muted-foreground text-xs">正在读取额度…</p>;
     }
     if (failed) {
-      return <p className="px-4 text-muted-foreground text-xs">额度暂时读不到</p>;
+      return <p className="px-4 pb-4 text-muted-foreground text-xs">额度暂时读不到</p>;
     }
     return null;
   }
   if (usage.error && !(usage.windows && usage.windows.length > 0)) {
-    return <p className="px-4 text-muted-foreground text-xs">{usage.error}</p>;
+    return <p className="px-4 pb-4 text-muted-foreground text-xs">{usage.error}</p>;
   }
   return (
-    <div className="flex flex-col gap-3 px-4">
+    <div className="flex flex-col gap-3 px-4 pb-4">
       {(usage.windows ?? []).map((window) => (
         <div className="flex flex-col gap-1" key={window.kind}>
           <div className="flex items-center justify-between gap-2 text-xs">
@@ -168,6 +170,24 @@ export const AccountsPanel: FC<{
                   <CardDescription>
                     {providerLabel[account.provider] ?? account.provider}
                   </CardDescription>
+                  <CardAction>
+                    <Menu>
+                      <MenuTrigger
+                        aria-label="更多"
+                        className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+                      >
+                        <DotsThreeIcon weight="bold" />
+                      </MenuTrigger>
+                      <MenuPopup align="end">
+                        <MenuItem
+                          variant="destructive"
+                          onClick={() => setPendingDelete(account)}
+                        >
+                          删除
+                        </MenuItem>
+                      </MenuPopup>
+                    </Menu>
+                  </CardAction>
                 </CardHeader>
                 {sessionLimitProviders.has(account.provider) ? (
                   <UsageBars
@@ -176,14 +196,6 @@ export const AccountsPanel: FC<{
                     usage={usageByID.get(account.id)}
                   />
                 ) : null}
-                <CardFooter className="p-4 pt-3">
-                  <Button
-                    variant="destructive-outline"
-                    onClick={() => setPendingDelete(account)}
-                  >
-                    删除
-                  </Button>
-                </CardFooter>
               </Card>
             </li>
           ))}

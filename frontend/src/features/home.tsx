@@ -68,11 +68,13 @@ export const HomePage: FC = () => {
       </div>
       <Button variant="outline" aria-pressed={showKey} onClick={() => setShowKey(!showKey)}>{showKey ? "隐藏密钥" : "显示密钥"}</Button>
     </div>
-    {available.length === 0 ? <p className="text-sm text-muted-foreground" role="status">
-      {models.isFetching && data.status.running ? "正在读取模型…" : models.isError && data.status.running ? errorText(models.error) : "暂无可选模型。"}
-      {" 请将命令中的 <MODEL_ID> 替换为模型 ID。"}
-      {data.status.running ? <Button variant="ghost" size="sm" onClick={() => void models.refetch()}>刷新模型</Button> : null}
-    </p> : null}
+    {available.length === 0 ? <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground" role="status">
+      <p>
+        {models.isFetching && data.status.running ? "正在读取模型…" : models.isError && data.status.running ? errorText(models.error) : "暂无可选模型。"}
+        {models.isFetching && data.status.running ? "" : " 请将命令中的 <MODEL_ID> 替换为模型 ID。"}
+      </p>
+      {data.status.running && !models.isFetching ? <Button variant="ghost" size="sm" onClick={() => void models.refetch()}>刷新模型</Button> : null}
+    </div> : null}
     <p className="text-xs text-muted-foreground">复制内容包含第一把客户端密钥。模型是否支持对应 API 取决于上游。</p>
     {commands.map(({ title, command }, index) => <Card key={title} className="min-w-0 overflow-hidden">
       <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
