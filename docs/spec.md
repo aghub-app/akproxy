@@ -43,6 +43,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 
 ## System-wide constraints
 
+- 桌面壳使用 Wails v3，迁移范围与兼容要求见 `docs/prd/wails-v3.md` 和 `docs/adr/wails-v3.md`。
 - Repository agent entrypoint is root `AGENTS.md` (`CLAUDE.md` is a symlink to it).
 - Feature development workflow skill lives at `.agents/skills/feature-dev/` (also linked from `.claude/skills/`).
 - Commit attempts should re-check the working tree against this specification and relevant PRDs/ADRs before landing.

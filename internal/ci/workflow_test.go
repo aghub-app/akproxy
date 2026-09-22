@@ -18,7 +18,7 @@ func TestCommittedWorkflowPackagesDMG(t *testing.T) {
 	if !strings.HasPrefix(got.RunsOn, "macos-") {
 		t.Fatalf("runs-on = %q", got.RunsOn)
 	}
-	if !strings.Contains(got.WailsBuild, "wails build") {
+	if !strings.Contains(got.WailsBuild, "wails3 task build") {
 		t.Fatalf("build = %q", got.WailsBuild)
 	}
 	if !strings.HasSuffix(got.DMGPath, ".dmg") {
@@ -37,7 +37,7 @@ func TestCommittedWorkflowPackagesDMG(t *testing.T) {
 	}
 	for _, needle := range []string{
 		got.RunsOn,
-		"wails build",
+		"wails3 task build",
 		"actions/upload-artifact",
 		got.DMGPath,
 		"go-version-file: go.mod",
@@ -81,10 +81,10 @@ func TestInspectRejectsIncompleteWorkflows(t *testing.T) {
 			want:     "no macos-* runner",
 		},
 		{
-			name:     "no wails build",
+			name:     "no wails3 task build",
 			workflow: workflowYAML("macos-latest", false, true, "build/bin/akproxy.dmg", "error"),
 			script:   script,
-			want:     "missing wails build",
+			want:     "missing wails3 task build",
 		},
 		{
 			name:     "dmg only in a comment",
@@ -146,7 +146,7 @@ func TestInspectAcceptsFixtureThatCreatesAndUploadsDMG(t *testing.T) {
 	if got.RunsOn != "macos-14" || got.DMGPath != "build/bin/akproxy.dmg" || got.UploadPath != got.DMGPath {
 		t.Fatalf("%+v", got)
 	}
-	if !strings.Contains(got.WailsBuild, "wails build") {
+	if !strings.Contains(got.WailsBuild, "wails3 task build") {
 		t.Fatalf("build = %q", got.WailsBuild)
 	}
 	if !strings.HasPrefix(got.UploadUses, "actions/upload-artifact@") {
@@ -167,7 +167,7 @@ func workflowYAML(runsOn string, withBuild, withUpload bool, uploadPath, ifNoFil
 	b.WriteString("      - uses: actions/setup-go@v7.0.0\n        with:\n          go-version-file: go.mod\n")
 	b.WriteString("      - run: go install " + wailsModule + "\n")
 	if withBuild {
-		b.WriteString("      - run: wails build\n")
+		b.WriteString("      - run: wails3 task build\n")
 	}
 	b.WriteString("      - run: bash scripts/package-dmg.sh build/bin/akproxy.dmg\n")
 	b.WriteString("      # hdiutil create ignored.dmg\n")

@@ -1,3 +1,6 @@
+import * as app from "../../bindings/akproxy/app";
+import type { ServiceSettings as WireServiceSettings } from "../../bindings/akproxy/internal/desktop/models";
+
 export type ServiceSettings = {
   listenMode: "local" | "all" | "custom";
   customHost: string;
@@ -27,7 +30,7 @@ export type Account = {
 };
 
 export type UsageWindow = {
-  kind: "5h" | "weekly" | "weekly_opus" | "weekly_sonnet";
+  kind: string;
   used: number;
   resetsAt: string;
 };
@@ -48,30 +51,6 @@ export type Status = {
   error: string;
 };
 
-type DesktopApp = {
-  Status(): Promise<Status>;
-  ServiceSettings(): Promise<ServiceSettings>;
-  SaveService(input: ServiceSettings): Promise<void>;
-  OpenAIProviders(): Promise<OpenAIDraft[] | null>;
-  SaveOpenAI(drafts: OpenAIDraft[]): Promise<void>;
-  Start(): Promise<void>;
-  Stop(): Promise<void>;
-  Restart(): Promise<void>;
-  Login(provider: string): Promise<void>;
-  CancelLogin(): Promise<void>;
-  Accounts(page: string): Promise<Account[] | null>;
-  AccountUsage(page: string): Promise<AccountUsage[] | null>;
-  DeleteAccount(id: string): Promise<void>;
-};
-
-function desktop(): DesktopApp {
-  const app = window.go?.main?.App;
-  if (!app) {
-    throw new Error("桌面接口还没有准备好");
-  }
-  return app;
-}
-
 export function errorText(error: unknown): string {
   if (error instanceof Error && error.message) {
     return error.message;
@@ -83,39 +62,36 @@ export function errorText(error: unknown): string {
 }
 
 export const api = {
-  status: () => desktop().Status(),
-  service: async () => normalizeService(await desktop().ServiceSettings()),
-  saveService: (input: ServiceSettings) => desktop().SaveService(input),
-  openai: async () => (await desktop().OpenAIProviders()) ?? [],
-  saveOpenAI: (drafts: OpenAIDraft[]) => desktop().SaveOpenAI(drafts),
-  start: () => desktop().Start(),
-  stop: () => desktop().Stop(),
-  restart: () => desktop().Restart(),
-  login: (provider: string) => desktop().Login(provider),
-  cancelLogin: () => desktop().CancelLogin(),
-  accounts: async (page: string) => (await desktop().Accounts(page)) ?? [],
-  accountUsage: async (page: string) => (await desktop().AccountUsage(page)) ?? [],
-  deleteAccount: (id: string) => desktop().DeleteAccount(id),
+  status: async (): Promise<Status> => {
+    const status = await app.Status();
+    if (status.action !== "start" && status.action !== "stop" && status.action !== "restart") {
+      throw new Error("服务返回了未知的控制动作");
+    }
+    return { ...status, action: status.action };
+  },
+  service: async () => normalizeService(await app.ServiceSettings()),
+  saveService: (input: ServiceSettings) => app.SaveService(input),
+  openai: async (): Promise<OpenAIDraft[]> => ((await app.OpenAIProviders()) ?? []).map(
+    (row) => ({ ...row, apiKeys: row.apiKeys ?? [], models: row.models ?? [] }),
+  ),
+  saveOpenAI: (drafts: OpenAIDraft[]) => app.SaveOpenAI(drafts),
+  start: () => app.Start(),
+  stop: () => app.Stop(),
+  restart: () => app.Restart(),
+  login: (provider: string) => app.Login(provider),
+  cancelLogin: () => app.CancelLogin(),
+  accounts: async (page: string) => (await app.Accounts(page)) ?? [],
+  accountUsage: async (page: string) => (await app.AccountUsage(page)) ?? [],
+  deleteAccount: (id: string) => app.DeleteAccount(id),
 };
 
-function normalizeService(input: ServiceSettings): ServiceSettings {
+function normalizeService(input: WireServiceSettings): ServiceSettings {
   return {
     ...input,
-    listenMode: input.listenMode || "local",
+    listenMode: input.listenMode === "all" || input.listenMode === "custom" ? input.listenMode : "local",
     customHost: input.customHost ?? "",
     clientApiKeys: input.clientApiKeys ?? [],
     proxyUrl: input.proxyUrl ?? "",
     routingStrategy: input.routingStrategy || "round-robin",
   };
-}
-
-declare global {
-  interface Window {
-    go?: {
-      main?: {
-        App?: DesktopApp;
-      };
-    };
-    runtime?: unknown;
-  }
 }

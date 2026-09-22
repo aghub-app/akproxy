@@ -5,12 +5,11 @@ import (
 
 	"akproxy/internal/desktop"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // App is the Wails binding surface. It delegates to the desktop runtime.
 type App struct {
-	ctx     context.Context
 	desktop *desktop.Runtime
 }
 
@@ -19,22 +18,22 @@ func NewApp() *App {
 	return &App{}
 }
 
-func (a *App) startup(ctx context.Context) {
-	a.ctx = ctx
+func (a *App) ServiceStartup(_ context.Context, _ application.ServiceOptions) error {
 	service, err := desktop.NewRuntime(func(event string, data any) {
-		runtime.EventsEmit(ctx, event, data)
+		application.Get().Event.Emit(event, data)
 	})
 	if err != nil {
-		runtime.EventsEmit(ctx, "server:status", desktop.Status{Error: err.Error()})
-		return
+		return err
 	}
 	a.desktop = service
+	return nil
 }
 
-func (a *App) shutdown(ctx context.Context) {
+func (a *App) ServiceShutdown() error {
 	if a.desktop != nil {
 		a.desktop.Shutdown()
 	}
+	return nil
 }
 
 func (a *App) ready() error {

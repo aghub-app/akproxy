@@ -2,38 +2,35 @@ package main
 
 import (
 	"embed"
+	"log"
 
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
-	// Create an instance of the app structure
-	app := NewApp()
-
-	// Create application with options
-	err := wails.Run(&options.App{
-		Title:     "akproxy",
-		Width:     1120,
-		Height:    760,
-		MinWidth:  880,
-		MinHeight: 640,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
-		},
-		BackgroundColour: &options.RGBA{R: 250, G: 250, B: 249, A: 1},
-		OnStartup:        app.startup,
-		OnShutdown:       app.shutdown,
-		Bind: []interface{}{
-			app,
-		},
+	service := NewApp()
+	app := application.New(application.Options{
+		Name:     "akproxy",
+		Services: []application.Service{application.NewService(service)},
+		Assets:   application.AssetOptions{Handler: application.AssetFileServerFS(assets)},
+		Mac:      application.MacOptions{ApplicationShouldTerminateAfterLastWindowClosed: true},
 	})
-
-	if err != nil {
-		println("Error:", err.Error())
+	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+		Name:             "main",
+		Title:            "akproxy",
+		Width:            1120,
+		Height:           760,
+		MinWidth:         880,
+		MinHeight:        640,
+		BackgroundColour: application.NewRGB(250, 250, 249),
+		URL:              "/",
+	})
+	window.OnWindowEvent(events.Common.WindowClosing, func(_ *application.WindowEvent) { app.Quit() })
+	if err := app.Run(); err != nil {
+		log.Fatal(err)
 	}
 }

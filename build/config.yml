@@ -1,0 +1,18 @@
+version: '3'
+
+dev_mode:
+  root_path: .
+  log_level: warn
+  debounce: 1000
+  ignore:
+    dir: [.git, node_modules, frontend, build/bin]
+    file: [.DS_Store, '*_test.go']
+    watched_extension: ['*.go']
+    git_ignore: true
+  executes:
+    - cmd: wails3 task build DEV=true
+      type: blocking
+    - cmd: pnpm --dir frontend run dev
+      type: background
+    - cmd: wails3 task run
+      type: primary

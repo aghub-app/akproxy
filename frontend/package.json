@@ -15,6 +15,7 @@
     "@lobehub/icons": "^5.19.0",
     "@phosphor-icons/react": "^2.1.10",
     "@tanstack/react-query": "^5.90.2",
+    "@wailsio/runtime": "3.0.0-beta.24",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cn": "^0.3.0",

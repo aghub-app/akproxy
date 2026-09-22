@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const wailsModule = "github.com/wailsapp/wails/v2/cmd/wails@v2.12.0"
+const wailsModule = "github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.24"
 
 // Report is the macOS job that builds this repo with wails and uploads a DMG.
 type Report struct {
@@ -143,9 +143,9 @@ func inspectJob(repoRoot, file, name, runsOn string, job workflowJob) (Report, [
 		problems = append(problems, "missing go install "+wailsModule)
 	}
 
-	build, ok := commandText(job, "wails build")
+	build, ok := commandText(job, "wails3 task build")
 	if !ok {
-		problems = append(problems, "missing wails build")
+		problems = append(problems, "missing wails3 task build")
 	} else {
 		report.WailsBuild = build
 	}

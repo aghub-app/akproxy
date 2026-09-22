@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { ToastProvider } from "@/components/ui/toast";
 import { api } from "@/lib/desktop";
 import { playInteractionSound } from "@/lib/ui-sounds";
-import { EventsOff, EventsOn } from "../wailsjs/runtime/runtime";
+import { Events } from "@wailsio/runtime";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(
@@ -26,19 +26,16 @@ export function Providers({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!window.runtime) {
-      return;
-    }
-    EventsOn("server:status", (status) => {
-      client.setQueryData(["status"], status);
+    const offStatus = Events.On("server:status", (event) => {
+      client.setQueryData(["status"], event.data);
     });
-    EventsOn("login:done", () => {
+    const offLogin = Events.On("login:done", () => {
       void client.invalidateQueries({ queryKey: ["accounts"] });
     });
     void api.status().then((status) => client.setQueryData(["status"], status));
     return () => {
-      EventsOff("server:status");
-      EventsOff("login:done");
+      offStatus();
+      offLogin();
     };
   }, [client]);
 

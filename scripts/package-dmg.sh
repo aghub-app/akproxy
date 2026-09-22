@@ -18,7 +18,7 @@ if [[ "$dmg" != /* ]]; then
 fi
 
 if [[ ! -d "$app" ]]; then
-  echo "missing $app (run wails build first)" >&2
+  echo "missing $app (run wails3 task build first)" >&2
   exit 1
 fi
 if [[ ! -f "$app/Contents/MacOS/akproxy" ]]; then

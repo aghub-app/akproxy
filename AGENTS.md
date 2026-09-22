@@ -28,14 +28,15 @@ Before any commit, review staged, unstaged, and untracked changes against `docs/
 
 # Commands
 
-- `wails dev` — run the desktop shell with the Vite renderer.
-- `wails build` — package the desktop app.
+- `wails3 task dev` — run the desktop shell with the Vite renderer.
+- `wails3 task build` — build the renderer and desktop app (macOS `.app` included).
+- `wails3 task package` — build and package the macOS DMG.
 - `go test ./internal/desktop/` — run config and listen-button tests.
 - `pnpm --dir frontend run build` — typecheck and build the renderer.
 
-Wails removes `CC` before it generates bindings, then compiles with whatever `clang` Go resolves. Homebrew LLVM's `clang` is first on `PATH` here and cannot see the macOS SDK headers. The user Go env therefore sets `CC=/usr/bin/clang` and `CXX=/usr/bin/clang++` (`go env -w`). Prefixing `CC=` on the `wails` command does not affect that step.
+Wails Go module and CLI are pinned to `v3.0.0-beta.24`; the frontend runtime is `3.0.0-beta.24`. Install the CLI with `go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.24`. On this Mac use Apple's compiler (`CC=/usr/bin/clang`, `CXX=/usr/bin/clang++`) so Go can find SDK headers.
 
-Frontend install and scripts use pnpm. `wails.json` calls pnpm for install, dev, and build. Product behavior is specified in `docs/prd/local-proxy.md`.
+Frontend install and scripts use pnpm. `Taskfile.yml` and `build/config.yml` define build and development commands. Generate TypeScript bindings with `wails3 task bindings`. Product behavior is specified in `docs/prd/local-proxy.md`.
 
 # Code style
 
