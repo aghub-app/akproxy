@@ -21,7 +21,9 @@
 
 `security find-identity -v -p codesigning` 可查看证书指纹；必须和新 `.cer` 的指纹核对，不能只凭相同的 Developer ID 名称选择。p12 可用 `base64 -i /绝对路径/akproxy-developer-id.p12 | tr -d '\n' | gh secret set AKPROXY_CERTIFICATE_BASE64 --repo aghub-app/akproxy` 直接送入指定仓库，不打印内容。其他 secret 使用 `gh secret set NAME --repo aghub-app/akproxy` 的交互输入，不把密码放进命令行历史。
 
-CI 将这组材料导入一次性钥匙串，显式按指纹签名，结束时删除钥匙串和临时 p12。缺少材料、签名或公证失败都会阻止草稿 Release。
+CI 将这组材料及 Apple 官方 Developer ID 中间证书导入一次性钥匙串，并临时加入用户钥匙串搜索列表以构建证书链。通用包编译前检查指定指纹是否为有效签名身份；结束时恢复原搜索列表，删除临时钥匙串、p12 和中间证书。缺少材料、签名或公证失败都会阻止草稿 Release。
+
+仅传 `codesign --keychain` 不会把该钥匙串加入证书链搜索列表。相关流程见 [GitHub 签名指南](https://docs.github.com/en/actions/how-tos/deploy/deploy-to-third-party-platforms/sign-xcode-applications)；公开中间证书来源为 [Apple PKI](https://www.apple.com/certificateauthority/)，不修改系统信任设置。
 
 参考：[Apple CSR 流程](https://developer.apple.com/help/account/certificates/create-a-certificate-signing-request/)、[Developer ID 证书流程与数量限制](https://developer.apple.com/help/account/certificates/create-developer-id-certificates/)。
 
