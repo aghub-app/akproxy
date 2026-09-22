@@ -2,6 +2,16 @@ function quote(value: string): string {
   return "'" + value.replaceAll("'", "'\"'\"'") + "'";
 }
 
+function dotenvValue(value: string): string {
+  const escaped = value.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("\n", "\\n").replaceAll("\r", "\\r");
+  return `"${escaped}"`;
+}
+
+export function openaiEnv(address: string, key: string): string {
+  const base = address.replace(/\/$/, "") + "/v1";
+  return `OPENAI_API_KEY=${dotenvValue(key)}\nOPENAI_BASE_URL=${dotenvValue(base)}`;
+}
+
 export function curlCommands(address: string, key: string, model: string) {
   const base = address.replace(/\/$/, "");
   const header = `  -H ${quote(`Authorization: Bearer ${key}`)}`;
