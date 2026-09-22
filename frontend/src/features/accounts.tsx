@@ -1,6 +1,6 @@
 import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type FC, useState } from "react";
+import { type FC, type ReactNode, useState } from "react";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -15,6 +15,7 @@ import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "@/comp
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@/components/ui/menu";
 import { Progress, ProgressIndicator, ProgressTrack } from "@/components/ui/progress";
 import { toastManager } from "@/components/ui/toast";
+import { ProviderEmpty } from "@/features/provider-empty";
 import { api, errorText, type Account, type AccountUsage, type UsageWindow } from "@/lib/desktop";
 
 const windowLabel: Record<UsageWindow["kind"], string> = {
@@ -93,7 +94,8 @@ const providerLabel: Record<string, string> = {
 export const AccountsPanel: FC<{
   page: string;
   logins: { id: string; label: string }[];
-}> = ({ page, logins }) => {
+  filledExtra?: ReactNode;
+}> = ({ page, logins, filledExtra }) => {
   const client = useQueryClient();
   const [pendingDelete, setPendingDelete] = useState<Account | null>(null);
   const [loggingIn, setLoggingIn] = useState<string | null>(null);
@@ -136,31 +138,46 @@ export const AccountsPanel: FC<{
     },
   });
 
+  const actions = (
+    <>
+      {logins.map((item) => (
+        <Button
+          key={item.id}
+          loading={loggingIn === item.id}
+          disabled={loggingIn !== null && loggingIn !== item.id}
+          onClick={() => void login(item.id)}
+        >
+          {item.label}
+        </Button>
+      ))}
+      {loggingIn ? (
+        <Button variant="outline" onClick={() => void api.cancelLogin()}>
+          取消登录
+        </Button>
+      ) : null}
+    </>
+  );
+
+  if (accounts.isError && !accounts.data) {
+    return (
+      <div role="alert" className="flex flex-col items-start gap-3">
+        <p>{errorText(accounts.error)}</p>
+        <Button variant="outline" onClick={() => void accounts.refetch()}>重试</Button>
+      </div>
+    );
+  }
+  if (!accounts.data) {
+    return <p className="text-muted-foreground text-sm">正在读取账号…</p>;
+  }
+  if (accounts.data.length === 0) {
+    return <ProviderEmpty page={page}>{actions}</ProviderEmpty>;
+  }
+
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-2">
-        {logins.map((item) => (
-          <Button
-            key={item.id}
-            loading={loggingIn === item.id}
-            disabled={loggingIn !== null && loggingIn !== item.id}
-            onClick={() => void login(item.id)}
-          >
-            {item.label}
-          </Button>
-        ))}
-        {loggingIn ? (
-          <Button variant="outline" onClick={() => void api.cancelLogin()}>
-            取消登录
-          </Button>
-        ) : null}
-      </div>
-      {accounts.data && accounts.data.length === 0 ? (
-        <p className="text-muted-foreground text-sm">还没有浏览器登录的账号。</p>
-      ) : null}
-      {accounts.data && accounts.data.length > 0 ? (
-        <ul className="grid grid-cols-2 gap-3">
-          {accounts.data.map((account) => (
+      <div className="flex flex-wrap gap-2">{actions}</div>
+      <ul className="grid grid-cols-2 gap-3">
+        {accounts.data.map((account) => (
             <li className="min-w-0" key={account.id}>
               <Card className="h-full">
                 <CardHeader className="p-4">
@@ -200,7 +217,7 @@ export const AccountsPanel: FC<{
             </li>
           ))}
         </ul>
-      ) : null}
+      {filledExtra}
       <AlertDialog
         open={pendingDelete !== null}
         onOpenChange={(open) => {

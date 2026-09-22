@@ -121,8 +121,8 @@ export const AppLayout: FC = () => {
           })}
         </nav>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <ScrollArea className="h-full">
-            <div className="mx-auto flex w-full max-w-3xl flex-col px-6 py-6">
+          <ScrollArea className="h-full" stretch>
+            <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 py-6">
               <Outlet />
             </div>
           </ScrollArea>

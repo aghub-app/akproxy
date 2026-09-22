@@ -10,6 +10,7 @@ export function ScrollArea({
   scrollFade = false,
   scrollbarGutter = false,
   fill = false,
+  stretch = false,
   clampContentMinWidth = true,
   overscrollContain = false,
   ...props
@@ -17,6 +18,7 @@ export function ScrollArea({
   scrollFade?: boolean;
   scrollbarGutter?: boolean;
   fill?: boolean;
+  stretch?: boolean;
   clampContentMinWidth?: boolean;
   overscrollContain?: boolean;
 }): React.ReactElement {
@@ -38,7 +40,10 @@ export function ScrollArea({
         data-slot="scroll-area-viewport"
       >
         <ScrollAreaPrimitive.Content
-          className={cn(fill && "size-full")}
+          className={cn(
+            fill && "size-full",
+            stretch && "flex min-h-full w-full flex-col",
+          )}
           data-slot="scroll-area-content"
           style={clampContentMinWidth ? { minWidth: 0 } : undefined}
         >

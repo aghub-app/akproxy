@@ -41,6 +41,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 写入不得删除该页不编辑的已有配置。Codex、Grok、Claude、Gemini、Kimi、Devin 没有上游 API key 表单。名称为 `kimi` 或 `kimi-ai` 的 OpenAI 兼容项只存在于配置文件；写入「自定义 OpenAI」不得删除它们。
 - 监听配置只在启动或重启成功后成为已绑定监听。其他已写入配置在服务运行中热重载。
 - 浏览器登录写入应用自己的账号目录。界面不展示令牌。
+- 没有已登录账号的 Codex、Grok、Claude、Gemini、Kimi、Devin 页，以及没有自定义上游的「自定义 OpenAI」页，在内容区中央显示该页图标、名称和添加操作。读取失败时不显示成空列表。
 - Codex 和 Claude 账号卡片显示该账号的厂商会话额度百分比。额度读取失败只影响这一张卡片。其他平台不显示额度。
 - 应用进程结束时，服务不再监听。
 

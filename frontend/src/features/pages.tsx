@@ -24,6 +24,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { toastManager } from "@/components/ui/toast";
 import { AccountsPanel } from "@/features/accounts";
 import { OpenAIDraftCard } from "@/features/editors";
+import { ProviderEmpty } from "@/features/provider-empty";
 import { beginManualUpdateCheck, finishManualUpdateCheck } from "@/features/update-dialog";
 import { api, errorText, type OpenAIDraft, type ServiceSettings } from "@/lib/desktop";
 
@@ -385,6 +386,14 @@ function completeOpenAI(row: OpenAIDraft) {
 
 export const OpenAIPage: FC = () => {
   const query = useQuery({ queryKey: ["openai"], queryFn: api.openai });
+  if (query.isError && !query.data) {
+    return (
+      <div role="alert" className="flex flex-col items-start gap-3">
+        <p>{errorText(query.error)}</p>
+        <Button variant="outline" onClick={() => void query.refetch()}>重试</Button>
+      </div>
+    );
+  }
   if (!query.data) {
     return <p className="text-muted-foreground text-sm">正在读取自定义上游…</p>;
   }
@@ -449,6 +458,16 @@ const OpenAIForm: FC<{ initial: OpenAIDraft[] }> = ({ initial }) => {
     setRows(next);
     persist(next, immediate);
   }
+  function addRow() {
+    edit([...latest.current, { name: "", baseUrl: "", apiKeys: [], models: [{ name: "", alias: "" }] }]);
+  }
+  if (rows.length === 0) {
+    return (
+      <ProviderEmpty page="openai">
+        <Button onClick={addRow}>添加上游</Button>
+      </ProviderEmpty>
+    );
+  }
   return (
     <div className="flex flex-col gap-4">
       {rows.map((row, index) => (
@@ -461,13 +480,7 @@ const OpenAIForm: FC<{ initial: OpenAIDraft[] }> = ({ initial }) => {
           onRemove={() => edit(latest.current.filter((_, itemIndex) => itemIndex !== index), true)}
         />
       ))}
-      <Button
-        variant="outline"
-        className="self-start"
-        onClick={() =>
-          edit([...latest.current, { name: "", baseUrl: "", apiKeys: [], models: [{ name: "", alias: "" }] }])
-        }
-      >
+      <Button variant="outline" className="self-start" onClick={addRow}>
         添加上游
       </Button>
     </div>
@@ -476,9 +489,10 @@ const OpenAIForm: FC<{ initial: OpenAIDraft[] }> = ({ initial }) => {
 
 export const DevinPage: FC = () => {
   return (
-    <div className="flex flex-col gap-4">
-      <AccountsPanel page="devin" logins={[{ id: "devin", label: "添加 Devin 账号" }]} />
-      <p className="text-muted-foreground text-sm">登录会直接写入账号目录。</p>
-    </div>
+    <AccountsPanel
+      page="devin"
+      logins={[{ id: "devin", label: "添加 Devin 账号" }]}
+      filledExtra={<p className="text-muted-foreground text-sm">登录会直接写入账号目录。</p>}
+    />
   );
 };
