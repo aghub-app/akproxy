@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowSquareOutIcon, GithubLogoIcon } from "@phosphor-icons/react";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
@@ -30,6 +30,12 @@ const presetLabels = Object.fromEntries(intervalPresets.map((item) => [item.valu
 function notifyError(error: unknown) {
   toastManager.add({ title: errorText(error), type: "error" });
 }
+
+const GithubMark: FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+  </svg>
+);
 
 export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
   const client = useQueryClient();
@@ -62,14 +68,17 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
       <div className="flex items-center gap-4">
         <img src={appIcon} alt="akproxy 图标" className="size-16" />
         <div className="flex flex-col gap-1">
-          <span className="text-lg font-medium">akproxy</span>
+          <span className="text-lg font-medium">
+            akproxy
+            {version ? <span className="text-muted-foreground ml-2 text-sm font-normal">{version}</span> : null}
+          </span>
           <span className="text-muted-foreground text-sm">{current.platform}</span>
         </div>
       </div>
       <div className="flex flex-col gap-5">
         <PrefSwitch
           label="自动更新"
-          description={version ? `当前 ${version}。自动检查发现新版本后直接下载，下载完成再询问是否重启。关闭时只提示，不下载。` : "自动检查发现新版本后直接下载，下载完成再询问是否重启。关闭时只提示，不下载。"}
+          description="自动检查发现新版本后直接下载，下载完成再询问是否重启。关闭时只提示，不下载。"
           checked={current.prefs.autoUpdate}
           onChange={(autoUpdate) =>
             save.mutate({ ...current.prefs, autoUpdate })
@@ -113,7 +122,7 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
           target="_blank"
           rel="noreferrer"
         >
-          <GithubLogoIcon size={16} />
+          <GithubMark size={16} />
           github.com/aghub-app/akproxy
           <ArrowSquareOutIcon size={14} />
         </a>
