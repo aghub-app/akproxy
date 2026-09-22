@@ -9,7 +9,7 @@ Wails v3 迁移已独立提交，见 `wails-v3.md`。现有 CI 仅将 DMG 上传
 ## 决定
 
 - 延续固定版本 Wails v3.0.0-beta.24，保留 React/coss UI 和进程内代理 SDK。
-- 使用官方 `app.Updater`、GitHub provider、默认窗口及 helper 替换/重启机制，不自行实现下载器或二进制替换。
+- 使用官方 `app.Updater`、GitHub provider、默认窗口及 helper 替换/重启机制，不自行实现下载器或二进制替换。检查来源的限频降级扩展见 `updater-fallback.md`；该扩展只包住 provider 的 Check 与 Download 入口，替换、重启和窗口机制仍是官方实现。
 - GitHub Release 是更新来源；客户端不携带 GitHub 凭据。版本在构建时由 tag 注入。
 - 更新资产按平台/架构精确匹配。要求 SHA256SUMS 中有匹配项，不接受缺失校验元数据的资产。SHA-256 证明下载完整性，信任边界仍是 HTTPS 和仓库发布权限；它不等同于独立发布签名。
 - macOS 更新 ZIP 包含 arm64/amd64 通用的完整签名、公证并 stapled 的 `.app`；DMG 用于首次安装。Windows ZIP、Linux tar.gz 包含 amd64 可执行文件。

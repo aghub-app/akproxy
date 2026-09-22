@@ -20,13 +20,14 @@ func configureUpdates(app *application.App) error {
 	if err != nil {
 		return err
 	}
+	provider := updates.NewFallbackProvider(p)
 	interval := time.Duration(0)
 	if version != "dev" {
 		interval = 24 * time.Hour
 	}
 	if err := app.Updater.Init(updater.Config{
 		CurrentVersion: version,
-		Providers:      []updater.Provider{p},
+		Providers:      []updater.Provider{provider},
 		CheckInterval:  interval,
 		// The built-in window opens as soon as a check starts, including the
 		// startup check and the up-to-date result. The app window shows a dialog
