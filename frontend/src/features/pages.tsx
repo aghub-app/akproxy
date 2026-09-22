@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FC, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Frame } from "@/components/ui/frame";
@@ -56,10 +56,22 @@ function canPersistService(next: ServiceSettings) {
 
 export const ServicePage: FC = () => {
   const query = useQuery({ queryKey: ["service"], queryFn: api.service });
+  const version = useQuery({ queryKey: ["version"], queryFn: api.version });
+  const update = useMutation({ mutationFn: api.checkUpdates, onError: notifyError });
   if (!query.data) {
     return <p className="text-muted-foreground text-sm">正在读取设置…</p>;
   }
-  return <ServiceForm key={JSON.stringify(query.data)} initial={query.data} />;
+  return (
+    <div className="flex flex-col gap-6">
+      <ServiceForm key={JSON.stringify(query.data)} initial={query.data} />
+      <div className="flex items-center justify-between border-t pt-4">
+        <span className="text-sm text-muted-foreground">akproxy {version.data}</span>
+        <Button variant="outline" loading={update.isPending} onClick={() => update.mutate()}>
+          检查更新
+        </Button>
+      </div>
+    </div>
+  );
 };
 
 function maskClientKey(key: string): string {

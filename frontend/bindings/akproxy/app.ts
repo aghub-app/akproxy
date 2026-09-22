@@ -35,6 +35,10 @@ export function CancelLogin(): $CancellablePromise<void> {
     return $Call.ByID(4242839088);
 }
 
+export function CheckUpdates(): $CancellablePromise<void> {
+    return $Call.ByID(2263355335);
+}
+
 /**
  * DeleteAccount removes one browser-login file.
  */
@@ -131,4 +135,8 @@ export function Status(): $CancellablePromise<desktop$0.Status> {
  */
 export function Stop(): $CancellablePromise<void> {
     return $Call.ByID(4158193117);
+}
+
+export function Version(): $CancellablePromise<string> {
+    return $Call.ByID(2431199839);
 }

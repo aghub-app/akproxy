@@ -10,6 +10,7 @@ import (
 
 // App is the Wails binding surface. It delegates to the desktop runtime.
 type App struct {
+	ctx     context.Context
 	desktop *desktop.Runtime
 }
 
@@ -18,7 +19,8 @@ func NewApp() *App {
 	return &App{}
 }
 
-func (a *App) ServiceStartup(_ context.Context, _ application.ServiceOptions) error {
+func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
+	a.ctx = ctx
 	service, err := desktop.NewRuntime(func(event string, data any) {
 		application.Get().Event.Emit(event, data)
 	})

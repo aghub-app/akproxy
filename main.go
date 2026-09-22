@@ -19,6 +19,9 @@ func main() {
 		Assets:   application.AssetOptions{Handler: application.AssetFileServerFS(assets)},
 		Mac:      application.MacOptions{ApplicationShouldTerminateAfterLastWindowClosed: true},
 	})
+	if err := configureUpdates(app); err != nil {
+		log.Fatal(err)
+	}
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Name:             "main",
 		Title:            "akproxy",
@@ -30,6 +33,15 @@ func main() {
 		URL:              "/",
 	})
 	window.OnWindowEvent(events.Common.WindowClosing, func(_ *application.WindowEvent) { app.Quit() })
+	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(_ *application.ApplicationEvent) {
+		if version != "dev" {
+			go func() {
+				if err := service.CheckUpdates(); err != nil {
+					app.Logger.Error("检查更新失败", "error", err)
+				}
+			}()
+		}
+	})
 	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}

@@ -83,6 +83,8 @@ export const api = {
   accounts: async (page: string) => (await app.Accounts(page)) ?? [],
   accountUsage: async (page: string) => (await app.AccountUsage(page)) ?? [],
   deleteAccount: (id: string) => app.DeleteAccount(id),
+  version: () => app.Version(),
+  checkUpdates: () => app.CheckUpdates(),
 };
 
 function normalizeService(input: WireServiceSettings): ServiceSettings {

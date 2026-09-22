@@ -2,6 +2,7 @@ version: '3'
 
 vars:
   BIN: 'build/bin/akproxy{{if eq OS "windows"}}.exe{{end}}'
+  VERSION: '{{.VERSION | default "dev"}}'
 
 tasks:
   bindings:
@@ -21,8 +22,8 @@ tasks:
       CGO_CFLAGS: '{{if eq OS "darwin"}}-mmacosx-version-min=12.0{{else}}{{.CGO_CFLAGS}}{{end}}'
       CGO_LDFLAGS: '{{if eq OS "darwin"}}-mmacosx-version-min=12.0{{else}}{{.CGO_LDFLAGS}}{{end}}'
     cmds:
-      - go build -tags '{{if eq .DEV "true"}}dev{{else}}production{{end}}' -ldflags '{{if ne .DEV "true"}}-s -w {{end}}{{if eq OS "windows"}}-H windowsgui{{end}}' -o '{{.BIN}}' .
-      - cmd: bash scripts/package-app.sh
+      - go build -tags '{{if eq .DEV "true"}}dev{{else}}production{{end}}' -ldflags '{{if ne .DEV "true"}}-s -w {{end}}-X main.version={{.VERSION}} {{if eq OS "windows"}}-H windowsgui{{end}}' -o '{{.BIN}}' .
+      - cmd: bash scripts/package-app.sh '{{.VERSION}}'
         platforms: [darwin]
 
   package:

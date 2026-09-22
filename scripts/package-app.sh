@@ -9,4 +9,8 @@ wails3 generate icons -input build/appicon.png -macfilename build/bin/iconfile.i
 cp build/bin/akproxy "$app/Contents/MacOS/akproxy"
 cp build/bin/iconfile.icns "$app/Contents/Resources/iconfile.icns"
 cp build/darwin/Info.plist "$app/Contents/Info.plist"
+if [[ "${1:-dev}" != dev ]]; then
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $1" "$app/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $1" "$app/Contents/Info.plist"
+fi
 codesign --force --sign - "$app"

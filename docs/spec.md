@@ -43,6 +43,16 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 
 ## System-wide constraints
 
+### 应用更新
+
+- 正式版本在启动及持续运行每 24 小时检查正式更新，忽略预发布和草稿，设置页提供手动入口及当前版本；开发版本不更新自身。
+- 采用 Wails 默认窗口及流程：自动下载校验，用户点击重启后安装，代理不自动恢复。
+- 更新不得改变配置和账号。校验信息缺失或不匹配时禁止安装。
+- tag 构建生成草稿 Release，维护者手动发布后才向客户端提供更新。
+- macOS 使用 akproxy 独立的证书、私钥和公证凭据。产品及架构见 `docs/prd/app-updates.md`、`docs/adr/wails-updater.md`。
+
+### 工程约束
+
 - 桌面壳使用 Wails v3，迁移范围与兼容要求见 `docs/prd/wails-v3.md` 和 `docs/adr/wails-v3.md`。
 - Repository agent entrypoint is root `AGENTS.md` (`CLAUDE.md` is a symlink to it).
 - Feature development workflow skill lives at `.agents/skills/feature-dev/` (also linked from `.claude/skills/`).
