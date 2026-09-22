@@ -25,6 +25,7 @@ type Report struct {
 }
 
 type workflowFile struct {
+	On   any                    `yaml:"on"`
 	Jobs map[string]workflowJob `yaml:"jobs"`
 }
 
@@ -113,6 +114,7 @@ func inspectFile(repoRoot, file string) (Report, []string, bool, error) {
 		if err != nil {
 			return Report{}, nil, true, err
 		}
+		problems = append(problems, tagPushProblems(doc.On)...)
 		if len(problems) == 0 {
 			return report, nil, true, nil
 		}
@@ -175,6 +177,80 @@ func inspectJob(repoRoot, file, name, runsOn string, job workflowJob) (Report, [
 		}
 	}
 	return report, problems, nil
+}
+
+func tagPushProblems(trigger any) []string {
+	const problem = "packaging must run only on tag pushes"
+	events, ok := triggerEvents(trigger)
+	if !ok || len(events) != 1 || events[0].name != "push" {
+		return []string{problem}
+	}
+	filters, ok := events[0].value.(map[string]any)
+	if !ok {
+		return []string{problem}
+	}
+	if _, found := filters["branches"]; found {
+		return []string{problem}
+	}
+	if _, found := filters["branches-ignore"]; found {
+		return []string{problem}
+	}
+	if len(stringList(filters["tags"])) == 0 {
+		return []string{problem}
+	}
+	return nil
+}
+
+type triggerEvent struct {
+	name  string
+	value any
+}
+
+func triggerEvents(trigger any) ([]triggerEvent, bool) {
+	switch typed := trigger.(type) {
+	case string:
+		return []triggerEvent{{name: typed}}, true
+	case []any:
+		events := make([]triggerEvent, 0, len(typed))
+		for _, item := range typed {
+			name, ok := item.(string)
+			if !ok {
+				return nil, false
+			}
+			events = append(events, triggerEvent{name: name})
+		}
+		return events, true
+	case map[string]any:
+		events := make([]triggerEvent, 0, len(typed))
+		for name, value := range typed {
+			events = append(events, triggerEvent{name: name, value: value})
+		}
+		return events, true
+	default:
+		return nil, false
+	}
+}
+
+func stringList(value any) []string {
+	switch typed := value.(type) {
+	case string:
+		if typed == "" {
+			return nil
+		}
+		return []string{typed}
+	case []any:
+		out := make([]string, 0, len(typed))
+		for _, item := range typed {
+			text, ok := item.(string)
+			if !ok || text == "" {
+				return nil
+			}
+			out = append(out, text)
+		}
+		return out
+	default:
+		return nil
+	}
 }
 
 func runsOnValues(value any) []string {

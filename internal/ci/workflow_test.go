@@ -44,10 +44,14 @@ func TestCommittedWorkflowPackagesDMG(t *testing.T) {
 		"pnpm/action-setup@",
 		"actions/setup-node@",
 		wailsModule,
+		tagTrigger,
 	} {
 		if !bytes.Contains(body, []byte(needle)) {
 			t.Fatalf("workflow file missing %q", needle)
 		}
+	}
+	if bytes.Contains(body, []byte("workflow_dispatch")) || bytes.Contains(body, []byte("branches:")) {
+		t.Fatal("packaging trigger is not limited to tags")
 	}
 
 	script, err := os.ReadFile(got.ScriptFile)
@@ -106,6 +110,18 @@ func TestInspectRejectsIncompleteWorkflows(t *testing.T) {
 			script:   script,
 			want:     "if-no-files-found must be error",
 		},
+		{
+			name:     "branch push",
+			workflow: strings.Replace(workflowYAML("macos-latest", true, true, "build/bin/akproxy.dmg", "error"), tagTrigger, "on: [push]\n", 1),
+			script:   script,
+			want:     "tag pushes",
+		},
+		{
+			name:     "manual dispatch",
+			workflow: strings.Replace(workflowYAML("macos-latest", true, true, "build/bin/akproxy.dmg", "error"), "      - \"**\"\n", "      - \"**\"\n  workflow_dispatch:\n", 1),
+			script:   script,
+			want:     "tag pushes",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -138,9 +154,13 @@ func TestInspectAcceptsFixtureThatCreatesAndUploadsDMG(t *testing.T) {
 	}
 }
 
+const tagTrigger = "on:\n  push:\n    tags:\n      - \"**\"\n"
+
 func workflowYAML(runsOn string, withBuild, withUpload bool, uploadPath, ifNoFiles string) string {
 	var b strings.Builder
-	b.WriteString("name: package\non: [push]\njobs:\n  package:\n    runs-on: " + runsOn + "\n    steps:\n")
+	b.WriteString("name: package\n")
+	b.WriteString(tagTrigger)
+	b.WriteString("jobs:\n  package:\n    runs-on: " + runsOn + "\n    steps:\n")
 	b.WriteString("      - uses: actions/checkout@v7.0.1\n")
 	b.WriteString("      - uses: pnpm/action-setup@v6.1.0\n")
 	b.WriteString("      - uses: actions/setup-node@v7.0.0\n")

@@ -2,7 +2,8 @@ name: macos-dmg
 
 on:
   push:
-  workflow_dispatch:
+    tags:
+      - "**"
 
 permissions:
   contents: read
