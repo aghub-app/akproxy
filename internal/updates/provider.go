@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -40,22 +39,21 @@ func (p *Provider) Check(ctx context.Context, req updater.CheckRequest) (*update
 	if release.Channel != "stable" {
 		return nil, nil
 	}
-	if release.Verification == nil || release.Verification.DigestAlgo != "sha256" || len(release.Verification.Digest) != sha256.Size {
-		return nil, ErrMissingChecksum
+	if err := requireDigest(release); err != nil {
+		return nil, err
 	}
 	return release, nil
 }
 
+func requireDigest(release *updater.Release) error {
+	if release.Verification == nil || release.Verification.DigestAlgo != "sha256" || len(release.Verification.Digest) != sha256.Size {
+		return ErrMissingChecksum
+	}
+	return nil
+}
+
 func MatchAsset(req updater.CheckRequest, assets []github.ReleaseAsset) int {
-	arch := req.Arch
-	if req.Platform == "darwin" && (arch == "arm64" || arch == "amd64") {
-		arch = "universal"
-	}
-	ext := ".zip"
-	if req.Platform == "linux" {
-		ext = ".tar.gz"
-	}
-	name := fmt.Sprintf("akproxy-%s-%s%s", req.Platform, arch, ext)
+	name := assetNameFor(req.Platform, req.Arch)
 	for i, asset := range assets {
 		if asset.Name == name {
 			return i
