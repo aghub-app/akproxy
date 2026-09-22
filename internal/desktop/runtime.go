@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -28,6 +29,7 @@ type Runtime struct {
 
 	loginMu     sync.Mutex
 	loginCancel context.CancelFunc
+	runLogin    func(ctx context.Context, provider string) (*coreauth.Auth, error)
 
 	emit func(event string, data any)
 }
@@ -44,7 +46,9 @@ func NewRuntime(emit func(event string, data any)) (*Runtime, error) {
 	if emit == nil {
 		emit = func(string, any) {}
 	}
-	return &Runtime{paths: paths, emit: emit}, nil
+	r := &Runtime{paths: paths, emit: emit}
+	r.runLogin = r.loginWithSDK
+	return r, nil
 }
 
 // Status reports the navbar button and the address clients should use.
@@ -267,16 +271,51 @@ func (r *Runtime) Login(provider string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
 	r.loginCancel = cancel
 	r.loginMu.Unlock()
-	defer func() {
+
+	release := func() {
 		cancel()
 		r.loginMu.Lock()
 		r.loginCancel = nil
 		r.loginMu.Unlock()
+	}
+
+	type outcome struct {
+		record *coreauth.Auth
+		err    error
+	}
+	done := make(chan outcome, 1)
+	go func() {
+		record, err := r.runLogin(ctx, loginProvider)
+		done <- outcome{record: record, err: err}
 	}()
 
+	var result outcome
+	select {
+	case result = <-done:
+	case <-ctx.Done():
+		unblockCallbackLogin(loginProvider)
+		release()
+		return fmt.Errorf("登录已取消")
+	}
+	release()
+
+	if result.err != nil {
+		if errors.Is(result.err, context.Canceled) || errors.Is(result.err, context.DeadlineExceeded) {
+			return fmt.Errorf("登录已取消")
+		}
+		return fmt.Errorf("登录失败: %w", result.err)
+	}
+	label := accountLabel(result.record)
+	r.emit("login:done", Account{ID: result.record.ID, Provider: result.record.Provider, Label: label})
+	return nil
+}
+
+// loginWithSDK runs the SDK browser login. Some authenticators ignore context
+// cancellation, so the caller must not hold the login slot while it blocks.
+func (r *Runtime) loginWithSDK(ctx context.Context, provider string) (*coreauth.Auth, error) {
 	cfg, err := loadConfig(r.paths.Config)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	cfg.AuthDir = r.paths.Auth
 	store := auth.GetTokenStore()
@@ -284,16 +323,11 @@ func (r *Runtime) Login(provider string) error {
 		setter.SetBaseDir(r.paths.Auth)
 	}
 	manager := auth.NewManager(store, newAuthenticators()...)
-	record, _, err := manager.Login(ctx, loginProvider, cfg, &auth.LoginOptions{})
+	record, _, err := manager.Login(ctx, provider, cfg, &auth.LoginOptions{})
 	if err != nil {
-		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-			return fmt.Errorf("登录已取消")
-		}
-		return fmt.Errorf("登录失败: %w", err)
+		return nil, err
 	}
-	label := accountLabel(record)
-	r.emit("login:done", Account{ID: record.ID, Provider: record.Provider, Label: label})
-	return nil
+	return record, nil
 }
 
 // CancelLogin stops the browser login that is waiting.
@@ -303,6 +337,35 @@ func (r *Runtime) CancelLogin() {
 	r.loginMu.Unlock()
 	if cancel != nil {
 		cancel()
+	}
+}
+
+// callbackLoginPorts maps providers whose authenticators wait on a local HTTP
+// callback and ignore context cancellation. Cancelling leaves that callback
+// server bound until its own timeout; a synthetic error callback makes the
+// authenticator return at once and release the port for the next login.
+var callbackLoginPorts = map[string]struct {
+	port int
+	path string
+}{
+	"codex":       {port: 1455, path: "/auth/callback"},
+	"claude":      {port: 54545, path: "/callback"},
+	"antigravity": {port: 51121, path: "/oauth-callback"},
+}
+
+func unblockCallbackLogin(provider string) {
+	target, ok := callbackLoginPorts[provider]
+	if !ok {
+		return
+	}
+	url := fmt.Sprintf("http://127.0.0.1:%d%s?error=login_cancelled", target.port, target.path)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	if err != nil {
+		return
+	}
+	resp, err := (&http.Client{Timeout: 2 * time.Second}).Do(req)
+	if err == nil {
+		_ = resp.Body.Close()
 	}
 }
 
