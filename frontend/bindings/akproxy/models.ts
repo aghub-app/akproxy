@@ -5,6 +5,11 @@
 // @ts-ignore: Unused imports
 import * as desktop$0 from "./internal/desktop/models.js";
 
+export interface BuildInfo {
+    "version": string;
+    "revision": string;
+}
+
 /**
  * UpdatePrefsStatus is what the 关于 tab shows for update preferences.
  */

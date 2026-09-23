@@ -157,6 +157,7 @@ const english: Record<string, string> = {
   "隐藏客户端密钥": "Hide client key",
   "显示客户端密钥": "Show client key",
   "正在读取关于信息…": "Loading About…",
+  "不可用": "Unavailable",
   "akproxy 图标": "akproxy icon",
   "发现新版本 v{version}，查看详情": "Version v{version} is available. View details",
   "检查完成": "Check complete",

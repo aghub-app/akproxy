@@ -20,7 +20,7 @@ PRD `docs/prd/about.md` 要求自动检查可开关、间隔可调且改动立�
 - 定时到点后按偏好分派：自动更新开 → `Check` 后 `DownloadAndInstall`；自动更新关 → 只 `Check`（发现新版本发应用自己的事件，由窗口弹「发现新版本」对话框，「立即下载」再调 `DownloadAndInstall`）。启动检查走同一条分派路径。分开调用可保留查到的版本供关于页展示和失败后重试。
 - 手动检查入口仍调 `CheckUpdates()`，执行同样的检查和下载流程；手动、定时和待下载操作串行，避免并发检查破坏已下载状态。定时触发前先看更新器状态，进行中则跳过本次。
 - 偏好读写走 `internal/desktop` 新的 `AppPrefs` 类型与存取函数，JSON 编解码；`app.json` 不参与 `config.yaml` 的任何校验或保存流程。
-- 关于页数据：版本沿用现有 `Version()` 绑定；平台架构用 `runtime.GOOS`/`runtime.GOARCH` 经绑定返回；仓库、链接是静态内容写在前端。
+- 关于页数据：版本与开发版构建信息由 `BuildInfo()` 绑定返回，详见 `development-build-info.md`；平台架构用 `runtime.GOOS`/`runtime.GOARCH` 经绑定返回；仓库、链接是静态内容写在前端。
 - 定时器生命周期跟随应用：启动时按偏好启动，`OnShutdown` 停止。
 
 ## 备选与后果

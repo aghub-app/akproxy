@@ -39,6 +39,10 @@ export function ApplyUpdate(): $CancellablePromise<void> {
     return $Call.ByID(4175318290);
 }
 
+export function BuildInfo(): $CancellablePromise<$models.BuildInfo> {
+    return $Call.ByID(2153119103);
+}
+
 /**
  * CancelLogin stops the login that is waiting.
  */
@@ -175,8 +179,4 @@ export function Stop(): $CancellablePromise<void> {
  */
 export function UpdatePrefStatus(): $CancellablePromise<$models.UpdatePrefsStatus> {
     return $Call.ByID(2284164635);
-}
-
-export function Version(): $CancellablePromise<string> {
-    return $Call.ByID(2431199839);
 }

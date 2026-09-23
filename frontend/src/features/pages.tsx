@@ -49,8 +49,8 @@ function notifyError(error: unknown) {
 }
 
 const AboutTabContainer: FC = () => {
-  const version = useQuery({ queryKey: ["version"], queryFn: api.version });
-  return <AboutTab version={version.data} />;
+  const build = useQuery({ queryKey: ["build-info"], queryFn: api.buildInfo });
+  return <AboutTab build={build.data} />;
 };
 
 const PresentationSettings: FC = () => {

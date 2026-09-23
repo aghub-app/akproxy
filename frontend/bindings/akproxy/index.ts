@@ -7,5 +7,6 @@ export {
 };
 
 export type {
+    BuildInfo,
     UpdatePrefsStatus
 } from "./models.js";

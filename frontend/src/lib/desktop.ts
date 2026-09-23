@@ -3,12 +3,13 @@ import type {
   AppPrefs as WireAppPrefs,
   ServiceSettings as WireServiceSettings,
 } from "../../bindings/akproxy/internal/desktop/models";
-import type { UpdatePrefsStatus as WireUpdatePrefsStatus } from "../../bindings/akproxy/models";
+import type { BuildInfo as WireBuildInfo, UpdatePrefsStatus as WireUpdatePrefsStatus } from "../../bindings/akproxy/models";
 import { currentLocale, localizeErrorMessage, type Locale } from "@/lib/i18n";
 
 export type AppPrefs = WireAppPrefs;
 
 export type UpdatePrefsStatus = WireUpdatePrefsStatus;
+export type BuildInfo = WireBuildInfo;
 
 export type ServiceSettings = {
   listenMode: "local" | "all" | "custom";
@@ -87,7 +88,7 @@ export const api = {
   accounts: async (page: string) => (await app.Accounts(page)) ?? [],
   accountUsage: async (page: string) => (await app.AccountUsage(page)) ?? [],
   deleteAccount: (id: string) => app.DeleteAccount(id),
-  version: () => app.Version(),
+  buildInfo: () => app.BuildInfo(),
   checkUpdates: () => app.CheckUpdates(),
   applyUpdate: () => app.ApplyUpdate(),
   updatePrefStatus: () => app.UpdatePrefStatus(),

@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { toastManager } from "@/components/ui/toast";
 import appIcon from "@/assets/images/appicon.png";
 import { beginManualUpdateCheck, finishManualUpdateCheck, showNewRelease } from "@/features/update-dialog";
-import { api, errorText } from "@/lib/desktop";
+import { api, errorText, type BuildInfo } from "@/lib/desktop";
 import { usePresentation } from "@/presentation";
 
 const intervalPresets = [
@@ -43,7 +43,7 @@ const GithubMark: FC<{ size?: number }> = ({ size = 16 }) => (
   </svg>
 );
 
-export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
+export const AboutTab: FC<{ build: BuildInfo | undefined }> = ({ build }) => {
   const { t, locale } = usePresentation();
   const client = useQueryClient();
   const status = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
@@ -70,14 +70,15 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
   }
 
   const current = status.data;
+  const dev = build?.version === "dev";
   return (
     <div className="flex flex-col gap-10">
       <div className="flex items-center gap-4">
         <img src={appIcon} alt={t("akproxy 图标")} className="size-16" />
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-medium">akproxy</span>
-            {version ? <span className="text-muted-foreground text-sm">{version}</span> : null}
+            {build ? <span className="text-muted-foreground text-sm" title={dev ? build.revision || undefined : undefined}>{build.version}{dev ? ` · ${build.revision ? build.revision.slice(0, 8) : t("不可用")}` : ""}</span> : null}
           </div>
           <span className="text-muted-foreground text-sm">{current.platform}</span>
           <div className="flex items-center gap-3">

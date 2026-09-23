@@ -13,6 +13,14 @@ import (
 // Release builds inject the tag. Development builds never replace themselves.
 var version = "dev"
 
+// Development build metadata is injected by the build task.
+var buildRevision string
+
+type BuildInfo struct {
+	Version  string `json:"version"`
+	Revision string `json:"revision"`
+}
+
 // Build-time override for the local end-to-end fixture; production uses GitHub.
 var updateAPIBase string
 
@@ -69,7 +77,13 @@ func configureUpdates(app *application.App) error {
 	return nil
 }
 
-func (a *App) Version() string { return version }
+func (a *App) BuildInfo() BuildInfo {
+	info := BuildInfo{Version: version}
+	if version == "dev" {
+		info.Revision = buildRevision
+	}
+	return info
+}
 
 // UpdatePrefStatus returns the 关于 tab's preferences and last check result.
 func (a *App) UpdatePrefStatus() (UpdatePrefsStatus, error) {
