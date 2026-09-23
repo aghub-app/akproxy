@@ -42,10 +42,13 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 写入不得删除该页不编辑的已有配置。Codex、Grok、Claude、Gemini、Kimi、Devin 没有上游 API key 表单。配置文件里的 OpenAI 兼容项没有编辑页，保存其他页面时不得删除它们。
 - 监听配置只在启动或重启成功后成为已绑定监听。其他已写入配置在服务运行中热重载。
 - 浏览器登录写入应用自己的账号目录。界面不展示令牌。
-- 没有已登录账号的 Codex、Grok、Claude、Gemini、Kimi、Devin 页，在内容区中央显示该页图标、名称和添加操作。读取失败时不显示成空列表。
-- Codex 和 Claude 账号卡片显示该账号的厂商会话额度百分比。额度读取失败只影响这一张卡片。其他平台不显示额度。
+- 没有已登录账号的 Codex、Grok、Claude、Gemini、Kimi、Devin 页，在内容区中央显示该页图标、名称和添加操作。读取账号失败时不显示成空列表。
+- Codex、Claude、Grok、Devin 账号卡片显示该账号的套餐名（有数据时）和厂商会话额度百分比窗口：Codex 按 ChatGPT 返回的周期显示 5 小时、每周或每月窗口，Claude 来自 Anthropic 的 5 小时、每周，以及有数据时的每周 Opus 和每周 Sonnet，Grok 来自 xAI 的周窗口，Devin 来自 GetUserStatus 的每日和每周窗口。额度读取用该账号自己的登录令牌，令牌不出现在界面上。读取失败只影响这一张卡片。Gemini 和 Kimi 没有厂商额度接口，卡片不画额度。开发构建和生产构建均不注入示例数据。设置 → 用量的「额度显示」开关关闭后停止额度读取与刷新、隐藏「刷新额度」按钮；开关默认开，改动立即生效，重启后保持。详见 `docs/prd/provider-usage.md` 和 `docs/adr/provider-usage.md`。
 - 后端操作和查询失败用 toast 展示原因；同一查询连续失败期间只提示一次，成功后再次失败可以重新提示。服务意外退出时用 toast 报告原因。
 - 应用进程结束时，服务不再监听。
+- 额度偏好升级时补齐缺失的默认值，保留明确的用户选择。缺失额度数据不得显示为零用量或额度耗尽；无可用窗口时按平台约定显示无窗口或读取失败。
+- 账号用量卡片可显示厂商明确返回的额外额度与重置次数。缺失附加指标不显示假零值。设置的「用量」页可选择已用/剩余百分比、倒计时/具体时间、使用节奏，并分别控制附加行可见性；偏好即时生效、重启保持。详见 `docs/prd/provider-usage.md`。
+- 额度显示开启时，有已保存账号的 Codex、Claude、Grok、Devin 额度在应用运行期间独立于页面导航定期读取；切换页面立即显示已读到的结果，首次请求未完成时才显示读取状态。关闭开关后停止后台额度请求。
 
 ## System-wide constraints
 
