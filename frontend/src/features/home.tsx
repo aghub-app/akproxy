@@ -1,8 +1,10 @@
+import { PlayIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { type FC, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { toastManager } from "@/components/ui/toast";
@@ -22,16 +24,34 @@ async function copyText(value: string, title: string) {
   }
 }
 
-const ConnectPanel: FC<{ address: string; clientKey: string; running: boolean }> = ({
+const DoodleArrow: FC = () => (
+  <svg viewBox="0 0 220 170" className="pointer-events-none absolute top-1 left-full ms-1 hidden h-40 w-48 -translate-x-[100px] -translate-y-[150px] text-foreground/80 sm:block" aria-hidden="true">
+    <path d="M20 146C48 149 66 128 82 109C96 92 107 88 119 93C135 100 132 119 117 121C101 123 96 105 105 91C116 73 141 76 150 92C160 110 115 135 131 122C160 99 158 56 198 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M178 28C186 26 193 25 198 24C192 31 188 39 186 47" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" transform="rotate(-15 198 24)" />
+    <path d="M167 17l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="currentColor" />
+    <circle cx="20" cy="146" r="2.5" fill="currentColor" />
+  </svg>
+);
+
+const HomeStopped: FC = () => (
+  <Empty className="-translate-y-8">
+    <EmptyHeader className="relative">
+      <EmptyMedia><PlayIcon size={40} weight="duotone" /></EmptyMedia>
+      <EmptyTitle>启动服务</EmptyTitle>
+      <EmptyDescription>
+        服务这会儿还停着。去窗口右上角点一下，它就在这台机器上跑起来。
+      </EmptyDescription>
+      <DoodleArrow />
+    </EmptyHeader>
+  </Empty>
+);
+
+const ConnectPanel: FC<{ address: string; clientKey: string }> = ({
   address,
   clientKey,
-  running,
 }) => {
   const [showKey, setShowKey] = useState(false);
   const [sdk, setSdk] = useState<SdkId>("openai-python");
-  if (!running) {
-    return <p className="text-sm text-muted-foreground">服务尚未启动，请点击顶部「启动」后查看接入信息。</p>;
-  }
   const visibleKey = showKey && clientKey ? clientKey : "••••••••";
   const env = openaiEnv(address, clientKey || "<API_KEY>");
   const visibleEnv = openaiEnv(address, visibleKey);
@@ -113,8 +133,9 @@ export const HomePage: FC = () => {
     </section>;
   }
 
-  const running = data.status.running;
-  const available = running && !models.isError ? (models.data ?? []) : [];
+  if (!data.status.running) return <HomeStopped />;
+
+  const available = !models.isError ? (models.data ?? []) : [];
   const model = available.includes(selectedModel) ? selectedModel : (available[0] ?? "<MODEL_ID>");
   const commands = curlCommands(data.status.address, data.clientKey || "<API_KEY>", model);
   const displayed = curlCommands(data.status.address, showKey ? (data.clientKey || "<API_KEY>") : "••••••••", model);
@@ -127,10 +148,9 @@ export const HomePage: FC = () => {
         <TabsTab value="test">测试</TabsTab>
       </TabsList>
       <TabsPanel value="connect">
-        <ConnectPanel address={data.status.address} clientKey={data.clientKey} running={running} />
+        <ConnectPanel address={data.status.address} clientKey={data.clientKey} />
       </TabsPanel>
       <TabsPanel value="test" className="flex flex-col gap-5">
-        {!running ? <p className="text-sm text-muted-foreground">服务尚未启动，请点击顶部「启动」后复制命令。</p> : null}
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <label id="home-model-label" className="text-sm font-medium">模型</label>
@@ -141,14 +161,14 @@ export const HomePage: FC = () => {
           </div>
           <Button variant="outline" aria-pressed={showKey} onClick={() => setShowKey(!showKey)}>{showKey ? "隐藏密钥" : "显示密钥"}</Button>
         </div>
-        {running && available.length === 0 ? <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground" role="status">
+        {available.length === 0 ? <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground" role="status">
           <p>
             {models.isFetching ? "正在读取模型…" : models.isError ? errorText(models.error) : "暂无可选模型。"}
             {models.isFetching ? "" : " 请将命令中的 <MODEL_ID> 替换为模型 ID。"}
           </p>
           {!models.isFetching ? <Button variant="ghost" size="sm" onClick={() => void models.refetch()}>刷新模型</Button> : null}
         </div> : null}
-        {running ? <p className="text-xs text-muted-foreground">复制内容包含第一把客户端密钥。模型是否支持对应 API 取决于上游。</p> : null}
+        <p className="text-xs text-muted-foreground">复制内容包含第一把客户端密钥。模型是否支持对应 API 取决于上游。</p>
         {commands.map(({ title, command }, index) => <Card key={title} className="min-w-0 overflow-hidden">
           <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
             <h2 className="text-sm font-medium">{title}</h2>
@@ -156,8 +176,7 @@ export const HomePage: FC = () => {
               variant="outline"
               size="sm"
               aria-label={`复制${title}命令`}
-              disabled={!running}
-              onClick={() => { if (running) void copyText(command, "已复制命令"); }}
+              onClick={() => void copyText(command, "已复制命令")}
             >复制</Button>
           </div>
           <pre className="sh-code overflow-x-auto p-4 text-xs leading-relaxed"><code dangerouslySetInnerHTML={{ __html: highlightCommand(displayed[index].command) }} /></pre>

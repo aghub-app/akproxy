@@ -31,8 +31,8 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 
 ### 本地代理
 
-- 默认入口为 `/` 首页。无上游登录账号或非空上游 API key 时展示 provider 导航卡片；存在任意上游凭据时用分段切换「接入」和「测试」，默认是「接入」。客户端密钥不算上游凭据。
-- 「接入」只在服务运行时展示当前绑定地址、第一把客户端密钥、一份不含 `export` 的 .env（`OPENAI_API_KEY` 和 `OPENAI_BASE_URL`），以及一张可切换 SDK 的示例卡片。密钥默认遮挡。未启动时不展示这些信息。「测试」展示 models、chat completions、responses 三个 curl 示例；未启动时不能复制。复制内容是纯文本，包含真实客户端密钥。模型读取失败或服务停止时使用明确的模型占位符，不自动启动服务。命令展示按 shell 语法高亮。详见 `docs/prd/home.md`。
+- 默认入口为 `/` 首页。无上游登录账号或非空上游 API key 时展示 provider 导航卡片。已有上游凭据但服务未运行时，内容区只有居中空状态：播放图标、标题「启动服务」、一句只提示去右上角启动的描述，以及描述旁指向窗口右上角的手绘箭头。箭头不在文字里。没有分段。服务运行且存在任意上游凭据时，用分段切换「接入」和「测试」，默认是「接入」。客户端密钥不算上游凭据。
+- 「接入」展示当前绑定地址、第一把客户端密钥、一份不含 `export` 的 .env（`OPENAI_API_KEY` 和 `OPENAI_BASE_URL`），以及一张可切换 SDK 的示例卡片。密钥默认遮挡。「测试」展示 models、chat completions、responses 三个 curl 示例。复制内容是纯文本，包含真实客户端密钥。模型读取失败时使用明确的模型占位符，不自动启动服务。命令展示按 shell 语法高亮。详见 `docs/prd/home.md`。
 
 - 侧边栏依次为「首页」、Codex、Grok、Claude、Gemini、Kimi、Devin。「设置」固定在侧边栏底部，不随上面的导航滚动。没有原始配置编辑页，也没有自定义 OpenAI 页。
 - 导航栏左侧是 akproxy。右侧用圆点表示服务是否在运行，并只有一个服务控制。未运行时为「启动」；运行中且已写入监听等于已绑定监听时为「停止」；运行中且二者不同时为「重启」，下一行写明当前地址和重启后将使用的地址。启动或重启失败后服务停止，该行显示失败原因。启动成功后提示服务已启动，并说明可以到首页看接入方式；人已经在首页，或首页还没有接入命令时，也同样提示。停止和重启成功不出现这条提示。
@@ -65,7 +65,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - Feature development workflow skill lives at `.agents/skills/feature-dev/` (also linked from `.claude/skills/`).
 - Commit attempts should re-check the working tree against this specification and relevant PRDs/ADRs before landing.
 - 配置与账号的事实来源、进程内 SDK，以及监听重启和热重载的分界，分别见 `docs/adr/config-file-source-of-truth.md`、`docs/adr/embed-go-sdk.md` 和 `docs/adr/listen-restart.md`。
-- 窗口渲染使用 React 和 coss ui，见 `docs/adr/coss-renderer.md`。首页命令高亮见 `docs/adr/home-command-highlight.md`。
+- 窗口渲染使用 React 和 coss ui，见 `docs/adr/coss-renderer.md`。首页命令高亮见 `docs/adr/home-command-highlight.md`。已有凭据但未运行时的首页空状态见 `docs/adr/home-stopped-empty.md`。
 
 ## Current implementation status
 
