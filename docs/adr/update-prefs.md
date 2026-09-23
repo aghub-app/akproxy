@@ -15,7 +15,7 @@ PRD `docs/prd/about.md` 要求自动检查可开关、间隔可调且改动立�
 
 ## 决定
 
-- 偏好存独立文件 `app.json`，位于应用配置目录（`Paths.Root` 下，与 `config.yaml` 同目录）。结构为 `{ "autoUpdate": bool, "autoCheck": bool, "checkIntervalHours": int }`。默认值：`true`、`true`、`24`。文件损坏或缺字段时按默认值处理，不报错阻断启动。
+- 偏好存独立文件 `app.json`，位于应用配置目录（`Paths.Root` 下，与 `config.yaml` 同目录）。更新字段为 `{ "autoUpdate": bool, "autoCheck": bool, "checkIntervalHours": int }`，默认值为 `true`、`true`、`24`。后续用量及语言与外观偏好也存于该文件，见 `provider-usage.md` 和 `language-appearance.md`。文件损坏或缺字段时按默认值处理，不报错阻断启动。
 - `updater.Config.CheckInterval` 恒传 0，更新器内置周期任务不再使用。应用在 `internal/desktop` 之外新建一个定时管理器（app 包内），持有 `time.Timer`：按偏好启动、停止、改间隔；从关到开或改短间隔时立即触发一次检查。
 - 定时到点后按偏好分派：自动更新开 → `Check` 后 `DownloadAndInstall`；自动更新关 → 只 `Check`（发现新版本发应用自己的事件，由窗口弹「发现新版本」对话框，「立即下载」再调 `DownloadAndInstall`）。启动检查走同一条分派路径。分开调用可保留查到的版本供关于页展示和失败后重试。
 - 手动检查入口仍调 `CheckUpdates()`，执行同样的检查和下载流程；手动、定时和待下载操作串行，避免并发检查破坏已下载状态。定时触发前先看更新器状态，进行中则跳过本次。

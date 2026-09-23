@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { Progress, ProgressIndicator, ProgressTrack } from "@/components/ui/progress";
 import { toastManager } from "@/components/ui/toast";
-import { api, errorText } from "@/lib/desktop";
+import { api, rawErrorText } from "@/lib/desktop";
+import { currentLocale, localizeErrorMessage, translate } from "@/lib/i18n";
+import { usePresentation } from "@/presentation";
 
 type Phase = "closed" | "available" | "downloading" | "verifying" | "installing" | "ready" | "failed";
 
@@ -47,6 +49,7 @@ function percent(written: number, total: number) {
 }
 
 export const UpdateDialog: FC = () => {
+  const { t, locale } = usePresentation();
   const [phase, setPhase] = useState<Phase>("closed");
   const [version, setVersion] = useState("");
   const [notes, setNotes] = useState("");
@@ -65,7 +68,7 @@ export const UpdateDialog: FC = () => {
 
   function showFailure(message: string) {
     if (lastError.current !== message) {
-      toastManager.add({ title: message, type: "error" });
+      toastManager.add({ title: localizeErrorMessage(message, currentLocale()), type: "error" });
       lastError.current = message;
     }
     setApplying(false);
@@ -133,7 +136,7 @@ export const UpdateDialog: FC = () => {
       }
       manualCheck = false;
       setApplying(false);
-      toastManager.add({ title: "已是最新版本", type: "success" });
+      toastManager.add({ title: translate("已是最新版本", currentLocale()), type: "success" });
     });
     const offError = Events.On("wails:updater:error", (event) => {
       const notice = (eventBody(event) ?? {}) as FailureNotice;
@@ -162,24 +165,24 @@ export const UpdateDialog: FC = () => {
   const open = phase !== "closed" && !dismissed;
   const title =
     phase === "available"
-      ? "发现新版本"
+      ? t("发现新版本")
       : phase === "ready"
-        ? "可以重启以完成更新"
+        ? t("可以重启以完成更新")
         : phase === "failed"
-          ? "更新失败"
-          : "正在更新";
+          ? t("更新失败")
+          : t("正在更新");
   const detail =
     phase === "available"
-      ? `有新版本${version ? ` v${version}` : ""}可以更新。自动下载已关闭，可以现在手动下载。`
+      ? t("有新版本{version}可以更新。自动下载已关闭，可以现在手动下载。", { version: version ? ` v${version}` : "" })
       : phase === "ready"
-        ? `${version ? `v${version} ` : ""}已准备好。重启后会换成新版本，代理会停止。`
+        ? t("{version}已准备好。重启后会换成新版本，代理会停止。", { version: version ? `v${version} ` : "" })
         : phase === "failed"
-          ? failure
+          ? localizeErrorMessage(failure, locale)
           : phase === "verifying"
-            ? "正在校验下载的文件。"
+            ? t("正在校验下载的文件。")
             : phase === "installing"
-              ? "正在准备安装。"
-              : `正在下载${version ? ` v${version}` : ""}。`;
+              ? t("正在准备安装。")
+              : t("正在下载{version}。", { version: version ? ` v${version}` : "" });
 
   return (
     <Dialog
@@ -209,7 +212,7 @@ export const UpdateDialog: FC = () => {
         ) : null}
         <DialogFooter>
           <Button variant="outline" onClick={() => setDismissed(true)}>
-            {phase === "ready" ? "稍后" : phase === "available" ? "忽略" : "关闭"}
+            {phase === "ready" ? t("稍后") : phase === "available" ? t("忽略") : t("关闭")}
           </Button>
           {phase === "available" ? (
             <Button
@@ -220,11 +223,11 @@ export const UpdateDialog: FC = () => {
                 lastError.current = "";
                 changePhase("downloading");
                 void api.downloadPendingUpdate().catch((error: unknown) => {
-                  showFailure(errorText(error));
+                  showFailure(rawErrorText(error));
                 });
               }}
             >
-              立即下载
+              {t("立即下载")}
             </Button>
           ) : null}
           {phase === "failed" ? (
@@ -237,23 +240,23 @@ export const UpdateDialog: FC = () => {
                 if (retryAction === "download") {
                   changePhase("downloading");
                   void api.downloadPendingUpdate().catch((error: unknown) => {
-                    showFailure(errorText(error));
+                    showFailure(rawErrorText(error));
                   });
                 } else if (retryAction === "restart") {
                   void api.applyUpdate().catch((error: unknown) => {
-                    showFailure(errorText(error));
+                    showFailure(rawErrorText(error));
                   });
                 } else {
                   beginManualUpdateCheck();
                   changePhase("downloading");
                   void api.checkUpdates().catch((error: unknown) => {
                     finishManualUpdateCheck();
-                    showFailure(errorText(error));
+                    showFailure(rawErrorText(error));
                   });
                 }
               }}
             >
-              重试
+              {t("重试")}
             </Button>
           ) : null}
           {phase === "ready" ? (
@@ -264,11 +267,11 @@ export const UpdateDialog: FC = () => {
                 setRetryAction("restart");
                 lastError.current = "";
                 void api.applyUpdate().catch((error: unknown) => {
-                  showFailure(errorText(error));
+                  showFailure(rawErrorText(error));
                 });
               }}
             >
-              立即重启
+              {t("立即重启")}
             </Button>
           ) : null}
         </DialogFooter>

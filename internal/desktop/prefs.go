@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-// AppPrefs is the 更新偏好 owned by the 关于 page. It lives in app.json and
+// AppPrefs is the application-owned preference set. It lives in app.json and
 // never touches config.yaml, whose parser drops unknown fields.
 type AppPrefs struct {
 	AutoUpdate            bool   `json:"autoUpdate"`
@@ -19,6 +19,8 @@ type AppPrefs struct {
 	UsageShowExtra        bool   `json:"usageShowExtra"`
 	UsageShowResets       bool   `json:"usageShowResets"`
 	UsageAlwaysShowPacing bool   `json:"usageAlwaysShowPacing"`
+	Language              string `json:"language"`
+	Theme                 string `json:"theme"`
 }
 
 const (
@@ -28,7 +30,7 @@ const (
 
 // DefaultAppPrefs matches the historical built-in behavior.
 func DefaultAppPrefs() AppPrefs {
-	return AppPrefs{AutoUpdate: true, AutoCheck: true, CheckIntervalHours: DefaultCheckIntervalHours, UsageEnabled: true, UsagePercentMode: "left", UsageResetMode: "countdown", UsageShowExtra: true, UsageShowResets: true}
+	return AppPrefs{AutoUpdate: true, AutoCheck: true, CheckIntervalHours: DefaultCheckIntervalHours, UsageEnabled: true, UsagePercentMode: "left", UsageResetMode: "countdown", UsageShowExtra: true, UsageShowResets: true, Language: "system", Theme: "system"}
 }
 
 // Normalize clamps a parsed prefs value into the accepted range.
@@ -42,6 +44,12 @@ func NormalizeAppPrefs(in AppPrefs) AppPrefs {
 	}
 	if out.UsageResetMode != "countdown" && out.UsageResetMode != "exact" {
 		out.UsageResetMode = "countdown"
+	}
+	if out.Language != "zh-CN" && out.Language != "en" {
+		out.Language = "system"
+	}
+	if out.Theme != "light" && out.Theme != "dark" {
+		out.Theme = "system"
 	}
 	return out
 }

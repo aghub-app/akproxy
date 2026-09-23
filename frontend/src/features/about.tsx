@@ -21,6 +21,7 @@ import { toastManager } from "@/components/ui/toast";
 import appIcon from "@/assets/images/appicon.png";
 import { beginManualUpdateCheck, finishManualUpdateCheck, showNewRelease } from "@/features/update-dialog";
 import { api, errorText } from "@/lib/desktop";
+import { usePresentation } from "@/presentation";
 
 const intervalPresets = [
   { value: "1", label: "每 1 小时" },
@@ -43,6 +44,7 @@ const GithubMark: FC<{ size?: number }> = ({ size = 16 }) => (
 );
 
 export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
+  const { t, locale } = usePresentation();
   const client = useQueryClient();
   const status = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
   const check = useMutation({
@@ -64,14 +66,14 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
   });
 
   if (!status.data) {
-    return <p className="text-muted-foreground text-sm">正在读取关于信息…</p>;
+    return <p className="text-muted-foreground text-sm">{t("正在读取关于信息…")}</p>;
   }
 
   const current = status.data;
   return (
     <div className="flex flex-col gap-10">
       <div className="flex items-center gap-4">
-        <img src={appIcon} alt="akproxy 图标" className="size-16" />
+        <img src={appIcon} alt={t("akproxy 图标")} className="size-16" />
         <div className="flex flex-col gap-1">
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-medium">akproxy</span>
@@ -85,11 +87,11 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
                 className="text-primary text-sm underline-offset-4 hover:underline"
                 onClick={() => showNewRelease({ version: current.latestVersion })}
               >
-                发现新版本 v{current.latestVersion}，查看详情
+                {t("发现新版本 v{version}，查看详情", { version: current.latestVersion })}
               </button>
             ) : current.lastCheckAt ? (
               <span className="text-muted-foreground text-xs tabular-nums">
-                {current.lastCheckResult || "检查完成"} · 上次检查 {current.lastCheckAt}
+                {t(current.lastCheckResult || "检查完成")} · {t("上次检查 {time}", { time: new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" }).format(new Date(current.lastCheckAt.replace(" ", "T"))) })}
               </span>
             ) : null}
             <Button
@@ -101,23 +103,23 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
                 check.mutate();
               }}
             >
-              检查更新
+              {t("检查更新")}
             </Button>
           </div>
         </div>
       </div>
       <div className="flex flex-col gap-5">
         <PrefSwitch
-          label="自动更新"
-          description="自动检查发现新版本后直接下载，下载完成再询问是否重启。关闭时只提示，不下载。"
+          label={t("自动更新")}
+          description={t("自动检查发现新版本后直接下载，下载完成再询问是否重启。关闭时只提示，不下载。")}
           checked={current.prefs.autoUpdate}
           onChange={(autoUpdate) =>
             save.mutate({ ...current.prefs, autoUpdate })
           }
         />
         <PrefSwitch
-          label="自动检查更新"
-          description="启动时检查一次，并按下面的间隔持续检查。关闭后只能手动检查。"
+          label={t("自动检查更新")}
+          description={t("启动时检查一次，并按下面的间隔持续检查。关闭后只能手动检查。")}
           checked={current.prefs.autoCheck}
           onChange={(autoCheck) =>
             save.mutate({ ...current.prefs, autoCheck })
@@ -146,7 +148,7 @@ export const AboutTab: FC<{ version: string | undefined }> = ({ version }) => {
           LICENSE
         </a>
         <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy/issues" target="_blank" rel="noreferrer">
-          问题反馈
+          {t("问题反馈")}
         </a>
       </div>
     </div>
@@ -173,12 +175,13 @@ const IntervalField: FC<{
   disabled: boolean;
   onChange: (hours: number) => void;
 }> = ({ hours, disabled, onChange }) => {
+  const { t } = usePresentation();
   const matched = intervalPresets.some((item) => item.value === String(hours));
   const [customMode, setCustomMode] = useState(matched ? false : true);
   const preset = matched && !customMode ? String(hours) : "custom";
   return (
     <Field>
-      <FieldLabel>检查间隔</FieldLabel>
+      <FieldLabel>{t("检查间隔")}</FieldLabel>
       <div className="flex items-center gap-2">
         <Select
           value={preset}
@@ -196,13 +199,13 @@ const IntervalField: FC<{
         >
           <SelectTrigger disabled={disabled} className="w-auto min-w-28">
             <SelectValue>
-              {(value) => (typeof value === "string" ? presetLabels[value] ?? value : null)}
+              {(value) => (typeof value === "string" ? t(presetLabels[value] ?? value) : null)}
             </SelectValue>
           </SelectTrigger>
           <SelectPopup>
             {intervalPresets.map((item) => (
               <SelectItem key={item.value} value={item.value}>
-                {item.label}
+                {t(item.label)}
               </SelectItem>
             ))}
           </SelectPopup>
@@ -230,8 +233,8 @@ const IntervalField: FC<{
       </div>
       <FieldDescription>
         {preset === "custom"
-          ? "填写 1 到 720 之间的小时数。"
-          : "自动检查发现新版本的节奏，改动立即生效。"}
+          ? t("填写 1 到 720 之间的小时数。")
+          : t("自动检查发现新版本的节奏，改动立即生效。")}
       </FieldDescription>
     </Field>
   );

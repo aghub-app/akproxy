@@ -7,21 +7,26 @@ import {
 } from "@/features/pages";
 import { HomePage } from "@/features/home";
 import { AppLayout } from "@/app/shell";
+import { usePresentation } from "@/presentation";
 
 function CodexRoute() {
-  return <NativeProviderPage provider="codex" loginLabel="添加 Codex 账号" />;
+  const { t } = usePresentation();
+  return <NativeProviderPage provider="codex" loginLabel={t("添加 Codex 账号")} />;
 }
 
 function GrokRoute() {
-  return <NativeProviderPage provider="grok" loginLabel="添加 Grok 账号" />;
+  const { t } = usePresentation();
+  return <NativeProviderPage provider="grok" loginLabel={t("添加 Grok 账号")} />;
 }
 
 function ClaudeRoute() {
-  return <NativeProviderPage provider="claude" loginLabel="添加 Claude 账号" />;
+  const { t } = usePresentation();
+  return <NativeProviderPage provider="claude" loginLabel={t("添加 Claude 账号")} />;
 }
 
 function GeminiRoute() {
-  return <NativeProviderPage provider="gemini" loginLabel="添加 Gemini 账号" />;
+  const { t } = usePresentation();
+  return <NativeProviderPage provider="gemini" loginLabel={t("添加 Gemini 账号")} />;
 }
 
 export const router = createHashRouter([

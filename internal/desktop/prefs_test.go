@@ -46,6 +46,8 @@ func TestAppPrefsRoundTrip(t *testing.T) {
 	in.CheckIntervalHours = 6
 	in.UsagePercentMode = "used"
 	in.UsageResetMode = "exact"
+	in.Language = "en"
+	in.Theme = "dark"
 	if err := WriteAppPrefs(root, in); err != nil {
 		t.Fatal(err)
 	}
@@ -58,6 +60,23 @@ func TestAppPrefsRoundTrip(t *testing.T) {
 	}
 	if len(body) == 0 || body[len(body)-1] != '\n' {
 		t.Fatalf("app.json should end with a newline")
+	}
+}
+
+func TestAppPrefsPresentationDefaultsAndInvalidValues(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "app.json"), []byte(`{"autoUpdate":false,"theme":"invalid","language":"fr"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got := ReadAppPrefs(root)
+	if got.AutoUpdate || got.Language != "system" || got.Theme != "system" {
+		t.Fatalf("presentation preference upgrade = %+v", got)
+	}
+	if err := WriteAppPrefs(root, AppPrefs{Language: "fr", Theme: "invalid"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := ReadAppPrefs(root); got.Language != "system" || got.Theme != "system" {
+		t.Fatalf("invalid choices should be normalized: %+v", got)
 	}
 }
 

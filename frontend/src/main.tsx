@@ -9,17 +9,6 @@ import { router } from "@/app/router";
 import { Providers } from "@/providers";
 import "./index.css";
 
-const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
-
-function applySystemTheme() {
-  const dark = colorScheme.matches;
-  document.documentElement.classList.toggle("dark", dark);
-  document.documentElement.style.colorScheme = dark ? "dark" : "light";
-}
-
-applySystemTheme();
-colorScheme.addEventListener("change", applySystemTheme);
-
 const root = document.getElementById("root");
 if (!root) {
   throw new Error("找不到根节点");

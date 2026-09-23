@@ -227,7 +227,7 @@ func (s *updateScheduler) Save(in desktop.AppPrefs) (UpdatePrefsStatus, error) {
 		s.mu.Unlock()
 		return s.Status(), err
 	}
-	s.prefs = in
+	s.prefs = desktop.NormalizeAppPrefs(in)
 	s.armLocked()
 	s.mu.Unlock()
 	if turnedOn && version != "dev" {

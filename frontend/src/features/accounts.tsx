@@ -18,6 +18,8 @@ import { toastManager } from "@/components/ui/toast";
 import { ProviderEmpty } from "@/features/provider-empty";
 import { windowPace } from "@/features/usage-pace";
 import { api, errorText, type Account, type AccountUsage, type AppPrefs, type UsageWindow } from "@/lib/desktop";
+import { localizeErrorMessage, translate, type Locale } from "@/lib/i18n";
+import { usePresentation } from "@/presentation";
 
 const windowLabel: Record<UsageWindow["kind"], string> = {
   "5h": "5 小时",
@@ -40,35 +42,40 @@ const defaultUsageOptions: UsageOptions = {
   usageAlwaysShowPacing: false,
 };
 
-function resetLabel(value: string, mode: string) {
+function resetLabel(value: string, mode: string, locale: Locale) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return "";
   }
   if (mode === "countdown") {
     const minutes = Math.max(0, Math.ceil((date.getTime() - Date.now()) / 60_000));
-    if (minutes === 0) return "即将重置";
+    if (minutes === 0) return translate("即将重置", locale);
     const days = Math.floor(minutes / 1440);
     const hours = Math.floor((minutes % 1440) / 60);
     const rest = minutes % 60;
-    return `约 ${days ? `${days} 天 ` : ""}${hours ? `${hours} 小时 ` : ""}${!days && rest ? `${rest} 分钟` : ""}后重置`;
+    const duration = [
+      days ? translate("{count} 天", locale, { count: days }) : "",
+      hours ? translate("{count} 小时", locale, { count: hours }) : "",
+      !days && rest ? translate("{count} 分钟", locale, { count: rest }) : "",
+    ].filter(Boolean).join(" ");
+    return translate("约 {duration}后重置", locale, { duration });
   }
   const sameDay = date.toDateString() === new Date().toDateString();
-  const time = new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit" }).format(date);
+  const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(date);
   if (sameDay) {
-    return `${time} 重置`;
+    return translate("{time} 重置", locale, { time });
   }
-  const day = new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric" }).format(date);
-  return `${day} ${time} 重置`;
+  const day = new Intl.DateTimeFormat(locale, { month: "numeric", day: "numeric" }).format(date);
+  return translate("{day} {time} 重置", locale, { day, time });
 }
 
-function extraLabel(extra: NonNullable<AccountUsage["extra"]>) {
-  if (extra.kind === "disabled") return "未启用";
+function extraLabel(extra: NonNullable<AccountUsage["extra"]>, locale: Locale) {
+  if (extra.kind === "disabled") return translate("未启用", locale);
   const amount = extra.currency === "credits"
-    ? `${extra.amount.toLocaleString("zh-CN", { maximumFractionDigits: 1 })} 积分`
-    : `${extra.currency === "USD" ? "$" : `${extra.currency} `}${extra.amount.toFixed(2)}`;
-  if (extra.kind === "cap") return `${amount} 上限`;
-  return `${amount} ${extra.kind === "used" ? "已用" : "余额"}`;
+    ? translate("{amount} 积分", locale, { amount: extra.amount.toLocaleString(locale, { maximumFractionDigits: 1 }) })
+    : `${extra.currency === "USD" ? "$" : `${extra.currency} `}${extra.amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (extra.kind === "cap") return translate("{amount} 上限", locale, { amount });
+  return translate(extra.kind === "used" ? "{amount} 已用" : "{amount} 余额", locale, { amount });
 }
 
 const UsageBars: FC<{ usage?: AccountUsage; loading: boolean; failed: boolean; options: UsageOptions }> = ({
@@ -77,32 +84,33 @@ const UsageBars: FC<{ usage?: AccountUsage; loading: boolean; failed: boolean; o
   failed,
   options,
 }) => {
+  const { t, locale } = usePresentation();
   if (!usage) {
     if (loading) {
-      return <p className="px-4 pb-4 text-muted-foreground text-xs">正在读取额度…</p>;
+      return <p className="px-4 pb-4 text-muted-foreground text-xs">{t("正在读取额度…")}</p>;
     }
     if (failed) {
-      return <p className="px-4 pb-4 text-muted-foreground text-xs">额度暂时读不到</p>;
+      return <p className="px-4 pb-4 text-muted-foreground text-xs">{t("额度暂时读不到")}</p>;
     }
     return null;
   }
   if (usage.error && !(usage.windows && usage.windows.length > 0) && !usage.extra && usage.resetCredits == null) {
-    return <p className="px-4 pb-4 text-muted-foreground text-xs">{usage.error}</p>;
+    return <p className="px-4 pb-4 text-muted-foreground text-xs">{localizeErrorMessage(usage.error, locale)}</p>;
   }
   return (
     <div className="flex flex-1 flex-col gap-4 px-4 pb-4">
-      {usage.error ? <p className="text-xs text-muted-foreground">{usage.error}</p> : null}
-      {!usage.error && !usage.windows?.length ? <p className="text-xs text-muted-foreground">暂无额度窗口</p> : null}
+      {usage.error ? <p className="text-xs text-muted-foreground">{localizeErrorMessage(usage.error, locale)}</p> : null}
+      {!usage.error && !usage.windows?.length ? <p className="text-xs text-muted-foreground">{t("暂无额度窗口")}</p> : null}
       {(usage.windows ?? []).map((window) => {
-        const pace = windowPace(window, options.usageAlwaysShowPacing);
-        const label = windowLabel[window.kind] ?? window.kind;
+        const pace = windowPace(window, options.usageAlwaysShowPacing, Date.now(), locale);
+        const label = t(windowLabel[window.kind] ?? window.kind);
         return (
           <div className="flex flex-col gap-2" key={window.kind}>
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{label}</span>
               {pace.label ? <span className={`text-right text-xs ${pace.tone === "danger" ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>{pace.label}</span> : null}
             </div>
-            <Progress aria-label={`${label}额度`} value={options.usagePercentMode === "used" ? window.used : 100 - window.used}>
+            <Progress aria-label={t("{label}额度", { label })} value={options.usagePercentMode === "used" ? window.used : 100 - window.used}>
               <ProgressTrack className="relative">
                 <ProgressIndicator className={pace.tone === "danger" ? "bg-red-500" : pace.tone === "warning" ? "bg-amber-500" : "bg-blue-500"} />
                 {pace.tick != null && (options.usageAlwaysShowPacing || pace.tone !== "normal") ? (
@@ -111,22 +119,22 @@ const UsageBars: FC<{ usage?: AccountUsage; loading: boolean; failed: boolean; o
               </ProgressTrack>
             </Progress>
             <div className="flex items-center justify-between gap-2 text-xs tabular-nums">
-              <span>{Math.round(options.usagePercentMode === "used" ? window.used : 100 - window.used)}% {options.usagePercentMode === "used" ? "已用" : "剩余"}</span>
-              {window.resetsAt ? <span className="text-right text-muted-foreground">{resetLabel(window.resetsAt, options.usageResetMode)}</span> : null}
+              <span>{Math.round(options.usagePercentMode === "used" ? window.used : 100 - window.used)}% {options.usagePercentMode === "used" ? t("已用") : t("剩余")}</span>
+              {window.resetsAt ? <span className="text-right text-muted-foreground">{resetLabel(window.resetsAt, options.usageResetMode, locale)}</span> : null}
             </div>
           </div>
         );
       })}
       {options.usageShowExtra && usage.extra ? (
         <div className="flex items-center justify-between gap-2 text-sm">
-          <span>{usage.extra.kind === "cap" || usage.extra.kind === "disabled" ? "按量付费" : "额外额度"}</span>
-          <span className="text-right tabular-nums text-muted-foreground">{extraLabel(usage.extra)}</span>
+          <span>{usage.extra.kind === "cap" || usage.extra.kind === "disabled" ? t("按量付费") : t("额外额度")}</span>
+          <span className="text-right tabular-nums text-muted-foreground">{extraLabel(usage.extra, locale)}</span>
         </div>
       ) : null}
       {options.usageShowResets && usage.resetCredits != null ? (
         <div className="flex items-center justify-between gap-2 text-sm">
-          <span>额度重置次数</span>
-          <span className="tabular-nums text-muted-foreground">{usage.resetCredits} 次可用</span>
+          <span>{t("额度重置次数")}</span>
+          <span className="tabular-nums text-muted-foreground">{t("{count} 次可用", { count: usage.resetCredits })}</span>
         </div>
       ) : null}
     </div>
@@ -144,6 +152,7 @@ export const AccountsPanel: FC<{
   logins: { id: string; label: string }[];
   filledExtra?: ReactNode;
 }> = ({ page, logins, filledExtra }) => {
+  const { t, locale } = usePresentation();
   const client = useQueryClient();
   const [pendingDelete, setPendingDelete] = useState<Account | null>(null);
   const status = useQuery({ queryKey: ["status"], queryFn: api.status, refetchInterval: 2000 });
@@ -182,7 +191,7 @@ export const AccountsPanel: FC<{
       await api.login(id);
       await client.invalidateQueries({ queryKey: ["accounts", page] });
       await client.invalidateQueries({ queryKey: ["account-usage", page] });
-      toastManager.add({ title: "登录完成", type: "success" });
+      toastManager.add({ title: t("登录完成"), type: "success" });
     } catch (error) {
       toastManager.add({ title: errorText(error), type: "error" });
     }
@@ -215,11 +224,11 @@ export const AccountsPanel: FC<{
         <Button variant="outline" onClick={() => void api.cancelLogin().catch((error: unknown) => {
           toastManager.add({ title: errorText(error), type: "error" });
         })}>
-          取消登录
+          {t("取消登录")}
         </Button>
       ) : null}
       {prefs.isError && hasSessionLimit ? (
-        <Button variant="outline" onClick={() => void prefs.refetch()}>重试读取用量设置</Button>
+        <Button variant="outline" onClick={() => void prefs.refetch()}>{t("重试读取用量设置")}</Button>
       ) : null}
       {hasSessionLimit && usageEnabled ? (
         <Button
@@ -228,7 +237,7 @@ export const AccountsPanel: FC<{
           onClick={() => refresh.mutate()}
         >
           <ArrowsClockwiseIcon weight="duotone" />
-          刷新额度
+          {t("刷新额度")}
         </Button>
       ) : null}
     </>
@@ -237,13 +246,13 @@ export const AccountsPanel: FC<{
   if (accounts.isError && !accounts.data) {
     return (
       <div role="alert" className="flex flex-col items-start gap-3">
-        <p>{errorText(accounts.error)}</p>
-        <Button variant="outline" onClick={() => void accounts.refetch()}>重试</Button>
+        <p>{errorText(accounts.error, locale)}</p>
+        <Button variant="outline" onClick={() => void accounts.refetch()}>{t("重试")}</Button>
       </div>
     );
   }
   if (!accounts.data) {
-    return <p className="text-muted-foreground text-sm">正在读取账号…</p>;
+    return <p className="text-muted-foreground text-sm">{t("正在读取账号…")}</p>;
   }
   if (accounts.data.length === 0) {
     return <ProviderEmpty page={page}>{actions}</ProviderEmpty>;
@@ -266,7 +275,7 @@ export const AccountsPanel: FC<{
                   <CardAction>
                     <Menu>
                       <MenuTrigger
-                        aria-label="更多"
+                        aria-label={t("更多")}
                         className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
                       >
                         <DotsThreeIcon weight="bold" />
@@ -277,7 +286,7 @@ export const AccountsPanel: FC<{
                           onClick={() => setPendingDelete(account)}
                         >
                           <TrashIcon weight="duotone" />
-                          删除
+                          {t("删除")}
                         </MenuItem>
                       </MenuPopup>
                     </Menu>
@@ -306,13 +315,13 @@ export const AccountsPanel: FC<{
       >
         <AlertDialogPopup>
           <AlertDialogHeader>
-            <AlertDialogTitle>删除这个账号？</AlertDialogTitle>
+            <AlertDialogTitle>{t("删除这个账号？")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDelete?.label || pendingDelete?.id} 会从账号目录移除。正在运行的服务也不再使用它。
+              {t("{account} 会从账号目录移除。正在运行的服务也不再使用它。", { account: pendingDelete?.label || pendingDelete?.id || "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogClose render={<Button variant="outline" />}>取消</AlertDialogClose>
+            <AlertDialogClose render={<Button variant="outline" />}>{t("取消")}</AlertDialogClose>
             <Button
               variant="destructive"
               loading={remove.isPending}
@@ -323,7 +332,7 @@ export const AccountsPanel: FC<{
               }}
             >
               <TrashIcon weight="duotone" />
-              删除
+              {t("删除")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogPopup>

@@ -5,6 +5,7 @@ import { UpdateDialog } from "@/features/update-dialog";
 import { errorText, type Status, type UpdatePrefsStatus } from "@/lib/desktop";
 import { playInteractionSound } from "@/lib/ui-sounds";
 import { Events } from "@wailsio/runtime";
+import { PresentationProvider } from "@/presentation";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(
@@ -43,7 +44,7 @@ export function Providers({ children }: { children: ReactNode }) {
       const previous = client.getQueryData<Status>(["status"]);
       client.setQueryData(["status"], next);
       if (next.error && previous?.running && !next.running) {
-        toastManager.add({ title: next.error, type: "error" });
+        toastManager.add({ title: errorText(next.error), type: "error" });
       }
     });
     const offLogin = Events.On("login:done", () => {
@@ -65,10 +66,12 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={client}>
-      <ToastProvider position="bottom-center">
-        {children}
-        <UpdateDialog />
-      </ToastProvider>
+      <PresentationProvider>
+        <ToastProvider position="bottom-center">
+          {children}
+          <UpdateDialog />
+        </ToastProvider>
+      </PresentationProvider>
     </QueryClientProvider>
   );
 }

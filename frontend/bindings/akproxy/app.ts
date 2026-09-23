@@ -143,6 +143,13 @@ export function ServiceSettings(): $CancellablePromise<desktop$0.ServiceSettings
 }
 
 /**
+ * SetPresentation keeps the native menu and window background in sync with the renderer.
+ */
+export function SetPresentation(language: string, dark: boolean): $CancellablePromise<void> {
+    return $Call.ByID(1410094571, language, dark);
+}
+
+/**
  * Start binds the saved config.
  */
 export function Start(): $CancellablePromise<void> {

@@ -1,7 +1,8 @@
 import type { UsageWindow } from "@/lib/desktop";
+import { translate, type Locale } from "../lib/i18n.ts";
 
-export function windowPace(window: UsageWindow, alwaysShow: boolean, now = Date.now()) {
-  if (window.used >= 100) return { tone: "danger", label: "额度已用尽", tick: null };
+export function windowPace(window: UsageWindow, alwaysShow: boolean, now = Date.now(), locale: Locale = "zh-CN") {
+  if (window.used >= 100) return { tone: "danger", label: translate("额度已用尽", locale), tick: null };
   const fallbackSeconds = window.kind === "5h" ? 5 * 3600
     : window.kind === "daily" ? 24 * 3600
     : window.kind === "monthly" ? 30 * 24 * 3600
@@ -14,8 +15,8 @@ export function windowPace(window: UsageWindow, alwaysShow: boolean, now = Date.
   }
   const projectedUsed = window.used * duration / elapsed;
   const tone = projectedUsed >= 100 ? "danger" : projectedUsed >= 90 ? "warning" : "normal";
-  const label = tone === "danger" ? "按当前速度可能提前用尽"
-    : tone === "warning" ? `按当前速度，重置时约剩余 ${Math.max(1, Math.round(100 - projectedUsed))}%`
-    : alwaysShow ? `按当前速度，重置时约剩余 ${Math.round(100 - projectedUsed)}%` : "";
+  const label = tone === "danger" ? translate("按当前速度可能提前用尽", locale)
+    : tone === "warning" ? translate("按当前速度，重置时约剩余 {percent}%", locale, { percent: Math.max(1, Math.round(100 - projectedUsed)) })
+    : alwaysShow ? translate("按当前速度，重置时约剩余 {percent}%", locale, { percent: Math.round(100 - projectedUsed) }) : "";
   return { tone, label, tick: Math.min(98, Math.max(2, elapsed / duration * 100)) };
 }

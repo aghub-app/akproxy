@@ -15,6 +15,8 @@ import { highlightCommand, highlightSnippet } from "@/lib/highlight-command";
 import { isSdkId, sdkExample, sdkOptions, type SdkId } from "@/lib/sdk-examples";
 import { errorText } from "@/lib/desktop";
 import { providerPages } from "@/lib/providers";
+import { currentLocale, translate } from "@/lib/i18n";
+import { usePresentation } from "@/presentation";
 import { homeModelsQueryOptions, homeQueryOptions } from "@/requests/home";
 
 async function copyText(value: string, title: string) {
@@ -22,7 +24,7 @@ async function copyText(value: string, title: string) {
     await Clipboard.SetText(value);
     toastManager.add({ title, type: "success" });
   } catch {
-    toastManager.add({ title: "复制失败，请重试", type: "error" });
+    toastManager.add({ title: translate("复制失败，请重试", currentLocale()), type: "error" });
   }
 }
 
@@ -35,18 +37,21 @@ const DoodleArrow: FC = () => (
   </svg>
 );
 
-const HomeStopped: FC = () => (
+const HomeStopped: FC = () => {
+  const { t } = usePresentation();
+  return (
   <Empty className="-translate-y-8">
     <EmptyHeader className="relative">
       <EmptyMedia><PlayIcon size={40} weight="duotone" /></EmptyMedia>
-      <EmptyTitle>启动服务</EmptyTitle>
+      <EmptyTitle>{t("启动服务")}</EmptyTitle>
       <EmptyDescription>
-        服务这会儿还停着。去窗口右上角点一下，它就在这台机器上跑起来。
+        {t("服务这会儿还停着。去窗口右上角点一下，它就在这台机器上跑起来。")}
       </EmptyDescription>
       <DoodleArrow />
     </EmptyHeader>
   </Empty>
-);
+  );
+};
 
 const ConnectPanel: FC<{ address: string; clientKeys: string[]; clientKey: string; onSelectKey: (key: string) => void }> = ({
   address,
@@ -54,6 +59,7 @@ const ConnectPanel: FC<{ address: string; clientKeys: string[]; clientKey: strin
   clientKey,
   onSelectKey,
 }) => {
+  const { t } = usePresentation();
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [sdk, setSdk] = useState<SdkId>("openai-python");
   const showKey = clientKey !== "" && revealedKey === clientKey;
@@ -66,28 +72,28 @@ const ConnectPanel: FC<{ address: string; clientKeys: string[]; clientKey: strin
   return <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
     <CardFrame className="min-w-0">
       <CardFrameHeader className="px-3 py-2">
-        <CardFrameTitle render={<h2 />}>地址</CardFrameTitle>
+        <CardFrameTitle render={<h2 />}>{t("地址")}</CardFrameTitle>
         <CardFrameAction>
-          <Button variant="outline" size="sm" disabled={!address} onClick={() => void copyText(address, "已复制地址")}>复制</Button>
+          <Button variant="outline" size="sm" disabled={!address} onClick={() => void copyText(address, t("已复制地址"))}>{t("复制")}</Button>
         </CardFrameAction>
       </CardFrameHeader>
       <Card className="min-w-0 flex-1 overflow-hidden">
-        <CardPanel className="flex min-w-0 items-center p-3 font-mono text-sm"><p className="truncate">{address || "还没有地址"}</p></CardPanel>
+        <CardPanel className="flex min-w-0 items-center p-3 font-mono text-sm"><p className="truncate">{address || t("还没有地址")}</p></CardPanel>
       </Card>
     </CardFrame>
     <CardFrame className="min-w-0">
       <CardFrameHeader className="px-3 py-2">
-        <CardFrameTitle render={<h2 />}>密钥</CardFrameTitle>
+        <CardFrameTitle render={<h2 />}>{t("密钥")}</CardFrameTitle>
         <CardFrameAction className="gap-2">
           {clientKeys.length > 1 ? <Select value={String(clientKeys.indexOf(clientKey))} onValueChange={(index) => {
             if (typeof index !== "string") return;
             const key = clientKeys[Number(index)];
             if (key) { setRevealedKey(null); onSelectKey(key); }
           }}>
-            <SelectTrigger size="sm" className="w-52" aria-label="选择客户端密钥"><SelectValue>{maskClientKey(clientKey)}</SelectValue></SelectTrigger>
+            <SelectTrigger size="sm" className="w-52" aria-label={t("选择客户端密钥")}><SelectValue>{maskClientKey(clientKey)}</SelectValue></SelectTrigger>
             <SelectPopup>{clientKeys.map((key, index) => <SelectItem key={key} value={String(index)}>{maskClientKey(key)}</SelectItem>)}</SelectPopup>
           </Select> : null}
-          <Button variant="outline" size="sm" disabled={!clientKey} onClick={() => void copyText(clientKey, "已复制 API key")}>复制</Button>
+          <Button variant="outline" size="sm" disabled={!clientKey} onClick={() => void copyText(clientKey, t("已复制 API key"))}>{t("复制")}</Button>
         </CardFrameAction>
       </CardFrameHeader>
       <Card className="min-w-0 flex-1 overflow-hidden">
@@ -98,9 +104,9 @@ const ConnectPanel: FC<{ address: string; clientKeys: string[]; clientKey: strin
     </CardFrame>
     <CardFrame className="min-w-0 md:col-span-2">
       <CardFrameHeader className="px-3 py-2">
-        <CardFrameTitle render={<h2 />}>环境变量</CardFrameTitle>
+        <CardFrameTitle render={<h2 />}>{t("环境变量")}</CardFrameTitle>
         <CardFrameAction>
-          <Button variant="outline" size="sm" disabled={!address || !clientKey} onClick={() => void copyText(env, "已复制环境变量")}>复制</Button>
+          <Button variant="outline" size="sm" disabled={!address || !clientKey} onClick={() => void copyText(env, t("已复制环境变量"))}>{t("复制")}</Button>
         </CardFrameAction>
       </CardFrameHeader>
       <Card className="min-w-0 overflow-hidden">
@@ -121,7 +127,7 @@ const ConnectPanel: FC<{ address: string; clientKeys: string[]; clientKey: strin
           </Select>
         </div>
         <CardFrameAction>
-          <Button variant="outline" size="sm" disabled={!address || !clientKey} onClick={() => void copyText(example, "已复制示例")}>复制</Button>
+          <Button variant="outline" size="sm" disabled={!address || !clientKey} onClick={() => void copyText(example, t("已复制示例"))}>{t("复制")}</Button>
         </CardFrameAction>
       </CardFrameHeader>
       <Card className="min-w-0 overflow-hidden">
@@ -132,6 +138,7 @@ const ConnectPanel: FC<{ address: string; clientKeys: string[]; clientKey: strin
 };
 
 export const HomePage: FC = () => {
+  const { t, locale } = usePresentation();
   const home = useQuery(homeQueryOptions());
   const [selectedModel, setSelectedModel] = useState("");
   const [selectedKey, setSelectedKey] = useState("");
@@ -143,15 +150,15 @@ export const HomePage: FC = () => {
 
   if (home.isError) {
     return <div role="alert" className="flex flex-col items-start gap-3">
-      <p>{errorText(home.error)}</p>
-      <Button variant="outline" onClick={() => void home.refetch()}>重试</Button>
+      <p>{errorText(home.error, locale)}</p>
+      <Button variant="outline" onClick={() => void home.refetch()}>{t("重试")}</Button>
     </div>;
   }
-  if (!data) return <p className="text-sm text-muted-foreground">正在读取首页…</p>;
+  if (!data) return <p className="text-sm text-muted-foreground">{t("正在读取首页…")}</p>;
   if (!data.hasCredentials) {
     return <section className="flex flex-col gap-6">
-      <div><h1 className="text-xl font-semibold">添加你的第一个上游</h1>
-        <p className="mt-2 text-sm text-muted-foreground">选择一个提供商，登录账号或配置 API key。</p></div>
+      <div><h1 className="text-xl font-semibold">{t("添加你的第一个上游")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("选择一个提供商，登录账号或配置 API key。")}</p></div>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
         {providerPages.map(({ to, label, icon: Icon }) => (
           <Card key={to} render={<Link to={to} />} className="items-center gap-3 p-4 transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring">
@@ -173,11 +180,11 @@ export const HomePage: FC = () => {
   const displayed = curlCommands(data.status.address, showKey ? (clientKey || "<API_KEY>") : "••••••••", model);
 
   return <section className="flex flex-col gap-5">
-    <h1 className="text-xl font-semibold">开始调用</h1>
+    <h1 className="text-xl font-semibold">{t("开始调用")}</h1>
     <Tabs className="gap-5" defaultValue="connect">
       <TabsList>
-        <TabsTab value="connect">接入</TabsTab>
-        <TabsTab value="test">测试</TabsTab>
+        <TabsTab value="connect">{t("接入")}</TabsTab>
+        <TabsTab value="test">{t("测试")}</TabsTab>
       </TabsList>
       <TabsPanel value="connect">
         <ConnectPanel address={data.status.address} clientKeys={clientKeys} clientKey={clientKey} onSelectKey={(key) => { setSelectedKey(key); setRevealedTestKey(null); }} />
@@ -185,27 +192,27 @@ export const HomePage: FC = () => {
       <TabsPanel value="test" className="flex flex-col gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <label id="home-model-label" className="text-sm font-medium">模型</label>
+            <label id="home-model-label" className="text-sm font-medium">{t("模型")}</label>
             <Select value={model} disabled={available.length === 0} onValueChange={(value) => { if (typeof value === "string") setSelectedModel(value); }}>
               <SelectTrigger aria-labelledby="home-model-label"><SelectValue>{model}</SelectValue></SelectTrigger>
               <SelectPopup>{available.map((id) => <SelectItem key={id} value={id}>{id}</SelectItem>)}</SelectPopup>
             </Select>
           </div>
-          <Button variant="outline" aria-pressed={showKey} onClick={() => setRevealedTestKey(showKey ? null : clientKey)}>{showKey ? "隐藏密钥" : "显示密钥"}</Button>
+          <Button variant="outline" aria-pressed={showKey} onClick={() => setRevealedTestKey(showKey ? null : clientKey)}>{showKey ? t("隐藏密钥") : t("显示密钥")}</Button>
         </div>
         {available.length === 0 ? <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground" role="status">
           <p>
-            {models.isFetching ? "正在读取模型…" : models.isError ? errorText(models.error) : "暂无可选模型。"}
-            {models.isFetching ? "" : " 请将命令中的 <MODEL_ID> 替换为模型 ID。"}
+            {models.isFetching ? t("正在读取模型…") : models.isError ? errorText(models.error, locale) : t("暂无可选模型。")}
+            {models.isFetching ? "" : t(" 请将命令中的 <MODEL_ID> 替换为模型 ID。")}
           </p>
-          {!models.isFetching ? <Button variant="ghost" size="sm" onClick={() => void models.refetch()}>刷新模型</Button> : null}
+          {!models.isFetching ? <Button variant="ghost" size="sm" onClick={() => void models.refetch()}>{t("刷新模型")}</Button> : null}
         </div> : null}
-        <p className="text-xs text-muted-foreground">复制内容包含所选客户端密钥。模型是否支持对应 API 取决于上游。</p>
+        <p className="text-xs text-muted-foreground">{t("复制内容包含所选客户端密钥。模型是否支持对应 API 取决于上游。")}</p>
         {commands.map(({ title, command }, index) => <CardFrame key={title} className="min-w-0">
           <CardFrameHeader className="px-3 py-2">
-            <CardFrameTitle render={<h2 />}>{title}</CardFrameTitle>
+            <CardFrameTitle render={<h2 />}>{t(title)}</CardFrameTitle>
             <CardFrameAction>
-              <Button variant="outline" size="sm" aria-label={`复制${title}命令`} onClick={() => void copyText(command, "已复制命令")}>复制</Button>
+              <Button variant="outline" size="sm" aria-label={t("复制{title}命令", { title: t(title) })} onClick={() => void copyText(command, t("已复制命令"))}>{t("复制")}</Button>
             </CardFrameAction>
           </CardFrameHeader>
           <Card className="min-w-0 overflow-hidden">

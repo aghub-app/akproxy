@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"akproxy/internal/desktop"
 
@@ -10,8 +11,9 @@ import (
 
 // App is the Wails binding surface. It delegates to the desktop runtime.
 type App struct {
-	ctx     context.Context
-	desktop *desktop.Runtime
+	ctx       context.Context
+	desktop   *desktop.Runtime
+	aboutMenu *application.MenuItem
 }
 
 // NewApp creates the application before the window starts.
@@ -41,6 +43,24 @@ func (a *App) ServiceShutdown() error {
 func (a *App) ready() error {
 	if a.desktop == nil {
 		return errNotReady
+	}
+	return nil
+}
+
+// SetPresentation keeps the native menu and window background in sync with the renderer.
+func (a *App) SetPresentation(language string, dark bool) error {
+	if language != "zh-CN" && language != "en" {
+		return fmt.Errorf("界面语言无效")
+	}
+	if a.aboutMenu != nil {
+		label := "关于 akproxy"
+		if language == "en" {
+			label = "About akproxy"
+		}
+		a.aboutMenu.SetLabel(label)
+	}
+	if window, ok := application.Get().Window.GetByName("main"); ok {
+		window.SetBackgroundColour(windowBackground(dark))
 	}
 	return nil
 }

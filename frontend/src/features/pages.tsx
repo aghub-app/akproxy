@@ -28,6 +28,7 @@ import { toastManager } from "@/components/ui/toast";
 import { AccountsPanel } from "@/features/accounts";
 import { AboutTab } from "@/features/about";
 import { api, errorText, type AppPrefs, type ServiceSettings } from "@/lib/desktop";
+import { usePresentation } from "@/presentation";
 
 const strategies = [
   { value: "round-robin", label: "轮询" },
@@ -52,7 +53,59 @@ const AboutTabContainer: FC = () => {
   return <AboutTab version={version.data} />;
 };
 
+const PresentationSettings: FC = () => {
+  const { t } = usePresentation();
+  const client = useQueryClient();
+  const status = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
+  const save = useMutation({
+    mutationFn: (prefs: AppPrefs) => api.saveUpdatePrefs(prefs),
+    onSuccess: (next) => client.setQueryData(["update-prefs"], next),
+    onError: notifyError,
+  });
+  if (status.isError && !status.data) {
+    return (
+      <div role="alert" className="flex items-center gap-3 text-sm">
+        <span>{t("设置暂时读不到")}</span>
+        <Button variant="outline" onClick={() => void status.refetch()}>{t("重试")}</Button>
+      </div>
+    );
+  }
+  if (!status.data) return <p className="text-muted-foreground text-sm">{t("正在读取设置…")}</p>;
+  return (
+    <div className="flex max-w-xl flex-col gap-6">
+      <Field>
+        <FieldLabel>{t("界面语言")}</FieldLabel>
+        <Select disabled={save.isPending} value={status.data.prefs.language} onValueChange={(language) => {
+          if (language === "system" || language === "zh-CN" || language === "en") save.mutate({ ...status.data.prefs, language });
+        }}>
+          <SelectTrigger><SelectValue>{(value) => value === "zh-CN" ? t("简体中文") : value === "en" ? "English" : t("跟随系统")}</SelectValue></SelectTrigger>
+          <SelectPopup>
+            <SelectItem value="system">{t("跟随系统")}</SelectItem>
+            <SelectItem value="zh-CN">{t("简体中文")}</SelectItem>
+            <SelectItem value="en">English</SelectItem>
+          </SelectPopup>
+        </Select>
+      </Field>
+      <Field>
+        <FieldLabel>{t("明暗模式")}</FieldLabel>
+        <Select disabled={save.isPending} value={status.data.prefs.theme} onValueChange={(theme) => {
+          if (theme === "system" || theme === "light" || theme === "dark") save.mutate({ ...status.data.prefs, theme });
+        }}>
+          <SelectTrigger><SelectValue>{(value) => value === "light" ? t("浅色") : value === "dark" ? t("深色") : t("跟随系统")}</SelectValue></SelectTrigger>
+          <SelectPopup>
+            <SelectItem value="system">{t("跟随系统")}</SelectItem>
+            <SelectItem value="light">{t("浅色")}</SelectItem>
+            <SelectItem value="dark">{t("深色")}</SelectItem>
+          </SelectPopup>
+        </Select>
+        <FieldDescription>{t("选择后立即生效，重启后保持。")}</FieldDescription>
+      </Field>
+    </div>
+  );
+};
+
 const UsagePrefField: FC = () => {
+  const { t } = usePresentation();
   const client = useQueryClient();
   const status = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
   const save = useMutation({
@@ -66,13 +119,13 @@ const UsagePrefField: FC = () => {
   if (status.isError) {
     return (
       <div role="alert" className="flex items-center gap-3 text-sm">
-        <span>用量设置暂时读不到</span>
-        <Button variant="outline" onClick={() => void status.refetch()}>重试</Button>
+        <span>{t("用量设置暂时读不到")}</span>
+        <Button variant="outline" onClick={() => void status.refetch()}>{t("重试")}</Button>
       </div>
     );
   }
   if (!status.data) {
-    return <p className="text-muted-foreground text-sm">正在读取用量设置…</p>;
+    return <p className="text-muted-foreground text-sm">{t("正在读取用量设置…")}</p>;
   }
   const prefs = status.data.prefs;
   return (
@@ -86,54 +139,54 @@ const UsagePrefField: FC = () => {
             save.mutate({ ...prefs, usageEnabled: checked })
           }
         />
-        <FieldLabel>额度显示</FieldLabel>
+        <FieldLabel>{t("额度显示")}</FieldLabel>
       </div>
-      <FieldDescription>关闭后停止读取厂商额度。</FieldDescription>
+      <FieldDescription>{t("关闭后停止读取厂商额度。")}</FieldDescription>
       </Field>
       <Field>
-        <FieldLabel>百分比显示</FieldLabel>
+        <FieldLabel>{t("百分比显示")}</FieldLabel>
         <Select disabled={save.isPending} value={prefs.usagePercentMode} onValueChange={(value) => {
           if (value === "left" || value === "used") save.mutate({ ...prefs, usagePercentMode: value });
         }}>
-          <SelectTrigger><SelectValue>{(value) => value === "used" ? "已用" : "剩余"}</SelectValue></SelectTrigger>
+          <SelectTrigger><SelectValue>{(value) => value === "used" ? t("已用") : t("剩余")}</SelectValue></SelectTrigger>
           <SelectPopup>
-            <SelectItem value="left">剩余</SelectItem>
-            <SelectItem value="used">已用</SelectItem>
+            <SelectItem value="left">{t("剩余")}</SelectItem>
+            <SelectItem value="used">{t("已用")}</SelectItem>
           </SelectPopup>
         </Select>
       </Field>
       <Field>
-        <FieldLabel>重置时间</FieldLabel>
+        <FieldLabel>{t("重置时间")}</FieldLabel>
         <Select disabled={save.isPending} value={prefs.usageResetMode} onValueChange={(value) => {
           if (value === "countdown" || value === "exact") save.mutate({ ...prefs, usageResetMode: value });
         }}>
-          <SelectTrigger><SelectValue>{(value) => value === "exact" ? "具体时间" : "倒计时"}</SelectValue></SelectTrigger>
+          <SelectTrigger><SelectValue>{(value) => value === "exact" ? t("具体时间") : t("倒计时")}</SelectValue></SelectTrigger>
           <SelectPopup>
-            <SelectItem value="countdown">倒计时</SelectItem>
-            <SelectItem value="exact">具体时间</SelectItem>
+            <SelectItem value="countdown">{t("倒计时")}</SelectItem>
+            <SelectItem value="exact">{t("具体时间")}</SelectItem>
           </SelectPopup>
         </Select>
       </Field>
       <Field>
         <div className="flex items-center gap-3">
           <Switch disabled={save.isPending} checked={prefs.usageAlwaysShowPacing} onCheckedChange={(checked) => save.mutate({ ...prefs, usageAlwaysShowPacing: checked })} />
-          <FieldLabel>始终显示使用节奏</FieldLabel>
+          <FieldLabel>{t("始终显示使用节奏")}</FieldLabel>
         </div>
-        <FieldDescription>有足够窗口数据后，显示按当前速度推算的剩余额度；关闭时只提醒接近限额的窗口。</FieldDescription>
+        <FieldDescription>{t("有足够窗口数据后，显示按当前速度推算的剩余额度；关闭时只提醒接近限额的窗口。")}</FieldDescription>
       </Field>
       <Field>
         <div className="flex items-center gap-3">
           <Switch disabled={save.isPending} checked={prefs.usageShowExtra} onCheckedChange={(checked) => save.mutate({ ...prefs, usageShowExtra: checked })} />
-          <FieldLabel>显示额外额度</FieldLabel>
+          <FieldLabel>{t("显示额外额度")}</FieldLabel>
         </div>
-        <FieldDescription>仅在厂商明确返回金额或积分时显示。</FieldDescription>
+        <FieldDescription>{t("仅在厂商明确返回金额或积分时显示。")}</FieldDescription>
       </Field>
       <Field>
         <div className="flex items-center gap-3">
           <Switch disabled={save.isPending} checked={prefs.usageShowResets} onCheckedChange={(checked) => save.mutate({ ...prefs, usageShowResets: checked })} />
-          <FieldLabel>显示重置次数</FieldLabel>
+          <FieldLabel>{t("显示重置次数")}</FieldLabel>
         </div>
-        <FieldDescription>Codex 返回可用重置券数量时显示。</FieldDescription>
+        <FieldDescription>{t("Codex 返回可用重置券数量时显示。")}</FieldDescription>
       </Field>
     </div>
   );
@@ -150,9 +203,10 @@ function canPersistService(next: ServiceSettings) {
 }
 
 export const ServicePage: FC = () => {
+  const { t } = usePresentation();
   const query = useQuery({ queryKey: ["service"], queryFn: api.service });
   if (!query.data) {
-    return <p className="text-muted-foreground text-sm">正在读取设置…</p>;
+    return <p className="text-muted-foreground text-sm">{t("正在读取设置…")}</p>;
   }
   return (
     <div className="flex flex-col gap-6">
@@ -171,6 +225,7 @@ const ClientKeysTable: FC<{
   keys: string[];
   onChange: (keys: string[]) => void;
 }> = ({ keys, onChange }) => {
+  const { t } = usePresentation();
   const [visible, setVisible] = useState<Record<string, boolean>>({});
   const [flashed, setFlashed] = useState<string | null>(null);
   const rows = keys.map((key) => key.trim()).filter((key) => key !== "");
@@ -182,7 +237,7 @@ const ClientKeysTable: FC<{
     }
     onChange([...rows, key]);
     setFlashed(key);
-    toastManager.add({ title: "创建成功", type: "success" });
+    toastManager.add({ title: t("创建成功"), type: "success" });
   }
 
   return (
@@ -194,7 +249,7 @@ const ClientKeysTable: FC<{
             <TableHead>
               <div className="flex justify-end">
                 <Button type="button" size="sm" onClick={createKey}>
-                  新建 API key
+                  {t("新建 API key")}
                 </Button>
               </div>
             </TableHead>
@@ -204,7 +259,7 @@ const ClientKeysTable: FC<{
           {rows.length === 0 ? (
             <TableRow>
               <TableCell className="text-muted-foreground" colSpan={2}>
-                还没有客户端密钥。至少保留一把，否则不能启动。
+                {t("还没有客户端密钥。至少保留一把，否则不能启动。")}
               </TableCell>
             </TableRow>
           ) : (
@@ -227,11 +282,11 @@ const ClientKeysTable: FC<{
                     variant="outline"
                     onClick={() => {
                       void Clipboard.SetText(key).then(() => {
-                        toastManager.add({ title: "已复制 API key", type: "success" });
+                        toastManager.add({ title: t("已复制 API key"), type: "success" });
                       }).catch(notifyError);
                     }}
                   >
-                    复制
+                    {t("复制")}
                   </Button>
                   <Button
                     className="ms-2"
@@ -239,7 +294,7 @@ const ClientKeysTable: FC<{
                     variant="destructive-outline"
                     onClick={() => onChange(rows.filter((item) => item !== key))}
                   >
-                    删除
+                    {t("删除")}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -252,6 +307,7 @@ const ClientKeysTable: FC<{
 };
 
 const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
+  const { t } = usePresentation();
   const client = useQueryClient();
   const [form, setForm] = useState(initial);
   const latest = useRef(initial);
@@ -260,7 +316,7 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
   const writes = useRef(Promise.resolve());
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const tab = tabParam === "clients" || tabParam === "advanced" || tabParam === "usage" || tabParam === "about" ? tabParam : "listen";
+  const tab = tabParam === "clients" || tabParam === "advanced" || tabParam === "usage" || tabParam === "appearance" || tabParam === "about" ? tabParam : "listen";
 
   function write(snapshot: ServiceSettings) {
     if (!canPersistService(snapshot)) {
@@ -304,7 +360,7 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
   function edit(patch: Partial<ServiceSettings>, immediate = false) {
     const next = { ...latest.current, ...patch };
     if (patch.clientApiKeys && !next.clientApiKeys.some((key) => key.trim() !== "")) {
-      toastManager.add({ title: "至少保留一把客户端密钥", type: "error" });
+      toastManager.add({ title: t("至少保留一把客户端密钥"), type: "error" });
       return;
     }
     latest.current = next;
@@ -319,15 +375,16 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
         onValueChange={(value) => setSearchParams(value ? { tab: String(value) } : {})}
       >
         <TabsList>
-          <TabsTab value="listen">监听</TabsTab>
-          <TabsTab value="clients">密钥</TabsTab>
-          <TabsTab value="advanced">高级</TabsTab>
-          <TabsTab value="usage">用量</TabsTab>
-          <TabsTab value="about">关于</TabsTab>
+          <TabsTab value="listen">{t("监听")}</TabsTab>
+          <TabsTab value="clients">{t("密钥")}</TabsTab>
+          <TabsTab value="advanced">{t("高级")}</TabsTab>
+          <TabsTab value="usage">{t("用量")}</TabsTab>
+          <TabsTab value="appearance">{t("外观")}</TabsTab>
+          <TabsTab value="about">{t("关于")}</TabsTab>
         </TabsList>
         <TabsPanel value="listen" className="flex flex-col gap-5">
           <Field>
-            <FieldLabel>监听范围</FieldLabel>
+            <FieldLabel>{t("监听范围")}</FieldLabel>
             <Select
               value={form.listenMode}
               onValueChange={(value) => {
@@ -338,13 +395,13 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
             >
               <SelectTrigger>
                 <SelectValue>
-                  {(value) => (typeof value === "string" ? listenLabels[value] : null)}
+                  {(value) => (typeof value === "string" ? t(listenLabels[value]) : null)}
                 </SelectValue>
               </SelectTrigger>
               <SelectPopup>
-                <SelectItem value="local">只本机</SelectItem>
-                <SelectItem value="all">所有网络接口</SelectItem>
-                <SelectItem value="custom">自定义地址</SelectItem>
+                <SelectItem value="local">{t("只本机")}</SelectItem>
+                <SelectItem value="all">{t("所有网络接口")}</SelectItem>
+                <SelectItem value="custom">{t("自定义地址")}</SelectItem>
               </SelectPopup>
             </Select>
             {form.listenMode === "custom" ? (
@@ -355,11 +412,11 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
               />
             ) : null}
             <FieldDescription>
-              只本机会写成 127.0.0.1。所有网络接口意味着同一网络上的其他设备也能连接。
+              {t("只本机会写成 127.0.0.1。所有网络接口意味着同一网络上的其他设备也能连接。")}
             </FieldDescription>
           </Field>
           <Field>
-            <FieldLabel>端口</FieldLabel>
+            <FieldLabel>{t("端口")}</FieldLabel>
             <Input
               type="number"
               min={1}
@@ -381,7 +438,7 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
         </TabsPanel>
         <TabsPanel value="advanced" className="flex flex-col gap-5">
           <Field>
-            <FieldLabel>出站代理</FieldLabel>
+            <FieldLabel>{t("出站代理")}</FieldLabel>
             <Input
               value={form.proxyUrl}
               placeholder="http://127.0.0.1:7890"
@@ -389,7 +446,7 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
             />
           </Field>
           <Field>
-            <FieldLabel>路由</FieldLabel>
+            <FieldLabel>{t("路由")}</FieldLabel>
             <Select
               value={form.routingStrategy}
               onValueChange={(value) => {
@@ -400,13 +457,13 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
             >
               <SelectTrigger>
                 <SelectValue>
-                  {(value) => (typeof value === "string" ? strategyLabels[value] : null)}
+                  {(value) => (typeof value === "string" ? t(strategyLabels[value]) : null)}
                 </SelectValue>
               </SelectTrigger>
               <SelectPopup>
                 {strategies.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                    {t(item.label)}
                   </SelectItem>
                 ))}
               </SelectPopup>
@@ -415,12 +472,15 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
           <Field>
             <div className="flex items-center gap-3">
               <Switch checked={form.debug} onCheckedChange={(checked) => edit({ debug: checked }, true)} />
-              <FieldLabel>调试日志</FieldLabel>
+              <FieldLabel>{t("调试日志")}</FieldLabel>
             </div>
           </Field>
         </TabsPanel>
         <TabsPanel value="usage">
           <UsagePrefField />
+        </TabsPanel>
+        <TabsPanel value="appearance">
+          <PresentationSettings />
         </TabsPanel>
         <TabsPanel value="about">
           <AboutTabContainer />
@@ -438,23 +498,25 @@ export const NativeProviderPage: FC<{
 };
 
 export const KimiPage: FC = () => {
+  const { t } = usePresentation();
   return (
     <AccountsPanel
       page="kimi"
       logins={[
-        { id: "kimi", label: "添加 Kimi 中文站账号" },
-        { id: "kimi-ai", label: "添加 Kimi 国际站账号" },
+        { id: "kimi", label: t("添加 Kimi 中文站账号") },
+        { id: "kimi-ai", label: t("添加 Kimi 国际站账号") },
       ]}
     />
   );
 };
 
 export const DevinPage: FC = () => {
+  const { t } = usePresentation();
   return (
     <AccountsPanel
       page="devin"
-      logins={[{ id: "devin", label: "添加 Devin 账号" }]}
-      filledExtra={<p className="text-muted-foreground text-sm">登录会直接写入账号目录。</p>}
+      logins={[{ id: "devin", label: t("添加 Devin 账号") }]}
+      filledExtra={<p className="text-muted-foreground text-sm">{t("登录会直接写入账号目录。")}</p>}
     />
   );
 };

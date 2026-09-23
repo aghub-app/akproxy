@@ -29,10 +29,13 @@ func main() {
 		Assets:   application.AssetOptions{Handler: application.AssetFileServerFS(assets)},
 		Mac:      application.MacOptions{ApplicationShouldTerminateAfterLastWindowClosed: true},
 	})
-	app.Menu.Set(aboutToSettingsMenu(app))
 	if err := configureUpdates(app); err != nil {
 		log.Fatal(err)
 	}
+	prefs := scheduler.Status().Prefs
+	menu, about := aboutToSettingsMenu(app, prefs.Language == "en")
+	service.aboutMenu = about
+	app.Menu.Set(menu)
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Name:                  "main",
 		Title:                 "akproxy",
@@ -42,12 +45,12 @@ func main() {
 		MaximiseButtonState:   application.ButtonDisabled,
 		FullscreenButtonState: application.ButtonDisabled,
 		Mac:                   application.MacWindow{CollectionBehavior: application.MacWindowCollectionBehaviorFullScreenNone},
-		BackgroundColour:      windowBackground(app.Env.IsDarkMode()),
+		BackgroundColour:      windowBackground(darkForTheme(prefs.Theme, app.Env.IsDarkMode())),
 		URL:                   "/",
 	})
 	window.OnWindowEvent(events.Common.WindowClosing, func(_ *application.WindowEvent) { app.Quit() })
 	app.Event.OnApplicationEvent(events.Common.ThemeChanged, func(_ *application.ApplicationEvent) {
-		window.SetBackgroundColour(windowBackground(app.Env.IsDarkMode()))
+		window.SetBackgroundColour(windowBackground(darkForTheme(scheduler.Status().Prefs.Theme, app.Env.IsDarkMode())))
 	})
 	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(_ *application.ApplicationEvent) {
 		// The Dock caches bundle icons aggressively; set the icon at runtime so a
@@ -65,12 +68,19 @@ func main() {
 	}
 }
 
-// aboutToSettingsMenu replaces the default macOS app menu so the About item
-// opens the in-app 关于 tab instead of the system about panel.
-func aboutToSettingsMenu(app *application.App) *application.Menu {
+func darkForTheme(theme string, systemDark bool) bool {
+	return theme == "dark" || theme == "system" && systemDark
+}
+
+// aboutToSettingsMenu routes About to the in-app tab.
+func aboutToSettingsMenu(app *application.App, english bool) (*application.Menu, *application.MenuItem) {
 	menu := application.NewMenu()
 	appMenu := menu.AddSubmenu("akproxy")
-	about := appMenu.Add("关于 akproxy")
+	label := "关于 akproxy"
+	if english {
+		label = "About akproxy"
+	}
+	about := appMenu.Add(label)
 	about.OnClick(func(*application.Context) {
 		app.Event.Emit("app:about")
 	})
@@ -85,5 +95,5 @@ func aboutToSettingsMenu(app *application.App) *application.Menu {
 	menu.AddRole(application.EditMenu)
 	menu.AddRole(application.WindowMenu)
 	menu.AddRole(application.HelpMenu)
-	return menu
+	return menu, about
 }

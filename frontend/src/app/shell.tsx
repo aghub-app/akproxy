@@ -10,6 +10,7 @@ import { toastManager } from "@/components/ui/toast";
 import { api, errorText, type Status } from "@/lib/desktop";
 import { cn } from "@/lib/utils";
 import { controlSuccessToast, serviceBarNotice } from "./service-bar";
+import { usePresentation } from "@/presentation";
 
 const HomeIcon: FC<{ size?: number }> = ({ size }) => (
   <HouseIcon size={size} weight="duotone" />
@@ -49,6 +50,7 @@ const actionLabel = { start: "启动", stop: "停止", restart: "重启" } as co
 const usagePages = ["codex", "grok", "claude", "devin"] as const;
 
 export const AppLayout: FC = () => {
+  const { t, locale } = usePresentation();
   const client = useQueryClient();
   const navigate = useNavigate();
   const usagePrefs = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
@@ -93,7 +95,7 @@ export const AppLayout: FC = () => {
     },
     onSuccess: async (_data, ran) => {
       await client.invalidateQueries({ queryKey: ["status"] });
-      const started = controlSuccessToast(ran);
+      const started = controlSuccessToast(ran, locale);
       if (started) {
         toastManager.add({ ...started, type: "success" });
       }
@@ -109,7 +111,7 @@ export const AppLayout: FC = () => {
 
   const current = status.data;
   const action = current?.action ?? "start";
-  const notice = serviceBarNotice(current);
+  const notice = serviceBarNotice(current, locale);
 
   return (
     <div className="flex h-full flex-col bg-background text-foreground">
@@ -122,8 +124,8 @@ export const AppLayout: FC = () => {
               current?.running ? "bg-success" : "bg-muted-foreground/60",
             )}
             role="img"
-            aria-label={current?.running ? "运行中" : "已停止"}
-            title={current?.running ? "运行中" : "已停止"}
+            aria-label={current?.running ? t("运行中") : t("已停止")}
+            title={current?.running ? t("运行中") : t("已停止")}
           />
           <Button
             variant={action === "stop" ? "destructive" : "default"}
@@ -132,7 +134,7 @@ export const AppLayout: FC = () => {
           >
             {action === "stop" ? <StopIcon weight="duotone" /> : null}
             {action === "start" ? <PlayIcon weight="duotone" /> : null}
-            {actionLabel[action]}
+            {t(actionLabel[action])}
           </Button>
         </div>
         {notice ? (
@@ -151,11 +153,11 @@ export const AppLayout: FC = () => {
         <nav className="flex w-56 shrink-0 flex-col border-r">
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-3">
             {mainPages.map((item) => (
-              <SideLink key={item.to} item={item} />
+              <SideLink key={item.to} item={{ ...item, label: t(item.label) }} />
             ))}
           </div>
           <div className="shrink-0 p-3 pt-0">
-            <SideLink item={settingsPage} />
+            <SideLink item={{ ...settingsPage, label: t(settingsPage.label) }} />
           </div>
         </nav>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">

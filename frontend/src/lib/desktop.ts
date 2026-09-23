@@ -4,6 +4,7 @@ import type {
   ServiceSettings as WireServiceSettings,
 } from "../../bindings/akproxy/internal/desktop/models";
 import type { UpdatePrefsStatus as WireUpdatePrefsStatus } from "../../bindings/akproxy/models";
+import { currentLocale, localizeErrorMessage, type Locale } from "@/lib/i18n";
 
 export type AppPrefs = WireAppPrefs;
 
@@ -52,7 +53,7 @@ export type Status = {
   loginActive: boolean;
 };
 
-export function errorText(error: unknown): string {
+export function rawErrorText(error: unknown): string {
   if (error instanceof Error && error.message) {
     return error.message;
   }
@@ -60,6 +61,10 @@ export function errorText(error: unknown): string {
     return error;
   }
   return "操作失败";
+}
+
+export function errorText(error: unknown, locale: Locale = currentLocale()): string {
+  return localizeErrorMessage(rawErrorText(error), locale);
 }
 
 export const api = {
@@ -87,6 +92,7 @@ export const api = {
   applyUpdate: () => app.ApplyUpdate(),
   updatePrefStatus: () => app.UpdatePrefStatus(),
   saveUpdatePrefs: (input: AppPrefs) => app.SaveUpdatePrefs(input),
+  setPresentation: (language: "zh-CN" | "en", dark: boolean) => app.SetPresentation(language, dark),
   downloadPendingUpdate: () => app.DownloadPendingUpdate(),
 };
 

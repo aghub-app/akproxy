@@ -1,5 +1,6 @@
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { usePresentation } from "@/presentation";
 
 export function maskClientKey(key: string): string {
   if (key.length <= 8) return "•".repeat(Math.max(key.length, 8));
@@ -11,12 +12,13 @@ export function ClientKeyDisplay({ value, visible, onToggle }: {
   visible: boolean;
   onToggle: () => void;
 }) {
+  const { t } = usePresentation();
   return <div className="flex min-w-0 items-center gap-2">
     <Button
       size="icon-sm"
       type="button"
       variant="ghost"
-      aria-label={visible ? "隐藏客户端密钥" : "显示客户端密钥"}
+      aria-label={visible ? t("隐藏客户端密钥") : t("显示客户端密钥")}
       aria-pressed={visible}
       disabled={!value}
       onClick={onToggle}

@@ -23,7 +23,7 @@ export interface AccountUsage {
 }
 
 /**
- * AppPrefs is the 更新偏好 owned by the 关于 page. It lives in app.json and
+ * AppPrefs is the application-owned preference set. It lives in app.json and
  * never touches config.yaml, whose parser drops unknown fields.
  */
 export interface AppPrefs {
@@ -36,6 +36,8 @@ export interface AppPrefs {
     "usageShowExtra": boolean;
     "usageShowResets": boolean;
     "usageAlwaysShowPacing": boolean;
+    "language": string;
+    "theme": string;
 }
 
 /**

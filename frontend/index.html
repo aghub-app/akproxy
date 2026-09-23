@@ -6,9 +6,16 @@
     <title>akproxy</title>
     <script>
       (function () {
-        var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var theme = "system";
+        var language = "system";
+        try {
+          theme = localStorage.getItem("akproxy-theme") || "system";
+          language = localStorage.getItem("akproxy-language") || "system";
+        } catch (_) {}
+        var dark = theme === "dark" || theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches;
         document.documentElement.classList.toggle("dark", dark);
         document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        document.documentElement.lang = language === "en" || language === "zh-CN" ? language : navigator.language.toLowerCase().startsWith("en") ? "en" : "zh-CN";
       })();
     </script>
 </head>
@@ -17,4 +24,3 @@
 <script src="./src/main.tsx" type="module"></script>
 </body>
 </html>
-
