@@ -9,6 +9,10 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/aghub-app/akproxy/releases">下载连接</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/aghub-app/akproxy"><img alt="Star this repo" src="https://img.shields.io/github/stars/aghub-app/akproxy.svg?style=social&label=Star%20this%20repo"></a>
 </p>
 
