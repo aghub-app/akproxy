@@ -18,6 +18,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - **监听配置**: host、端口和 TLS。
 - **已绑定的监听**: 当前这次成功启动实际在听的 host、端口和 TLS。
 - **热重载**: 服务运行期间，监听配置以外的已保存变更无需重启即可生效。
+- **需要重新授权**: 运行中的 SDK 将某账号判为 `unauthorized` 或 `invalid_grant` 的认证错误。
 - **界面语言**: 应用自有文案的简体中文或英语呈现，不改变配置值及上游返回内容。
 
 ## Observable contracts
@@ -43,6 +44,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 写入不得删除该页不编辑的已有配置。Codex、Grok、Claude、Gemini、Kimi、Devin 没有上游 API key 表单。配置文件里的 OpenAI 兼容项没有编辑页，保存其他页面时不得删除它们。
 - 监听配置只在启动或重启成功后成为已绑定监听。其他已写入配置在服务运行中热重载。
 - 浏览器登录写入应用自己的账号目录。界面不展示令牌。
+- 服务运行时，账号列表按 SDK 实时认证状态为需要重新授权的账号显示红色提醒和对应卡片的重新授权操作。重新授权仅能更新被选中的同一账号；登录到不同账号时不写入。服务未运行时不显示历史提醒。其他 SDK 错误或额度读取失败不等于需要重新授权。详见 `docs/prd/account-reauthorization.md` 和 `docs/adr/account-auth-status.md`。
 - 没有已登录账号的 Codex、Grok、Claude、Gemini、Kimi、Devin 页，在内容区中央显示该页图标、名称和添加操作。读取账号失败时不显示成空列表。
 - Codex、Claude、Grok、Devin 账号卡片显示该账号的套餐名（有数据时）和厂商会话额度百分比窗口：Codex 按 ChatGPT 返回的周期显示 5 小时、每周或每月窗口，Claude 来自 Anthropic 的 5 小时、每周，以及有数据时的每周 Opus 和每周 Sonnet，Grok 来自 xAI 的周窗口，Devin 来自 GetUserStatus 的每日和每周窗口。卡片标题空间不足时可省略账号邮箱，套餐名须完整显示。额度读取用该账号自己的登录令牌，令牌不出现在界面上。读取失败只影响这一张卡片。Gemini 和 Kimi 没有厂商额度接口，卡片不画额度。开发构建和生产构建均不注入示例数据。设置 → 用量的「额度显示」开关关闭后停止额度读取与刷新、隐藏「刷新额度」按钮；开关默认开，改动立即生效，重启后保持。详见 `docs/prd/provider-usage.md` 和 `docs/adr/provider-usage.md`。
 - 后端操作和查询失败用 toast 展示原因；同一查询连续失败期间只提示一次，成功后再次失败可以重新提示。服务意外退出时用 toast 报告原因。

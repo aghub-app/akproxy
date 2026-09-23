@@ -165,6 +165,7 @@ export const AccountsPanel: FC<{
     queryFn: () => api.accounts(page),
     staleTime: 60_000,
     refetchOnMount: false,
+    refetchInterval: status.data?.running ? 5000 : false,
   });
   const hasSessionLimit = (accounts.data ?? []).some((account) =>
     sessionLimitProviders.has(account.provider),
@@ -194,6 +195,17 @@ export const AccountsPanel: FC<{
       toastManager.add({ title: t("登录完成"), type: "success" });
     } catch (error) {
       toastManager.add({ title: errorText(error), type: "error" });
+    }
+  }
+
+  async function reauthorize(id: string) {
+    try {
+      await api.reauthorizeAccount(id);
+      await client.invalidateQueries({ queryKey: ["accounts", page] });
+      await client.invalidateQueries({ queryKey: ["account-usage", page] });
+      toastManager.add({ title: t("重新授权完成"), type: "success" });
+    } catch (error) {
+      toastManager.add({ title: errorText(error, locale), type: "error" });
     }
   }
 
@@ -292,6 +304,14 @@ export const AccountsPanel: FC<{
                     </Menu>
                   </CardAction>
                 </CardHeader>
+                {account.needsReauthorization ? (
+                  <div className="flex flex-col items-start gap-2 px-4 pb-4">
+                    <p className="text-sm text-red-600 dark:text-red-400" role="alert">{t("账号需要重新授权")}</p>
+                    <Button size="sm" disabled={loginActive} onClick={() => void reauthorize(account.id)}>
+                      {t("重新授权")}
+                    </Button>
+                  </div>
+                ) : null}
                 {sessionLimitProviders.has(account.provider) ? (
                   <UsageBars
                     failed={usage.isError}

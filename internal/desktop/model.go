@@ -2,13 +2,13 @@ package desktop
 
 // ServiceSettings is the 服务 page.
 type ServiceSettings struct {
-	ListenMode            string   `json:"listenMode"`
-	CustomHost            string   `json:"customHost"`
-	Port                  int      `json:"port"`
-	ClientAPIKeys         []string `json:"clientApiKeys"`
-	ProxyURL              string   `json:"proxyUrl"`
-	RoutingStrategy       string   `json:"routingStrategy"`
-	Debug                 bool     `json:"debug"`
+	ListenMode      string   `json:"listenMode"`
+	CustomHost      string   `json:"customHost"`
+	Port            int      `json:"port"`
+	ClientAPIKeys   []string `json:"clientApiKeys"`
+	ProxyURL        string   `json:"proxyUrl"`
+	RoutingStrategy string   `json:"routingStrategy"`
+	Debug           bool     `json:"debug"`
 }
 
 // KeyDraft is one upstream API key edited on a provider page.
@@ -34,9 +34,10 @@ type OpenAIDraft struct {
 
 // Account is a browser-login record safe to show in the window.
 type Account struct {
-	ID       string `json:"id"`
-	Provider string `json:"provider"`
-	Label    string `json:"label"`
+	ID                   string `json:"id"`
+	Provider             string `json:"provider"`
+	Label                string `json:"label"`
+	NeedsReauthorization bool   `json:"needsReauthorization"`
 }
 
 // Status is the navbar control and the address clients should use.

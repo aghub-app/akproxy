@@ -153,6 +153,14 @@ func (a *App) Login(provider string) error {
 	return a.desktop.Login(provider)
 }
 
+// ReauthorizeAccount renews the selected saved browser login.
+func (a *App) ReauthorizeAccount(id string) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.desktop.ReauthorizeAccount(id)
+}
+
 // CancelLogin stops the login that is waiting.
 func (a *App) CancelLogin() {
 	if a.desktop != nil {

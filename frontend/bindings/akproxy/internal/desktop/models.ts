@@ -8,6 +8,7 @@ export interface Account {
     "id": string;
     "provider": string;
     "label": string;
+    "needsReauthorization": boolean;
 }
 
 /**

@@ -28,12 +28,13 @@ type Runtime struct {
 	cancel    context.CancelFunc
 	done      chan struct{}
 	running   bool
+	coreAuth  *coreauth.Manager
 	bound     Listen
 	runError  string
 
 	loginMu     sync.Mutex
 	loginCancel context.CancelFunc
-	runLogin    func(ctx context.Context, provider string) (*coreauth.Auth, error)
+	runLogin    func(ctx context.Context, provider string, target *reauthTarget) (*coreauth.Auth, error)
 
 	emit func(event string, data any)
 }
@@ -158,9 +159,13 @@ func (r *Runtime) start() error {
 	if err := CheckRunnable(cfg, r.paths.Auth); err != nil {
 		return err
 	}
+	store := auth.NewFileTokenStore()
+	store.SetBaseDir(r.paths.Auth)
+	manager := coreauth.NewManager(store, authSelector(cfg), nil)
 	svc, err := cliproxy.NewBuilder().
 		WithConfig(cfg).
 		WithConfigPath(r.paths.Config).
+		WithCoreAuthManager(manager).
 		Build()
 	if err != nil {
 		return fmt.Errorf("服务无法创建: %w", err)
@@ -188,6 +193,7 @@ func (r *Runtime) start() error {
 		}
 		r.mu.Lock()
 		r.running = false
+		r.coreAuth = nil
 		r.runError = err.Error()
 		r.cancel = nil
 		r.mu.Unlock()
@@ -197,6 +203,7 @@ func (r *Runtime) start() error {
 
 	r.mu.Lock()
 	r.running = true
+	r.coreAuth = manager
 	r.bound = listen
 	r.runError = ""
 	r.cancel = cancel
@@ -231,6 +238,7 @@ func (r *Runtime) stop() error {
 	}
 	r.mu.Lock()
 	r.running = false
+	r.coreAuth = nil
 	r.cancel = nil
 	r.done = nil
 	r.runError = ""
@@ -271,6 +279,34 @@ func (r *Runtime) Login(provider string) error {
 	if !ok {
 		return fmt.Errorf("这个上游不能用浏览器登录")
 	}
+	return r.login(loginProvider, nil)
+}
+
+// ReauthorizeAccount updates only the selected saved browser login.
+func (r *Runtime) ReauthorizeAccount(id string) error {
+	if !filepath.IsLocal(id) || strings.TrimSpace(id) == "" {
+		return fmt.Errorf("账号无效")
+	}
+	store := auth.NewFileTokenStore()
+	store.SetBaseDir(r.paths.Auth)
+	records, err := store.List(context.Background())
+	if err != nil {
+		return fmt.Errorf("读取账号失败: %w", err)
+	}
+	for _, record := range records {
+		if record == nil || record.ID != id {
+			continue
+		}
+		provider, ok := reauthProvider(record.Provider)
+		if !ok {
+			return fmt.Errorf("这个上游不能用浏览器登录")
+		}
+		return r.login(provider, &reauthTarget{ID: id, Provider: record.Provider})
+	}
+	return fmt.Errorf("账号不存在")
+}
+
+func (r *Runtime) login(loginProvider string, target *reauthTarget) error {
 	r.loginMu.Lock()
 	if r.loginCancel != nil {
 		r.loginMu.Unlock()
@@ -295,7 +331,7 @@ func (r *Runtime) Login(provider string) error {
 	}
 	done := make(chan outcome, 1)
 	go func() {
-		record, err := r.runLogin(ctx, loginProvider)
+		record, err := r.runLogin(ctx, loginProvider, target)
 		done <- outcome{record: record, err: err}
 	}()
 
@@ -315,6 +351,9 @@ func (r *Runtime) Login(provider string) error {
 		}
 		return fmt.Errorf("登录失败: %w", result.err)
 	}
+	if result.record == nil {
+		return fmt.Errorf("登录失败: 上游没有返回账号")
+	}
 	label := accountLabel(result.record)
 	r.emit("login:done", Account{ID: result.record.ID, Provider: result.record.Provider, Label: label})
 	return nil
@@ -322,7 +361,7 @@ func (r *Runtime) Login(provider string) error {
 
 // loginWithSDK runs the SDK browser login. Some authenticators ignore context
 // cancellation, so the caller must not hold the login slot while it blocks.
-func (r *Runtime) loginWithSDK(ctx context.Context, provider string) (*coreauth.Auth, error) {
+func (r *Runtime) loginWithSDK(ctx context.Context, provider string, target *reauthTarget) (*coreauth.Auth, error) {
 	cfg, err := loadConfig(r.paths.Config)
 	if err != nil {
 		return nil, err
@@ -331,6 +370,9 @@ func (r *Runtime) loginWithSDK(ctx context.Context, provider string) (*coreauth.
 	store := auth.GetTokenStore()
 	if setter, ok := store.(interface{ SetBaseDir(string) }); ok {
 		setter.SetBaseDir(r.paths.Auth)
+	}
+	if target != nil {
+		store = sameAccountStore{Store: store, target: *target, authDir: r.paths.Auth}
 	}
 	manager := auth.NewManager(store, newAuthenticators()...)
 	record, _, err := manager.Login(ctx, provider, cfg, &auth.LoginOptions{})
@@ -392,15 +434,27 @@ func (r *Runtime) Accounts(page string) ([]Account, error) {
 		return nil, fmt.Errorf("读取账号失败: %w", err)
 	}
 	out := make([]Account, 0)
+	r.mu.Lock()
+	manager := r.coreAuth
+	if !r.running {
+		manager = nil
+	}
+	r.mu.Unlock()
 	for _, record := range records {
 		if record == nil || !providers[record.Provider] {
 			continue
 		}
-		out = append(out, Account{
+		account := Account{
 			ID:       record.ID,
 			Provider: record.Provider,
 			Label:    accountLabel(record),
-		})
+		}
+		if manager != nil {
+			if current, ok := manager.GetByID(record.ID); ok {
+				account.NeedsReauthorization = needsReauthorization(current)
+			}
+		}
+		out = append(out, account)
 	}
 	return out, nil
 }
@@ -520,6 +574,7 @@ func (r *Runtime) watchExit(done chan struct{}, runErr chan error) {
 		return
 	}
 	r.running = false
+	r.coreAuth = nil
 	r.cancel = nil
 	r.done = nil
 	if message != "" {

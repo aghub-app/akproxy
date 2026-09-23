@@ -105,6 +105,13 @@ export function ProviderKeys(provider: string): $CancellablePromise<desktop$0.Ke
 }
 
 /**
+ * ReauthorizeAccount renews the selected saved browser login.
+ */
+export function ReauthorizeAccount(id: string): $CancellablePromise<void> {
+    return $Call.ByID(985618630, id);
+}
+
+/**
  * Restart stops the service and starts the saved config.
  */
 export function Restart(): $CancellablePromise<void> {
