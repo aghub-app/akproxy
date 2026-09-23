@@ -30,14 +30,16 @@ func main() {
 		log.Fatal(err)
 	}
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Name:             "main",
-		Title:            "akproxy",
-		Width:            1120,
-		Height:           760,
-		MinWidth:         880,
-		MinHeight:        640,
-		BackgroundColour: windowBackground(app.Env.IsDarkMode()),
-		URL:              "/",
+		Name:                  "main",
+		Title:                 "akproxy",
+		Width:                 1120,
+		Height:                760,
+		DisableResize:         true,
+		MaximiseButtonState:   application.ButtonDisabled,
+		FullscreenButtonState: application.ButtonDisabled,
+		Mac:                   application.MacWindow{CollectionBehavior: application.MacWindowCollectionBehaviorFullScreenNone},
+		BackgroundColour:      windowBackground(app.Env.IsDarkMode()),
+		URL:                   "/",
 	})
 	window.OnWindowEvent(events.Common.WindowClosing, func(_ *application.WindowEvent) { app.Quit() })
 	app.Event.OnApplicationEvent(events.Common.ThemeChanged, func(_ *application.ApplicationEvent) {
