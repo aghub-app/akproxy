@@ -34,12 +34,19 @@ func TestHomeSetupAndBoundModels(t *testing.T) {
 	} {
 		write(extra)
 		home, err := r.Home()
-		if err != nil || !home.HasCredentials || home.ClientKey != "client-test" {
+		if err != nil || !home.HasCredentials || len(home.ClientKeys) != 1 || home.ClientKeys[0] != "client-test" {
 			t.Fatalf("credential branch %q: %+v %v", extra, home, err)
 		}
 	}
-	write("")
+	if err := os.WriteFile(r.paths.Config, []byte(strings.Replace(defaultConfig(r.paths.Auth, "client-test"), "  - \"client-test\"\n", "  - \"client-test\"\n  - \"client-next\"\n", 1)), 0600); err != nil {
+		t.Fatal(err)
+	}
 	home, err := r.Home()
+	if err != nil || strings.Join(home.ClientKeys, ",") != "client-test,client-next" {
+		t.Fatalf("client key choices: %+v %v", home, err)
+	}
+	write("")
+	home, err = r.Home()
 	if err != nil || home.HasCredentials {
 		t.Fatalf("client key must not count: %+v %v", home, err)
 	}

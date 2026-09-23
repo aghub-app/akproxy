@@ -34,7 +34,7 @@ export interface AppPrefs {
  */
 export interface HomeSnapshot {
     "hasCredentials": boolean;
-    "clientKey": string;
+    "clientKeys": string[] | null;
     "status": Status;
 }
 

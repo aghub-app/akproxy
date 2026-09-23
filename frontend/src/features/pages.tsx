@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { type FC, useRef, useState } from "react";
+import { ClientKeyDisplay } from "@/components/client-key-display";
 import { Button } from "@/components/ui/button";
 import { Frame } from "@/components/ui/frame";
 import {
@@ -72,13 +72,6 @@ export const ServicePage: FC = () => {
   );
 };
 
-function maskClientKey(key: string): string {
-  if (key.length <= 8) {
-    return "•".repeat(Math.max(key.length, 8));
-  }
-  return `${key.slice(0, 6)}${"•".repeat(12)}`;
-}
-
 function createClientKey(): string {
   const bytes = new Uint8Array(24);
   crypto.getRandomValues(bytes);
@@ -137,17 +130,7 @@ const ClientKeysTable: FC<{
                 }}
               >
                 <TableCell className="max-w-md font-mono">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="icon-sm"
-                      type="button"
-                      variant="ghost"
-                      onClick={() => setVisible((current) => ({ ...current, [key]: !current[key] }))}
-                    >
-                      {visible[key] ? <EyeIcon /> : <EyeSlashIcon />}
-                    </Button>
-                    <span className="truncate">{visible[key] ? key : maskClientKey(key)}</span>
-                  </div>
+                  <ClientKeyDisplay value={key} visible={!!visible[key]} onToggle={() => setVisible((current) => ({ ...current, [key]: !current[key] }))} />
                 </TableCell>
                 <TableCell className="text-right">
                   <Button

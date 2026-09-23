@@ -15,9 +15,9 @@ import (
 
 // HomeSnapshot contains client-facing setup data, never upstream secrets.
 type HomeSnapshot struct {
-	HasCredentials bool   `json:"hasCredentials"`
-	ClientKey      string `json:"clientKey"`
-	Status         Status `json:"status"`
+	HasCredentials bool     `json:"hasCredentials"`
+	ClientKeys     []string `json:"clientKeys"`
+	Status         Status   `json:"status"`
 }
 
 func (r *Runtime) Home() (HomeSnapshot, error) {
@@ -29,10 +29,7 @@ func (r *Runtime) Home() (HomeSnapshot, error) {
 	if err != nil {
 		return HomeSnapshot{}, err
 	}
-	out := HomeSnapshot{Status: status}
-	if len(cfg.APIKeys) > 0 {
-		out.ClientKey = cfg.APIKeys[0]
-	}
+	out := HomeSnapshot{Status: status, ClientKeys: append([]string{}, cfg.APIKeys...)}
 	for _, provider := range []string{"codex", "grok", "claude", "gemini"} {
 		keys, err := ReadKeys(cfg, provider)
 		if err != nil {
@@ -79,14 +76,14 @@ func (r *Runtime) HomeModels() ([]string, error) {
 	if !home.Status.Running {
 		return nil, fmt.Errorf("服务尚未启动")
 	}
-	if home.ClientKey == "" {
+	if len(home.ClientKeys) == 0 || home.ClientKeys[0] == "" {
 		return nil, fmt.Errorf("没有客户端密钥")
 	}
 	req, err := http.NewRequest(http.MethodGet, home.Status.Address+"/v1/models", nil)
 	if err != nil {
 		return nil, fmt.Errorf("服务地址无效")
 	}
-	req.Header.Set("Authorization", "Bearer "+home.ClientKey)
+	req.Header.Set("Authorization", "Bearer "+home.ClientKeys[0])
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.Proxy = nil
 	defer transport.CloseIdleConnections()

@@ -2,8 +2,9 @@ import { PlayIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { type FC, useState } from "react";
 import { Link } from "react-router";
+import { ClientKeyDisplay, maskClientKey } from "@/components/client-key-display";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardFrame, CardFrameAction, CardFrameHeader, CardFrameTitle, CardPanel } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
@@ -46,47 +47,69 @@ const HomeStopped: FC = () => (
   </Empty>
 );
 
-const ConnectPanel: FC<{ address: string; clientKey: string }> = ({
+const ConnectPanel: FC<{ address: string; clientKeys: string[]; clientKey: string; onSelectKey: (key: string) => void }> = ({
   address,
+  clientKeys,
   clientKey,
+  onSelectKey,
 }) => {
-  const [showKey, setShowKey] = useState(false);
+  const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [sdk, setSdk] = useState<SdkId>("openai-python");
+  const showKey = clientKey !== "" && revealedKey === clientKey;
   const visibleKey = showKey && clientKey ? clientKey : "••••••••";
   const env = openaiEnv(address, clientKey || "<API_KEY>");
   const visibleEnv = openaiEnv(address, visibleKey);
   const sdkOption = sdkOptions.find((item) => item.id === sdk) ?? sdkOptions[0];
   const example = sdkExample(sdkOption.id, address, clientKey || "<API_KEY>");
   const visibleExample = sdkExample(sdkOption.id, address, visibleKey);
-  return <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-    <Card className="min-w-0 overflow-hidden">
-      <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
-        <h2 className="text-sm font-medium">地址</h2>
-        <Button variant="outline" size="sm" disabled={!address} onClick={() => void copyText(address, "已复制地址")}>复制</Button>
-      </div>
-      <p className="truncate px-4 py-4 font-mono text-sm">{address || "还没有地址"}</p>
-    </Card>
-    <Card className="min-w-0 overflow-hidden">
-      <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
-        <h2 className="text-sm font-medium">客户端密钥</h2>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" aria-pressed={showKey} disabled={!clientKey} onClick={() => setShowKey(!showKey)}>{showKey ? "隐藏" : "显示"}</Button>
+  return <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+    <CardFrame className="min-w-0">
+      <CardFrameHeader className="px-3 py-2">
+        <CardFrameTitle render={<h2 />}>地址</CardFrameTitle>
+        <CardFrameAction>
+          <Button variant="outline" size="sm" disabled={!address} onClick={() => void copyText(address, "已复制地址")}>复制</Button>
+        </CardFrameAction>
+      </CardFrameHeader>
+      <Card className="min-w-0 flex-1 overflow-hidden">
+        <CardPanel className="flex min-w-0 items-center p-3 font-mono text-sm"><p className="truncate">{address || "还没有地址"}</p></CardPanel>
+      </Card>
+    </CardFrame>
+    <CardFrame className="min-w-0">
+      <CardFrameHeader className="px-3 py-2">
+        <CardFrameTitle render={<h2 />}>密钥</CardFrameTitle>
+        <CardFrameAction className="gap-2">
+          {clientKeys.length > 1 ? <Select value={String(clientKeys.indexOf(clientKey))} onValueChange={(index) => {
+            if (typeof index !== "string") return;
+            const key = clientKeys[Number(index)];
+            if (key) { setRevealedKey(null); onSelectKey(key); }
+          }}>
+            <SelectTrigger size="sm" className="w-52" aria-label="选择客户端密钥"><SelectValue>{maskClientKey(clientKey)}</SelectValue></SelectTrigger>
+            <SelectPopup>{clientKeys.map((key, index) => <SelectItem key={key} value={String(index)}>{maskClientKey(key)}</SelectItem>)}</SelectPopup>
+          </Select> : null}
           <Button variant="outline" size="sm" disabled={!clientKey} onClick={() => void copyText(clientKey, "已复制 API key")}>复制</Button>
-        </div>
-      </div>
-      <p className="truncate px-4 py-4 font-mono text-sm">{visibleKey}</p>
-    </Card>
-    <Card className="min-w-0 overflow-hidden md:col-span-2">
-      <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
-        <h2 className="text-sm font-medium">环境变量</h2>
-        <Button variant="outline" size="sm" disabled={!address || !clientKey} onClick={() => void copyText(env, "已复制环境变量")}>复制</Button>
-      </div>
-      <pre className="sh-code overflow-x-auto p-4 text-xs leading-relaxed"><code dangerouslySetInnerHTML={{ __html: highlightCommand(visibleEnv) }} /></pre>
-    </Card>
-    <Card className="min-w-0 overflow-hidden md:col-span-2">
-      <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+        </CardFrameAction>
+      </CardFrameHeader>
+      <Card className="min-w-0 flex-1 overflow-hidden">
+        <CardPanel className="flex min-w-0 items-center p-3 font-mono text-sm">
+          <ClientKeyDisplay value={clientKey} visible={showKey} onToggle={() => setRevealedKey(showKey ? null : clientKey)} />
+        </CardPanel>
+      </Card>
+    </CardFrame>
+    <CardFrame className="min-w-0 md:col-span-2">
+      <CardFrameHeader className="px-3 py-2">
+        <CardFrameTitle render={<h2 />}>环境变量</CardFrameTitle>
+        <CardFrameAction>
+          <Button variant="outline" size="sm" disabled={!address || !clientKey} onClick={() => void copyText(env, "已复制环境变量")}>复制</Button>
+        </CardFrameAction>
+      </CardFrameHeader>
+      <Card className="min-w-0 overflow-hidden">
+        <CardPanel className="min-w-0 p-3"><pre className="sh-code overflow-x-auto text-xs leading-relaxed"><code dangerouslySetInnerHTML={{ __html: highlightCommand(visibleEnv) }} /></pre></CardPanel>
+      </Card>
+    </CardFrame>
+    <CardFrame className="min-w-0 md:col-span-2">
+      <CardFrameHeader className="px-3 py-2">
         <div className="flex min-w-0 items-center gap-3">
-          <h2 className="text-sm font-medium">SDK</h2>
+          <CardFrameTitle render={<h2 />}>SDK</CardFrameTitle>
           <Select value={sdk} onValueChange={(value) => { if (isSdkId(value)) setSdk(value); }}>
             <SelectTrigger size="sm" className="w-44" aria-label="SDK">
               <SelectValue>{sdkOption.label}</SelectValue>
@@ -96,17 +119,22 @@ const ConnectPanel: FC<{ address: string; clientKey: string }> = ({
             </SelectPopup>
           </Select>
         </div>
-        <Button variant="outline" size="sm" disabled={!address || !clientKey} onClick={() => void copyText(example, "已复制示例")}>复制</Button>
-      </div>
-      <pre className="sh-code overflow-x-auto p-4 text-xs leading-relaxed"><code dangerouslySetInnerHTML={{ __html: highlightSnippet(visibleExample, sdkOption.lang) }} /></pre>
-    </Card>
+        <CardFrameAction>
+          <Button variant="outline" size="sm" disabled={!address || !clientKey} onClick={() => void copyText(example, "已复制示例")}>复制</Button>
+        </CardFrameAction>
+      </CardFrameHeader>
+      <Card className="min-w-0 overflow-hidden">
+        <CardPanel className="min-w-0 p-3"><pre className="sh-code overflow-x-auto text-xs leading-relaxed"><code dangerouslySetInnerHTML={{ __html: highlightSnippet(visibleExample, sdkOption.lang) }} /></pre></CardPanel>
+      </Card>
+    </CardFrame>
   </div>;
 };
 
 export const HomePage: FC = () => {
   const home = useQuery(homeQueryOptions());
   const [selectedModel, setSelectedModel] = useState("");
-  const [showKey, setShowKey] = useState(false);
+  const [selectedKey, setSelectedKey] = useState("");
+  const [revealedTestKey, setRevealedTestKey] = useState<string | null>(null);
   const data = home.data;
   const models = useQuery(homeModelsQueryOptions(
     !home.isError && data?.hasCredentials && data.status.running ? data.status.address : null,
@@ -123,10 +151,10 @@ export const HomePage: FC = () => {
     return <section className="flex flex-col gap-6">
       <div><h1 className="text-xl font-semibold">添加你的第一个上游</h1>
         <p className="mt-2 text-sm text-muted-foreground">选择一个提供商，登录账号或配置 API key。</p></div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
         {providerPages.map(({ to, label, icon: Icon }) => (
-          <Card key={to} render={<Link to={to} />} className="items-center gap-4 p-6 transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring">
-            <Icon size={36} /><span className="text-sm font-medium">{label}</span>
+          <Card key={to} render={<Link to={to} />} className="items-center gap-3 p-4 transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring">
+            <Icon size={32} /><span className="text-sm font-medium">{label}</span>
           </Card>
         ))}
       </div>
@@ -135,10 +163,13 @@ export const HomePage: FC = () => {
 
   if (!data.status.running) return <HomeStopped />;
 
+  const clientKeys = data.clientKeys ?? [];
+  const clientKey = clientKeys.includes(selectedKey) ? selectedKey : (clientKeys[0] ?? "");
+  const showKey = clientKey !== "" && revealedTestKey === clientKey;
   const available = !models.isError ? (models.data ?? []) : [];
   const model = available.includes(selectedModel) ? selectedModel : (available[0] ?? "<MODEL_ID>");
-  const commands = curlCommands(data.status.address, data.clientKey || "<API_KEY>", model);
-  const displayed = curlCommands(data.status.address, showKey ? (data.clientKey || "<API_KEY>") : "••••••••", model);
+  const commands = curlCommands(data.status.address, clientKey || "<API_KEY>", model);
+  const displayed = curlCommands(data.status.address, showKey ? (clientKey || "<API_KEY>") : "••••••••", model);
 
   return <section className="flex flex-col gap-5">
     <h1 className="text-xl font-semibold">开始调用</h1>
@@ -148,9 +179,9 @@ export const HomePage: FC = () => {
         <TabsTab value="test">测试</TabsTab>
       </TabsList>
       <TabsPanel value="connect">
-        <ConnectPanel address={data.status.address} clientKey={data.clientKey} />
+        <ConnectPanel address={data.status.address} clientKeys={clientKeys} clientKey={clientKey} onSelectKey={(key) => { setSelectedKey(key); setRevealedTestKey(null); }} />
       </TabsPanel>
-      <TabsPanel value="test" className="flex flex-col gap-5">
+      <TabsPanel value="test" className="flex flex-col gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <label id="home-model-label" className="text-sm font-medium">模型</label>
@@ -159,7 +190,7 @@ export const HomePage: FC = () => {
               <SelectPopup>{available.map((id) => <SelectItem key={id} value={id}>{id}</SelectItem>)}</SelectPopup>
             </Select>
           </div>
-          <Button variant="outline" aria-pressed={showKey} onClick={() => setShowKey(!showKey)}>{showKey ? "隐藏密钥" : "显示密钥"}</Button>
+          <Button variant="outline" aria-pressed={showKey} onClick={() => setRevealedTestKey(showKey ? null : clientKey)}>{showKey ? "隐藏密钥" : "显示密钥"}</Button>
         </div>
         {available.length === 0 ? <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground" role="status">
           <p>
@@ -168,19 +199,18 @@ export const HomePage: FC = () => {
           </p>
           {!models.isFetching ? <Button variant="ghost" size="sm" onClick={() => void models.refetch()}>刷新模型</Button> : null}
         </div> : null}
-        <p className="text-xs text-muted-foreground">复制内容包含第一把客户端密钥。模型是否支持对应 API 取决于上游。</p>
-        {commands.map(({ title, command }, index) => <Card key={title} className="min-w-0 overflow-hidden">
-          <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
-            <h2 className="text-sm font-medium">{title}</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label={`复制${title}命令`}
-              onClick={() => void copyText(command, "已复制命令")}
-            >复制</Button>
-          </div>
-          <pre className="sh-code overflow-x-auto p-4 text-xs leading-relaxed"><code dangerouslySetInnerHTML={{ __html: highlightCommand(displayed[index].command) }} /></pre>
-        </Card>)}
+        <p className="text-xs text-muted-foreground">复制内容包含所选客户端密钥。模型是否支持对应 API 取决于上游。</p>
+        {commands.map(({ title, command }, index) => <CardFrame key={title} className="min-w-0">
+          <CardFrameHeader className="px-3 py-2">
+            <CardFrameTitle render={<h2 />}>{title}</CardFrameTitle>
+            <CardFrameAction>
+              <Button variant="outline" size="sm" aria-label={`复制${title}命令`} onClick={() => void copyText(command, "已复制命令")}>复制</Button>
+            </CardFrameAction>
+          </CardFrameHeader>
+          <Card className="min-w-0 overflow-hidden">
+            <CardPanel className="min-w-0 p-3"><pre className="sh-code overflow-x-auto text-xs leading-relaxed"><code dangerouslySetInnerHTML={{ __html: highlightCommand(displayed[index].command) }} /></pre></CardPanel>
+          </Card>
+        </CardFrame>)}
       </TabsPanel>
     </Tabs>
   </section>;
