@@ -1,8 +1,9 @@
 import { providerPages } from "@/lib/providers";
 import { HardDrivesIcon, HouseIcon, PlayIcon, StopIcon } from "@phosphor-icons/react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type FC } from "react";
-import { NavLink, Outlet } from "react-router";
+import { type FC, useEffect } from "react";
+import { NavLink, Outlet, useNavigate } from "react-router";
+import { Events } from "@wailsio/runtime";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toastManager } from "@/components/ui/toast";
@@ -49,6 +50,7 @@ const usagePages = ["codex", "grok", "claude", "devin"] as const;
 
 export const AppLayout: FC = () => {
   const client = useQueryClient();
+  const navigate = useNavigate();
   const usagePrefs = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
   const accountLists = useQueries({ queries: usagePages.map((page) => ({
     queryKey: ["accounts", page],
@@ -67,6 +69,10 @@ export const AppLayout: FC = () => {
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
   })) });
+  useEffect(
+    () => Events.On("app:about", () => navigate("/settings?tab=about")),
+    [navigate],
+  );
   const status = useQuery({
     queryKey: ["status"],
     queryFn: api.status,
