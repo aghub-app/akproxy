@@ -23,7 +23,7 @@ func TestCancelLoginFreesSlotWhileSDKStillBlocking(t *testing.T) {
 		t.Fatalf("NewRuntime: %v", err)
 	}
 	blocked := make(chan struct{})
-	r.runLogin = func(ctx context.Context, provider string) (*coreauth.Auth, error) {
+	r.runLogin = func(ctx context.Context, provider string, _ *reauthTarget) (*coreauth.Auth, error) {
 		close(blocked)
 		<-ctx.Done()
 		time.Sleep(50 * time.Millisecond)
@@ -93,7 +93,7 @@ func TestCancelLoginUnblocksCallbackServer(t *testing.T) {
 	defer func() { callbackLoginPorts["codex"] = previous }()
 
 	blocked := make(chan struct{})
-	r.runLogin = func(ctx context.Context, provider string) (*coreauth.Auth, error) {
+	r.runLogin = func(ctx context.Context, provider string, _ *reauthTarget) (*coreauth.Auth, error) {
 		close(blocked)
 		<-ctx.Done()
 		time.Sleep(300 * time.Millisecond)
@@ -124,7 +124,7 @@ func TestLoginMapsSDKErrorAndEmitsDone(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewRuntime: %v", err)
 	}
-	r.runLogin = func(ctx context.Context, provider string) (*coreauth.Auth, error) {
+	r.runLogin = func(ctx context.Context, provider string, _ *reauthTarget) (*coreauth.Auth, error) {
 		if provider != "claude" {
 			t.Fatalf("provider = %q, want claude", provider)
 		}
@@ -151,7 +151,7 @@ func TestLoginMapsSDKErrorAndEmitsDone(t *testing.T) {
 		t.Fatal("login:done not emitted")
 	}
 
-	r.runLogin = func(ctx context.Context, provider string) (*coreauth.Auth, error) {
+	r.runLogin = func(ctx context.Context, provider string, _ *reauthTarget) (*coreauth.Auth, error) {
 		return nil, errors.New("boom")
 	}
 	err = r.Login("claude")

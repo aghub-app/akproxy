@@ -24,6 +24,7 @@ export type Account = {
   id: string;
   provider: string;
   label: string;
+  needsReauthorization: boolean;
 };
 
 export type UsageWindow = {
@@ -83,6 +84,7 @@ export const api = {
   stop: () => app.Stop(),
   restart: () => app.Restart(),
   login: (provider: string) => app.Login(provider),
+  reauthorizeAccount: (id: string) => app.ReauthorizeAccount(id),
   cancelLogin: () => app.CancelLogin(),
   accounts: async (page: string) => (await app.Accounts(page)) ?? [],
   accountUsage: async (page: string) => (await app.AccountUsage(page)) ?? [],

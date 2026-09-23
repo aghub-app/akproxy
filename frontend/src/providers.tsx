@@ -43,6 +43,9 @@ export function Providers({ children }: { children: ReactNode }) {
       const next = event.data as Status;
       const previous = client.getQueryData<Status>(["status"]);
       client.setQueryData(["status"], next);
+      if (previous?.running !== next.running) {
+        void client.invalidateQueries({ queryKey: ["accounts"] });
+      }
       if (next.error && previous?.running && !next.running) {
         toastManager.add({ title: errorText(next.error), type: "error" });
       }
