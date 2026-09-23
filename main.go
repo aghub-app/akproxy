@@ -55,7 +55,11 @@ func main() {
 	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(_ *application.ApplicationEvent) {
 		// The Dock caches bundle icons aggressively; set the icon at runtime so a
 		// new build shows up without flushing the icon cache.
-		app.SetIcon(appIcon)
+		icon := appIcon
+		if info := app.Env.Info(); info.OS == "darwin" && info.OSInfo != nil {
+			icon = dockIcon(appIcon, info.OSInfo.Version)
+		}
+		app.SetIcon(icon)
 		if version != "dev" {
 			go func() {
 				// The scheduler no-ops this when auto-check is off.

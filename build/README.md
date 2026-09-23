@@ -2,7 +2,7 @@
 
 - `config.yml`：Wails v3 开发模式，启动 Vite 并监听 Go 代码变化。
 - `akproxy.icon`：Icon Composer 源文件。替换图标时改这一份。
-- `appicon.png`、`icon-round.png`：从 `akproxy.icon` 导出的 1024×1024 macOS Default 图，圆角外透明。Dock 运行时图标、README、关于页（`frontend/src/assets/images/appicon.png`，直接复制）、macOS `.icns` 和 Windows `.ico` 都用这一张。GitHub 会去掉 HTML 的样式，圆角做在图片上。
+- `appicon.png`、`icon-round.png`：从 `akproxy.icon` 导出的 1024×1024 macOS Default 图，圆角外透明。Dock 运行时图标、README、关于页（`frontend/src/assets/images/appicon.png`，直接复制）、macOS `.icns` 和 Windows `.ico` 都用这一张。macOS 26 及以后，贴到 Dock 前会把图案缩到 824×824 并放在 1024 画布正中，四边各留 100 像素。GitHub 会去掉 HTML 的样式，圆角做在图片上。
 - 导出并生成各平台图标：
 
   ```sh
