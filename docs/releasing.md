@@ -33,7 +33,7 @@ CI 将这组材料及 Apple 官方 Developer ID 中间证书导入一次性钥�
 2. 创建并推送稳定语义版本 tag，例如 `v1.0.0`。构建版本由 tag 注入；预发布 tag 会被拒绝。
 3. `release` 工作流在对应系统 runner 构建。macOS 生成 arm64/amd64 通用、Developer ID 签名且公证 stapled 的应用；Windows/Linux 生成 amd64 可执行文件。
 4. 所有构建成功后汇总以下文件，生成 `SHA256SUMS`，创建同名 **草稿** Release：
-   - `akproxy.dmg`：macOS 首次安装。
+   - `akproxy.dmg`：macOS 首次安装。打开后把 `akproxy.app` 拖进 Applications。
    - `akproxy-darwin-universal.zip`：完整 `.app` 更新包。
    - `akproxy-windows-amd64.zip`：Windows 安装/更新包。
    - `akproxy-linux-amd64.tar.gz`：Linux 安装/更新包。

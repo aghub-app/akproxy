@@ -13,6 +13,7 @@
   cp build/appicon.png frontend/src/assets/images/appicon.png
   wails3 generate icons -input build/appicon.png -macfilename build/bin/iconfile.icns -windowsfilename build/windows/icon.ico
   ```
+- `dmg-background.png`：macOS 拖放安装窗口的背景。用 `python3 scripts/render-dmg-background.py` 从 `appicon.png` 重画。图标坐标在这个脚本和 `scripts/package-dmg.sh` 里要一致。
 - `darwin/Info.plist`：macOS bundle 元数据，保留既有 `com.wails.akproxy` 标识。
 - `windows/`：原有 Windows 图标及安装器资源，尚未接入新的发布工作流。
 - `bin/`：被 Git 忽略的构建输出，包含二进制、生成图标、macOS `.app` 和 DMG。

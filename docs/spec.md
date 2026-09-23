@@ -66,6 +66,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 更新不得改变配置和账号。校验信息缺失或不匹配时禁止安装。
 - tag 构建生成草稿 Release，维护者手动发布后才向客户端提供更新。
 - macOS 使用 akproxy 独立的证书、私钥和公证凭据。产品及架构见 `docs/prd/app-updates.md`、`docs/prd/about.md`、`docs/adr/wails-updater.md`、`docs/adr/update-prefs.md`。
+- macOS 首次安装的 DMG 打开后是拖放窗口：背景为固定品牌图，箭头左侧是 `akproxy.app`，右侧是指向本机「应用程序」文件夹的替身。说明文字不随界面语言变化。见 `docs/prd/dmg-install.md` 和 `docs/adr/dmg-drag-install.md`。
 
 ### 工程约束
 
