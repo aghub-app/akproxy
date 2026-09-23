@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "akproxy-dev",
+      "runtimeExecutable": "wails3",
+      "runtimeArgs": ["task", "dev"],
+      "port": 9245
+    },
+    {
       "name": "frontend",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--dir", "frontend", "run", "dev"],
