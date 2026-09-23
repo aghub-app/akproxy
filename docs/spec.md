@@ -44,7 +44,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 监听配置只在启动或重启成功后成为已绑定监听。其他已写入配置在服务运行中热重载。
 - 浏览器登录写入应用自己的账号目录。界面不展示令牌。
 - 没有已登录账号的 Codex、Grok、Claude、Gemini、Kimi、Devin 页，在内容区中央显示该页图标、名称和添加操作。读取账号失败时不显示成空列表。
-- Codex、Claude、Grok、Devin 账号卡片显示该账号的套餐名（有数据时）和厂商会话额度百分比窗口：Codex 按 ChatGPT 返回的周期显示 5 小时、每周或每月窗口，Claude 来自 Anthropic 的 5 小时、每周，以及有数据时的每周 Opus 和每周 Sonnet，Grok 来自 xAI 的周窗口，Devin 来自 GetUserStatus 的每日和每周窗口。额度读取用该账号自己的登录令牌，令牌不出现在界面上。读取失败只影响这一张卡片。Gemini 和 Kimi 没有厂商额度接口，卡片不画额度。开发构建和生产构建均不注入示例数据。设置 → 用量的「额度显示」开关关闭后停止额度读取与刷新、隐藏「刷新额度」按钮；开关默认开，改动立即生效，重启后保持。详见 `docs/prd/provider-usage.md` 和 `docs/adr/provider-usage.md`。
+- Codex、Claude、Grok、Devin 账号卡片显示该账号的套餐名（有数据时）和厂商会话额度百分比窗口：Codex 按 ChatGPT 返回的周期显示 5 小时、每周或每月窗口，Claude 来自 Anthropic 的 5 小时、每周，以及有数据时的每周 Opus 和每周 Sonnet，Grok 来自 xAI 的周窗口，Devin 来自 GetUserStatus 的每日和每周窗口。卡片标题空间不足时可省略账号邮箱，套餐名须完整显示。额度读取用该账号自己的登录令牌，令牌不出现在界面上。读取失败只影响这一张卡片。Gemini 和 Kimi 没有厂商额度接口，卡片不画额度。开发构建和生产构建均不注入示例数据。设置 → 用量的「额度显示」开关关闭后停止额度读取与刷新、隐藏「刷新额度」按钮；开关默认开，改动立即生效，重启后保持。详见 `docs/prd/provider-usage.md` 和 `docs/adr/provider-usage.md`。
 - 后端操作和查询失败用 toast 展示原因；同一查询连续失败期间只提示一次，成功后再次失败可以重新提示。服务意外退出时用 toast 报告原因。
 - 应用进程结束时，服务不再监听。
 - 额度偏好升级时补齐缺失的默认值，保留明确的用户选择。缺失额度数据不得显示为零用量或额度耗尽；无可用窗口时按平台约定显示无窗口或读取失败。

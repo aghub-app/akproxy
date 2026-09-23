@@ -142,7 +142,7 @@ const UsageBars: FC<{ usage?: AccountUsage; loading: boolean; failed: boolean; o
 };
 
 const Badge: FC<{ children: ReactNode }> = ({ children }) => (
-  <span className="rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground text-xs leading-none">
+  <span className="shrink-0 whitespace-nowrap rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground text-xs leading-none">
     {children}
   </span>
 );
@@ -266,8 +266,8 @@ export const AccountsPanel: FC<{
             <li className="min-w-0" key={account.id}>
               <Card className="h-full">
                 <CardHeader className="p-4">
-                  <CardTitle className="flex items-center gap-2 break-all text-base leading-snug">
-                    <span>{account.label || account.id}</span>
+                  <CardTitle className="flex min-w-0 items-center gap-2 text-base leading-snug">
+                    <span className="min-w-0 flex-1 truncate">{account.label || account.id}</span>
                     {usageByID.get(account.id)?.plan ? (
                       <Badge>{usageByID.get(account.id)?.plan}</Badge>
                     ) : null}
