@@ -1,5 +1,6 @@
 import { PlayIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
+import { Clipboard } from "@wailsio/runtime";
 import { type FC, useState } from "react";
 import { Link } from "react-router";
 import { ClientKeyDisplay, maskClientKey } from "@/components/client-key-display";
@@ -18,7 +19,7 @@ import { homeModelsQueryOptions, homeQueryOptions } from "@/requests/home";
 
 async function copyText(value: string, title: string) {
   try {
-    await navigator.clipboard.writeText(value);
+    await Clipboard.SetText(value);
     toastManager.add({ title, type: "success" });
   } catch {
     toastManager.add({ title: "复制失败，请重试", type: "error" });

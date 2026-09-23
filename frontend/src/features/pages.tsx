@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Clipboard } from "@wailsio/runtime";
 import { type FC, useEffect, useRef, useState } from "react";
 import { ClientKeyDisplay } from "@/components/client-key-display";
 import { useSearchParams } from "react-router";
@@ -225,9 +226,9 @@ const ClientKeysTable: FC<{
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      void navigator.clipboard.writeText(key).then(() => {
+                      void Clipboard.SetText(key).then(() => {
                         toastManager.add({ title: "已复制 API key", type: "success" });
-                      });
+                      }).catch(notifyError);
                     }}
                   >
                     复制
