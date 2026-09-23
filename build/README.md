@@ -1,9 +1,18 @@
 # 构建资源
 
 - `config.yml`：Wails v3 开发模式，启动 Vite 并监听 Go 代码变化。
-- `appicon.png`：应用图标源文件（直角方形）。替换图标时更新这一个文件。
-- `icon-round.png`：`appicon.png` 的透明圆角版本，四角按应用图标比例（约 22.37%）切好。它是 README、关于页展示图（`frontend/src/assets/images/appicon.png`，直接复制）、macOS `.icns` 和 Windows `.ico` 的共同输入。GitHub 会去掉 HTML 的样式，圆角做在图片上。
-- 替换图标后运行 `wails3 generate icons -input build/icon-round.png -macfilename build/bin/iconfile.icns -windowsfilename build/windows/icon.ico`，再把 `icon-round.png` 复制到 `frontend/src/assets/images/appicon.png`。
+- `akproxy.icon`：Icon Composer 源文件。替换图标时改这一份。
+- `appicon.png`、`icon-round.png`：从 `akproxy.icon` 导出的 1024×1024 macOS Default 图，圆角外透明。Dock 运行时图标、README、关于页（`frontend/src/assets/images/appicon.png`，直接复制）、macOS `.icns` 和 Windows `.ico` 都用这一张。GitHub 会去掉 HTML 的样式，圆角做在图片上。
+- 导出并生成各平台图标：
+
+  ```sh
+  "/Applications/Icon Composer.app/Contents/Executables/ictool" build/akproxy.icon \
+    --export-image --output-file build/appicon.png \
+    --platform macOS --rendition Default --width 1024 --height 1024 --scale 1
+  cp build/appicon.png build/icon-round.png
+  cp build/appicon.png frontend/src/assets/images/appicon.png
+  wails3 generate icons -input build/appicon.png -macfilename build/bin/iconfile.icns -windowsfilename build/windows/icon.ico
+  ```
 - `darwin/Info.plist`：macOS bundle 元数据，保留既有 `com.wails.akproxy` 标识。
 - `windows/`：原有 Windows 图标及安装器资源，尚未接入新的发布工作流。
 - `bin/`：被 Git 忽略的构建输出，包含二进制、生成图标、macOS `.app` 和 DMG。

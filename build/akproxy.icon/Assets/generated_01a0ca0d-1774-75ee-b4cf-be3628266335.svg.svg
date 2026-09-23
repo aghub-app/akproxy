@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="892.5168067932129" height="800.6414253234864" fill="none" viewBox="66.73359336853028 64.67928733825684 892.5168067932129 800.6414253234864">
+<!-- SVG created with Arrow, by QuiverAI (https://quiver.ai) -->
+  <defs>
+    <linearGradient id="connector-purple" x1="284" x2="574" y1="467" y2="467" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#463BFA" offset="0"/>
+      <stop stop-color="#493EFA" offset=".55"/>
+      <stop stop-color="#4438F5" offset="1"/>
+    </linearGradient>
+    <radialGradient id="node-indigo" cx="0" cy="0" r="1" gradientTransform="translate(208 180) rotate(78) scale(130 127)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2D23C4" offset="0"/>
+      <stop stop-color="#2C21C4" offset=".78"/>
+      <stop stop-color="#2B20C0" offset="1"/>
+    </radialGradient>
+    <linearGradient id="destination-indigo" x1="582" x2="929" y1="304" y2="652" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2E23C5" offset="0"/>
+      <stop stop-color="#2C22C2" offset=".5"/>
+      <stop stop-color="#2C21C3" offset="1"/>
+    </linearGradient>
+    <linearGradient id="arrow-mint" x1="642" x2="853" y1="452" y2="511" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A3F8DA" offset="0"/>
+      <stop stop-color="#A0F9D8" offset="1"/>
+    </linearGradient>
+  </defs>
+  <g id="input-connections" stroke="url(#connector-purple)" stroke-linejoin="round" stroke-width="59">
+    <path id="upper-connection" d="m291 196h74c44 0 72 18 89 58l23 55c16 41 40 59 84 59h23"/>
+    <path id="middle-connection" d="m270 469h310"/>
+    <path id="lower-connection" d="m291 738h70c46 0 72-16 90-57l25-58c16-36 42-55 83-55h24"/>
+  </g>
+  <g id="input-nodes" fill="url(#node-indigo)" stroke="#3A2BD0" stroke-width="2">
+    <path id="upper-node" d="m315 183c0 55-39 108-96 109-60 2-105-41-105-95-1-56 43-110 100-111 55-2 101 41 101 97z"/>
+    <path id="middle-node" d="m290 465c1 58-42 104-100 105-57 1-101-43-102-96-1-56 45-107 99-108 52-2 100 39 103 99z"/>
+    <path id="lower-node" d="m315 737c1 56-39 106-97 107-56 2-103-39-104-94-2-56 41-108 97-110 57-3 102 41 104 97z"/>
+  </g>
+  <g id="destination">
+    <path id="destination-tile" d="m669 284h153c65 0 116 50 116 114v157c0 66-48 115-113 115h-158c-65 0-114-48-114-112v-158c0-66 48-116 116-116z" fill="url(#destination-indigo)" stroke="#3C2BCC" stroke-width="2"/>
+    <path id="right-arrow" d="m670 483h151m-62-66 63 66-63 65" stroke="#716CC1" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".32" stroke-width="65"/>
+    <path id="right-arrow-mint" d="m670 483h151m-62-66 63 66-63 65" stroke="url(#arrow-mint)" stroke-linecap="round" stroke-linejoin="round" stroke-width="59"/>
+  </g>
+</svg>
