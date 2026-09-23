@@ -97,7 +97,19 @@ end tell
 EOF
 
 sync
-hdiutil detach /Volumes/akproxy >/dev/null
+# Finder keeps the volume busy for a moment after the window closes.
+# Exit 16 is "resource busy"; retry, then force-detach once the layout is saved.
+detach_akproxy() {
+  local attempt
+  for attempt in 1 2 3 4 5 6; do
+    if hdiutil detach /Volumes/akproxy; then
+      return 0
+    fi
+    sleep 2
+  done
+  hdiutil detach -force /Volumes/akproxy
+}
+detach_akproxy
 mounted=0
 
 mkdir -p "$(dirname "$dmg")"

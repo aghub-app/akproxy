@@ -10,7 +10,7 @@
 
 ## 决定
 
-背景图提交在 `build/dmg-background.png`，由 `scripts/render-dmg-background.py` 按 720×680 点、2× 重新绘制。打包时先做可写 APFS 镜像，放入 `akproxy.app`、指向 `/Applications` 的替身，以及隐藏的 `.background/background.png`。再用 Finder 把窗口设成这个尺寸的图标视图，背景用这张图，两个图标的中心放在箭头两侧（196,430 和 524,430）。窗口框架先关闭再打开，然后才写入图标位置；写在关闭前的位置会被 Finder 存低大约 45 点。
+背景图提交在 `build/dmg-background.png`，由 `scripts/render-dmg-background.py` 按 720×680 点、2× 重新绘制。打包时先做可写 APFS 镜像，放入 `akproxy.app`、指向 `/Applications` 的替身，以及隐藏的 `.background/background.png`。再用 Finder 把窗口设成这个尺寸的图标视图，背景用这张图，两个图标的中心放在箭头两侧（196,430 和 524,430）。窗口框架先关闭再打开，然后才写入图标位置；写在关闭前的位置会被 Finder 存低大约 45 点。关闭窗口后如果卷仍被 Finder 占用，先重试卸载，再强制卸载；布局已经写入后才转换压缩镜像。
 
 最后 `hdiutil convert` 成 UDZO。CI 仍通过 `hdiutil` 和 `scripts/package-dmg.sh build/bin/akproxy.dmg` 识别这个产物。
 
