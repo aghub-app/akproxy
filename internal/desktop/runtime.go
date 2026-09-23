@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -20,12 +22,14 @@ import (
 type Runtime struct {
 	paths Paths
 
-	mu       sync.Mutex
-	cancel   context.CancelFunc
-	done     chan struct{}
-	running  bool
-	bound    Listen
-	runError string
+	controlMu sync.Mutex
+	editMu    sync.Mutex
+	mu        sync.Mutex
+	cancel    context.CancelFunc
+	done      chan struct{}
+	running   bool
+	bound     Listen
+	runError  string
 
 	loginMu     sync.Mutex
 	loginCancel context.CancelFunc
@@ -133,6 +137,12 @@ func (r *Runtime) SaveKimi(drafts []OpenAIDraft) error {
 
 // Start binds the saved config.
 func (r *Runtime) Start() error {
+	r.controlMu.Lock()
+	defer r.controlMu.Unlock()
+	return r.start()
+}
+
+func (r *Runtime) start() error {
 	r.mu.Lock()
 	if r.running {
 		r.mu.Unlock()
@@ -199,6 +209,12 @@ func (r *Runtime) Start() error {
 
 // Stop cancels the embedded service.
 func (r *Runtime) Stop() error {
+	r.controlMu.Lock()
+	defer r.controlMu.Unlock()
+	return r.stop()
+}
+
+func (r *Runtime) stop() error {
 	r.mu.Lock()
 	cancel := r.cancel
 	done := r.done
@@ -225,10 +241,12 @@ func (r *Runtime) Stop() error {
 
 // Restart stops the service and starts it with the saved config.
 func (r *Runtime) Restart() error {
-	if err := r.Stop(); err != nil {
+	r.controlMu.Lock()
+	defer r.controlMu.Unlock()
+	if err := r.stop(); err != nil {
 		return err
 	}
-	if err := r.Start(); err != nil {
+	if err := r.start(); err != nil {
 		return err
 	}
 	return nil
@@ -237,11 +255,13 @@ func (r *Runtime) Restart() error {
 // Shutdown stops the service when the window closes.
 func (r *Runtime) Shutdown() {
 	r.CancelLogin()
+	r.controlMu.Lock()
+	defer r.controlMu.Unlock()
 	r.mu.Lock()
 	running := r.running
 	r.mu.Unlock()
 	if running {
-		_ = r.Stop()
+		_ = r.stop()
 	}
 }
 
@@ -435,28 +455,51 @@ func (r *Runtime) DeleteAccount(id string) error {
 	if id == "" {
 		return fmt.Errorf("没有指定账号")
 	}
+	if !filepath.IsLocal(id) {
+		return fmt.Errorf("账号无效")
+	}
 	store := auth.NewFileTokenStore()
 	store.SetBaseDir(r.paths.Auth)
-	if err := store.Delete(context.Background(), id); err != nil {
+	records, err := store.List(context.Background())
+	if err != nil {
+		return fmt.Errorf("读取账号失败: %w", err)
+	}
+	found := false
+	for _, record := range records {
+		if record != nil && record.ID == id {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("账号不存在")
+	}
+	if err := os.Remove(filepath.Join(r.paths.Auth, id)); err != nil {
 		return fmt.Errorf("删除账号失败: %w", err)
 	}
 	return nil
 }
 
 func (r *Runtime) edit(apply func(*config.Config) error) error {
+	r.editMu.Lock()
 	cfg, err := loadConfig(r.paths.Config)
 	if err != nil {
+		r.editMu.Unlock()
 		return err
 	}
 	if err := apply(cfg); err != nil {
+		r.editMu.Unlock()
 		return err
 	}
 	if err := atLeastOneClientKey(cfg.APIKeys); err != nil {
+		r.editMu.Unlock()
 		return err
 	}
 	if err := saveConfig(r.paths.Config, cfg); err != nil {
+		r.editMu.Unlock()
 		return err
 	}
+	r.editMu.Unlock()
 	r.emit("server:status", mustStatus(r))
 	return nil
 }
@@ -472,6 +515,10 @@ func (r *Runtime) watchExit(done chan struct{}, runErr chan error) {
 	default:
 	}
 	r.mu.Lock()
+	if r.done != done {
+		r.mu.Unlock()
+		return
+	}
 	r.running = false
 	r.cancel = nil
 	r.done = nil

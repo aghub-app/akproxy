@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type FC, useRef, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { ClientKeyDisplay } from "@/components/client-key-display";
 import { Button } from "@/components/ui/button";
 import { Frame } from "@/components/ui/frame";
@@ -168,6 +168,30 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
   const latest = useRef(initial);
   const seq = useRef(0);
   const timer = useRef<number | null>(null);
+  const writes = useRef(Promise.resolve());
+
+  function write(snapshot: ServiceSettings) {
+    if (!canPersistService(snapshot)) {
+      return;
+    }
+    const id = ++seq.current;
+    writes.current = writes.current
+      .then(() => api.saveService(snapshot))
+      .then(async () => {
+        if (id === seq.current) {
+          await client.invalidateQueries({ queryKey: ["status"] });
+        }
+      })
+      .catch(notifyError);
+  }
+
+  useEffect(() => () => {
+    if (timer.current !== null) {
+      window.clearTimeout(timer.current);
+      timer.current = null;
+      write(latest.current);
+    }
+  }, []);
 
   function persist(next: ServiceSettings, immediate: boolean) {
     latest.current = next;
@@ -177,24 +201,7 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
     }
     const run = () => {
       timer.current = null;
-      const snapshot = latest.current;
-      if (!canPersistService(snapshot)) {
-        return;
-      }
-      const id = ++seq.current;
-      void api
-        .saveService(snapshot)
-        .then(async () => {
-          if (id !== seq.current) {
-            return;
-          }
-          await client.invalidateQueries({ queryKey: ["status"] });
-        })
-        .catch((error: unknown) => {
-          if (id === seq.current) {
-            notifyError(error);
-          }
-        });
+      write(latest.current);
     };
     if (immediate) {
       run();

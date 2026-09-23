@@ -1,5 +1,5 @@
 import { Events } from "@wailsio/runtime";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -54,7 +54,25 @@ export const UpdateDialog: FC = () => {
   const [failure, setFailure] = useState("");
   const [applying, setApplying] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const [failedAfterDownload, setFailedAfterDownload] = useState(false);
+  const [retryAction, setRetryAction] = useState<"check" | "download" | "restart">("check");
+  const phaseRef = useRef<Phase>("closed");
+  const lastError = useRef("");
+
+  function changePhase(next: Phase) {
+    phaseRef.current = next;
+    setPhase(next);
+  }
+
+  function showFailure(message: string) {
+    if (lastError.current !== message) {
+      toastManager.add({ title: message, type: "error" });
+      lastError.current = message;
+    }
+    setApplying(false);
+    setFailure(message);
+    setDismissed(false);
+    changePhase("failed");
+  }
 
   useEffect(() => {
     function showAvailable(body: unknown) {
@@ -64,8 +82,9 @@ export const UpdateDialog: FC = () => {
       setFailure("");
       setProgress(0);
       setDismissed(false);
-      setFailedAfterDownload(false);
-      setPhase("available");
+      setApplying(false);
+      lastError.current = "";
+      changePhase("available");
     }
     reshowAvailable = showAvailable;
 
@@ -80,25 +99,24 @@ export const UpdateDialog: FC = () => {
       setFailure("");
       setProgress(0);
       setDismissed(false);
-      setPhase("downloading");
+      setRetryAction("download");
+      lastError.current = "";
+      changePhase("downloading");
     }
 
-    const offAvailable = Events.On("wails:updater:update-available", (event) => {
-      showRelease(eventBody(event));
-    });
     const offDownload = Events.On("wails:updater:download-started", (event) => {
       showRelease(eventBody(event));
     });
     const offProgress = Events.On("wails:updater:download-progress", (event) => {
       const notice = (eventBody(event) ?? {}) as ProgressNotice;
       setProgress(percent(notice.written ?? 0, notice.total ?? 0));
-      setPhase("downloading");
+      changePhase("downloading");
     });
     const offVerifying = Events.On("wails:updater:verifying", () => {
-      setPhase("verifying");
+      changePhase("verifying");
     });
     const offInstalling = Events.On("wails:updater:installing", () => {
-      setPhase("installing");
+      changePhase("installing");
     });
     const offReady = Events.On("wails:updater:update-ready", (event) => {
       const release = (eventBody(event) ?? {}) as ReleaseNotice;
@@ -106,13 +124,15 @@ export const UpdateDialog: FC = () => {
         setVersion(release.version);
       }
       setDismissed(false);
-      setPhase("ready");
+      setApplying(false);
+      changePhase("ready");
     });
     const offNone = Events.On("wails:updater:no-update", () => {
       if (!manualCheck) {
         return;
       }
       manualCheck = false;
+      setApplying(false);
       toastManager.add({ title: "已是最新版本", type: "success" });
     });
     const offError = Events.On("wails:updater:error", (event) => {
@@ -121,15 +141,14 @@ export const UpdateDialog: FC = () => {
         return;
       }
       manualCheck = false;
-      setFailure(notice.message || "更新失败");
-      setDismissed(false);
-      setFailedAfterDownload(phase === "downloading" || phase === "verifying" || phase === "installing");
-      setPhase("failed");
+      setRetryAction(notice.stage === "download" || notice.stage === "verify" || notice.stage === "install"
+        || phaseRef.current === "downloading" || phaseRef.current === "verifying" || phaseRef.current === "installing"
+        ? "download" : "check");
+      showFailure(notice.message || "更新失败");
     });
     return () => {
       reshowAvailable = null;
       offNewRelease();
-      offAvailable();
       offDownload();
       offProgress();
       offVerifying();
@@ -197,12 +216,11 @@ export const UpdateDialog: FC = () => {
               loading={applying}
               onClick={() => {
                 setApplying(true);
-                setPhase("downloading");
+                setRetryAction("download");
+                lastError.current = "";
+                changePhase("downloading");
                 void api.downloadPendingUpdate().catch((error: unknown) => {
-                  setApplying(false);
-                  setFailure(errorText(error));
-                  setFailedAfterDownload(true);
-                  setPhase("failed");
+                  showFailure(errorText(error));
                 });
               }}
             >
@@ -215,21 +233,22 @@ export const UpdateDialog: FC = () => {
               onClick={() => {
                 setApplying(true);
                 setFailure("");
-                if (failedAfterDownload) {
-                  setPhase("downloading");
+                lastError.current = "";
+                if (retryAction === "download") {
+                  changePhase("downloading");
                   void api.downloadPendingUpdate().catch((error: unknown) => {
-                    setApplying(false);
-                    setFailure(errorText(error));
-                    setPhase("failed");
+                    showFailure(errorText(error));
+                  });
+                } else if (retryAction === "restart") {
+                  void api.applyUpdate().catch((error: unknown) => {
+                    showFailure(errorText(error));
                   });
                 } else {
                   beginManualUpdateCheck();
-                  setPhase("downloading");
+                  changePhase("downloading");
                   void api.checkUpdates().catch((error: unknown) => {
-                    setApplying(false);
                     finishManualUpdateCheck();
-                    setFailure(errorText(error));
-                    setPhase("failed");
+                    showFailure(errorText(error));
                   });
                 }
               }}
@@ -242,10 +261,10 @@ export const UpdateDialog: FC = () => {
               loading={applying}
               onClick={() => {
                 setApplying(true);
+                setRetryAction("restart");
+                lastError.current = "";
                 void api.applyUpdate().catch((error: unknown) => {
-                  setApplying(false);
-                  setFailure(errorText(error));
-                  setPhase("failed");
+                  showFailure(errorText(error));
                 });
               }}
             >

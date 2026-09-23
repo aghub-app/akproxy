@@ -60,7 +60,7 @@ func configureUpdates(app *application.App) error {
 	}
 	scheduler = newUpdateScheduler(func(event string, data any) {
 		app.Event.Emit(event, data)
-	})
+	}, app.Updater)
 	scheduler.Start()
 	app.OnShutdown(func() {
 		scheduler.Stop()
@@ -94,14 +94,7 @@ func (a *App) CheckUpdates() error {
 	if version == "dev" {
 		return errors.New("开发版本不执行更新，请使用正式安装包")
 	}
-	u := application.Get().Updater
-	switch u.State() {
-	case updater.StateChecking, updater.StateDownloading, updater.StateVerifying, updater.StateInstalling:
-		return errors.New("更新正在进行中")
-	}
-	err := u.CheckAndInstall(a.ctx)
-	scheduler.RecordManualCheck(err)
-	return err
+	return scheduler.ManualCheck(a.ctx)
 }
 
 // ApplyUpdate restarts into a downloaded release. It does not restart the proxy.

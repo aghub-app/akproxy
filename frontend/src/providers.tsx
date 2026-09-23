@@ -1,19 +1,30 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useState } from "react";
-import { ToastProvider } from "@/components/ui/toast";
+import { ToastProvider, toastManager } from "@/components/ui/toast";
 import { UpdateDialog } from "@/features/update-dialog";
-import { api } from "@/lib/desktop";
+import { errorText, type Status, type UpdatePrefsStatus } from "@/lib/desktop";
 import { playInteractionSound } from "@/lib/ui-sounds";
 import { Events } from "@wailsio/runtime";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(
-    () =>
-      new QueryClient({
+    () => {
+      const reported = new WeakSet<object>();
+      return new QueryClient({
+        queryCache: new QueryCache({
+          onError: (error, query) => {
+            if (!reported.has(query)) {
+              reported.add(query);
+              toastManager.add({ title: errorText(error), type: "error" });
+            }
+          },
+          onSuccess: (_data, query) => reported.delete(query),
+        }),
         defaultOptions: {
           queries: { retry: false, refetchOnWindowFocus: false },
         },
-      }),
+      });
+    },
   );
 
   useEffect(() => {
@@ -28,15 +39,27 @@ export function Providers({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const offStatus = Events.On("server:status", (event) => {
-      client.setQueryData(["status"], event.data);
+      const next = event.data as Status;
+      const previous = client.getQueryData<Status>(["status"]);
+      client.setQueryData(["status"], next);
+      if (next.error && previous?.running && !next.running) {
+        toastManager.add({ title: next.error, type: "error" });
+      }
     });
     const offLogin = Events.On("login:done", () => {
       void client.invalidateQueries({ queryKey: ["accounts"] });
     });
-    void api.status().then((status) => client.setQueryData(["status"], status));
+    const offUpdateChecked = Events.On("updates:checked", (event) => {
+      client.setQueryData<UpdatePrefsStatus>(["update-prefs"], event.data as UpdatePrefsStatus);
+    });
+    const offUpdateError = Events.On("updates:check-error", (event) => {
+      toastManager.add({ title: errorText(event.data), type: "error" });
+    });
     return () => {
       offStatus();
       offLogin();
+      offUpdateChecked();
+      offUpdateError();
     };
   }, [client]);
 

@@ -55,9 +55,9 @@ node scripts/update-fixture.mjs /绝对路径/更新包目录 0.0.2
 
 先用 `wails3 task build` 生成前端；分别编译两份测试版本，构建时注入 `-X main.version=0.0.1 -X main.updateAPIBase=http://127.0.0.1:18765`（新版改为 `0.0.2`），macOS CGO 参数沿用 Taskfile；调用 `bash scripts/package-app.sh 版本号` 打包。旧版复制到临时可写目录，新版用 `ditto -c -k --norsrc --keepParent build/bin/akproxy.app 更新包目录/akproxy-darwin-universal.zip` 打包。不要拿正式安装目录做测试。
 
-验收：启动旧版看到官方窗口自动下载；等待 `Update Ready`，期间旧版仍可使用；点击 `Restart & Apply` 后确认 PID 改变、安装路径不变、设置页版本为新版、代理停止、监听端口关闭。对比重启前后配置和账号文件哈希。若启动代理触发上游令牌刷新，应在刷新完成后取基线，或单独在代理停止状态验证文件保持不变。
+验收：启动旧版后在应用更新对话框看到下载进度；等待「可以重启以完成更新」，期间旧版仍可使用；点击「重启」后确认 PID 改变、安装路径不变、设置页版本为新版、代理停止、监听端口关闭。对比重启前后配置和账号文件哈希。若启动代理触发上游令牌刷新，应在刷新完成后取基线，或单独在代理停止状态验证文件保持不变。
 
-再验证设置页手动检查出现 `You're Up to Date`，错误校验和出现 `Update Failed` 且无重启按钮，网络失败后能重新检查。beta.24 官方 `Try Again` 只重新下载已发现的版本，不重新检查发布信息：检查阶段网络失败，或修正 Release 校验元数据后，应关闭窗口并从设置重新检查。
+再验证设置页手动检查已是最新版本时只显示 toast；错误校验和出现「更新失败」且无重启按钮，点击「重试」会重新下载；检查阶段网络失败用 toast 提示，从设置重新检查。
 
 本地 ad-hoc 测试不等于正式签名验收。发布前还须用专用 Developer ID、公证包和实际 GitHub Release 完成升级验证。
 

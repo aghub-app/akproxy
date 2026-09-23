@@ -44,6 +44,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 浏览器登录写入应用自己的账号目录。界面不展示令牌。
 - 没有已登录账号的 Codex、Grok、Claude、Gemini、Kimi、Devin 页，在内容区中央显示该页图标、名称和添加操作。读取失败时不显示成空列表。
 - Codex 和 Claude 账号卡片显示该账号的厂商会话额度百分比。额度读取失败只影响这一张卡片。其他平台不显示额度。
+- 后端操作和查询失败用 toast 展示原因；同一查询连续失败期间只提示一次，成功后再次失败可以重新提示。服务意外退出时用 toast 报告原因。
 - 应用进程结束时，服务不再监听。
 
 ## System-wide constraints

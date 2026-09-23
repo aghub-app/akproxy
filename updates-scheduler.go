@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"akproxy/internal/desktop"
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/updater"
 )
 
@@ -29,16 +28,18 @@ type NewReleaseNotice struct {
 	Notes   string `json:"notes"`
 }
 
-var errUpToDate = errors.New("已是最新版本")
-
 // updateScheduler owns the periodic update check. The updater's built-in
 // CheckInterval cannot restart after StopPeriodicCheck, so the app runs its
 // own timer to honor runtime preference changes.
 type updateScheduler struct {
-	emit func(event string, data any)
+	emit    func(event string, data any)
+	updater updateClient
 
 	mu         sync.Mutex
+	checkMu    sync.Mutex
 	timer      *time.Timer
+	generation uint64
+	stopped    bool
 	prefs      desktop.AppPrefs
 	lastAt     time.Time
 	lastResult string
@@ -46,97 +47,154 @@ type updateScheduler struct {
 	pending    *updater.Release
 }
 
-func newUpdateScheduler(emit func(event string, data any)) *updateScheduler {
+type updateClient interface {
+	State() updater.State
+	Check(context.Context) (*updater.Release, error)
+	DownloadAndInstall(context.Context) error
+}
+
+func newUpdateScheduler(emit func(event string, data any), client updateClient) *updateScheduler {
 	if emit == nil {
 		emit = func(string, any) {}
 	}
-	return &updateScheduler{emit: emit, prefs: desktop.ReadAppPrefs(prefsRoot())}
+	return &updateScheduler{emit: emit, updater: client, prefs: desktop.ReadAppPrefs(prefsRoot())}
 }
 
 func (s *updateScheduler) Start() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.stopped = false
 	s.armLocked()
 }
 
 func (s *updateScheduler) armLocked() {
+	s.generation++
 	if s.timer != nil {
 		s.timer.Stop()
 		s.timer = nil
 	}
-	if version == "dev" || !s.prefs.AutoCheck {
+	if s.stopped || version == "dev" || !s.prefs.AutoCheck {
 		return
 	}
 	interval := time.Duration(s.prefs.CheckIntervalHours) * time.Hour
-	s.timer = time.AfterFunc(interval, func() { s.tick() })
+	generation := s.generation
+	s.timer = time.AfterFunc(interval, func() { s.tickAt(generation) })
 }
 
 // tick runs one automatic check. A check flow already in progress makes the
 // updater drop this tick, matching its own periodic behavior.
 func (s *updateScheduler) tick() {
+	s.tickAt(0)
+}
+
+func (s *updateScheduler) tickAt(generation uint64) {
 	s.mu.Lock()
+	if s.stopped || version == "dev" || !s.prefs.AutoCheck || (generation != 0 && generation != s.generation) {
+		s.mu.Unlock()
+		return
+	}
+	current := s.generation
 	prefs := s.prefs
 	s.mu.Unlock()
-	if !prefs.AutoCheck {
+	defer func() {
+		s.mu.Lock()
+		if current == s.generation {
+			s.armLocked()
+		}
+		s.mu.Unlock()
+	}()
+	if !s.checkMu.TryLock() {
 		return
 	}
-	u := application.Get().Updater
-	switch u.State() {
-	case updater.StateChecking, updater.StateDownloading, updater.StateVerifying, updater.StateInstalling:
+	defer s.checkMu.Unlock()
+	switch s.updater.State() {
+	case updater.StateChecking, updater.StateDownloading, updater.StateVerifying, updater.StateInstalling, updater.StateReady:
 		return
 	}
-	s.check(prefs.AutoUpdate)
+	_ = s.check(context.Background(), prefs.AutoUpdate, true)
 }
 
 // check runs one update round. download=true keeps the historical
 // find-and-download behavior; download=false only records the found release
 // and notifies the window.
-func (s *updateScheduler) check(download bool) {
-	u := application.Get().Updater
-	rel, err := u.Check(context.Background())
-	if err == nil && rel != nil && !download {
-		s.mu.Lock()
-		s.pending = rel
-		s.mu.Unlock()
-		s.emit("updates:new-release", NewReleaseNotice{Version: rel.Version, Notes: rel.Notes})
-	}
+func (s *updateScheduler) check(ctx context.Context, download, background bool) error {
+	rel, err := s.updater.Check(ctx)
 	s.record(err, rel)
+	s.emit("updates:checked", s.Status())
+	if err != nil && background {
+		s.emit("updates:check-error", err.Error())
+	}
+	if err != nil || rel == nil {
+		return err
+	}
+	if !download {
+		s.emit("updates:new-release", NewReleaseNotice{Version: rel.Version, Notes: rel.Notes})
+		return nil
+	}
+	if err := s.updater.DownloadAndInstall(ctx); err != nil {
+		return err
+	}
+	s.clearPending()
+	return nil
+}
+
+func (s *updateScheduler) ManualCheck(ctx context.Context) error {
+	if !s.checkMu.TryLock() {
+		return errors.New("更新正在进行中")
+	}
+	defer s.checkMu.Unlock()
+	switch s.updater.State() {
+	case updater.StateChecking, updater.StateDownloading, updater.StateVerifying, updater.StateInstalling:
+		return errors.New("更新正在进行中")
+	}
+	return s.check(ctx, true, false)
 }
 
 // DownloadPendingUpdate starts downloading the release found by a
 // find-only automatic check.
 func (s *updateScheduler) DownloadPendingUpdate() error {
+	if !s.checkMu.TryLock() {
+		return errors.New("更新正在进行中")
+	}
+	defer s.checkMu.Unlock()
 	s.mu.Lock()
 	pending := s.pending
 	s.mu.Unlock()
 	if pending == nil {
 		return errors.New("没有待下载的新版本")
 	}
-	u := application.Get().Updater
-	switch u.State() {
+	switch s.updater.State() {
 	case updater.StateDownloading, updater.StateVerifying, updater.StateInstalling:
 		return errors.New("更新正在进行中")
 	}
-	return u.DownloadAndInstall(context.Background())
+	if err := s.updater.DownloadAndInstall(context.Background()); err != nil {
+		return err
+	}
+	s.clearPending()
+	return nil
+}
+
+func (s *updateScheduler) clearPending() {
+	s.mu.Lock()
+	s.pending = nil
+	s.mu.Unlock()
 }
 
 func (s *updateScheduler) record(err error, rel *updater.Release) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.lastAt = time.Now()
-	s.pending = nil
+	s.pending = rel
 	switch {
-	case errors.Is(err, errUpToDate):
-		s.lastResult = "已是最新版本"
-		s.lastFound = ""
 	case err != nil:
 		s.lastResult = "检查失败"
 		s.lastFound = ""
+	case rel == nil:
+		s.lastResult = "已是最新版本"
+		s.lastFound = ""
 	default:
-		if rel != nil {
-			s.lastFound = rel.Version
-			s.lastResult = "发现新版本"
-		}
+		s.lastFound = rel.Version
+		s.lastResult = "发现新版本"
 	}
 }
 
@@ -165,44 +223,23 @@ func (s *updateScheduler) Save(in desktop.AppPrefs) (UpdatePrefsStatus, error) {
 	}
 	s.mu.Lock()
 	turnedOn := in.AutoCheck && !s.prefs.AutoCheck
-	s.prefs = in
 	if err := desktop.WriteAppPrefs(prefsRoot(), in); err != nil {
 		s.mu.Unlock()
 		return s.Status(), err
 	}
+	s.prefs = in
 	s.armLocked()
 	s.mu.Unlock()
 	if turnedOn && version != "dev" {
-		s.tick()
+		go s.tick()
 	}
 	return s.Status(), nil
-}
-
-// RecordManualCheck lets the manual 检查更新 entry share the last-check display.
-func (s *updateScheduler) RecordManualCheck(err error) {
-	u := application.Get().Updater
-	var rel *updater.Release
-	if err == nil && u.State() == updater.StateAvailable {
-		rel = &updater.Release{Version: ""}
-	}
-	s.record(manualResult(err), rel)
 }
 
 // Stop cancels the timer at shutdown.
 func (s *updateScheduler) Stop() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.timer != nil {
-		s.timer.Stop()
-		s.timer = nil
-	}
-}
-
-// manualResult folds the updater's no-update sentinel into a nil error for
-// manual checks, which surface failure through the settings error toast.
-func manualResult(err error) error {
-	if errors.Is(err, errUpToDate) {
-		return nil
-	}
-	return err
+	s.stopped = true
+	s.armLocked()
 }

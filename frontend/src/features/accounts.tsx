@@ -148,7 +148,9 @@ export const AccountsPanel: FC<{
         </Button>
       ))}
       {loginActive ? (
-        <Button variant="outline" onClick={() => void api.cancelLogin()}>
+        <Button variant="outline" onClick={() => void api.cancelLogin().catch((error: unknown) => {
+          toastManager.add({ title: errorText(error), type: "error" });
+        })}>
           取消登录
         </Button>
       ) : null}
