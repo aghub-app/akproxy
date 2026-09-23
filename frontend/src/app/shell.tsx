@@ -47,7 +47,7 @@ function SideLink({ item }: { item: typeof settingsPage }) {
 }
 
 const actionLabel = { start: "启动", stop: "停止", restart: "重启" } as const;
-const usagePages = ["codex", "grok", "claude", "devin"] as const;
+const usagePages = ["codex", "grok", "claude", "gemini", "kimi", "devin"] as const;
 
 export const AppLayout: FC = () => {
   const { t, locale } = usePresentation();

@@ -39,6 +39,7 @@ export interface AppPrefs {
     "usageAlwaysShowPacing": boolean;
     "language": string;
     "theme": string;
+    "livestream": boolean;
 }
 
 /**

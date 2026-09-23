@@ -46,13 +46,13 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 浏览器登录写入应用自己的账号目录。界面不展示令牌。
 - 服务运行时，账号列表按 SDK 实时认证状态为需要重新授权的账号显示红色提醒和对应卡片的重新授权操作。重新授权仅能更新被选中的同一账号；登录到不同账号时不写入。服务未运行时不显示历史提醒。其他 SDK 错误或额度读取失败不等于需要重新授权。详见 `docs/prd/account-reauthorization.md` 和 `docs/adr/account-auth-status.md`。
 - 没有已登录账号的 Codex、Grok、Claude、Gemini、Kimi、Devin 页，在内容区中央显示该页图标、名称和添加操作。读取账号失败时不显示成空列表。
-- Codex、Claude、Grok、Devin 账号卡片显示该账号的套餐名（有数据时）和厂商会话额度百分比窗口：Codex 按 ChatGPT 返回的周期显示 5 小时、每周或每月窗口，Claude 来自 Anthropic 的 5 小时、每周，以及有数据时的每周 Opus 和每周 Sonnet，Grok 来自 xAI 的周窗口，Devin 来自 GetUserStatus 的每日和每周窗口。卡片标题空间不足时可省略账号邮箱，套餐名须完整显示。额度读取用该账号自己的登录令牌，令牌不出现在界面上。读取失败只影响这一张卡片。Gemini 和 Kimi 没有厂商额度接口，卡片不画额度。开发构建和生产构建均不注入示例数据。设置 → 用量的「额度显示」开关关闭后停止额度读取与刷新、隐藏「刷新额度」按钮；开关默认开，改动立即生效，重启后保持。详见 `docs/prd/provider-usage.md` 和 `docs/adr/provider-usage.md`。
+- Codex、Claude、Grok、Gemini、Kimi、Devin 账号卡片显示该账号的套餐名（有数据时）和厂商会话额度百分比窗口：Codex 按 ChatGPT 返回的周期显示 5 小时、每周或每月窗口，Claude 来自 Anthropic 的 5 小时、每周，以及有数据时的每周 Opus 和每周 Sonnet，Grok 来自 xAI 的周窗口，Gemini 来自 Antigravity 的 Gemini 池与非 Gemini 池的 5 小时和每周窗口，Kimi 的中国站和国际站来自 Coding Plan 的 5 小时、每周和有数据时的每月窗口，没有可用窗口时套餐名显示为「免费版」，其下说明没有 5 小时和每周额度，Devin 来自 GetUserStatus 的每日和每周窗口。卡片标题空间不足时可省略账号邮箱，套餐名须完整显示。额度读取用该账号自己的登录令牌，令牌不出现在界面上。读取失败只影响这一张卡片。开发构建和生产构建均不注入示例数据。设置 → 用量的「额度显示」开关关闭后停止额度读取与刷新、隐藏「刷新额度」按钮；开关默认开，改动立即生效，重启后保持。详见 `docs/prd/provider-usage.md`、`docs/adr/provider-usage.md`、`docs/adr/gemini-quota.md` 和 `docs/adr/kimi-quota.md`。
 - 后端操作和查询失败用 toast 展示原因；同一查询连续失败期间只提示一次，成功后再次失败可以重新提示。服务意外退出时用 toast 报告原因。
 - 应用进程结束时，服务不再监听。
 - 额度偏好升级时补齐缺失的默认值，保留明确的用户选择。缺失额度数据不得显示为零用量或额度耗尽；无可用窗口时按平台约定显示无窗口或读取失败。
 - 账号用量卡片可显示厂商明确返回的额外额度与重置次数。缺失附加指标不显示假零值。设置的「用量」页可选择已用/剩余百分比、倒计时/具体时间、使用节奏，并分别控制附加行可见性；关闭额度显示时子选项禁用并保留原值，偏好即时生效、重启保持。详见 `docs/prd/provider-usage.md`。
-- 额度显示开启时，有已保存账号的 Codex、Claude、Grok、Devin 额度在应用运行期间独立于页面导航定期读取；切换页面立即显示已读到的结果，首次请求未完成时才显示读取状态。关闭开关后停止后台额度请求。
-- 设置页的语言可选跟随系统、简体中文、英语；外观可选跟随系统、浅色、深色。两项默认跟随系统、立即生效、重启保持。系统语言不受支持时回退简体中文。只翻译应用自有文案；详情见 `docs/prd/language-appearance.md`。
+- 额度显示开启时，有已保存账号的 Codex、Claude、Grok、Gemini、Kimi、Devin 额度在应用运行期间独立于页面导航定期读取；切换页面立即显示已读到的结果，首次请求未完成时才显示读取状态。关闭开关后停止后台额度请求。
+- 设置页的语言可选跟随系统、简体中文、英语；外观可选跟随系统、浅色、深色。两项默认跟随系统、立即生效、重启保持。系统语言不受支持时回退简体中文。只翻译应用自有文案。外观里的直播模式默认关闭；打开后服务商账号卡片和删除确认中的邮箱显示为固定打码，不改账号数据。详情见 `docs/prd/language-appearance.md`。
 
 ## System-wide constraints
 

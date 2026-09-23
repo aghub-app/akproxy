@@ -19,6 +19,7 @@ import { ProviderEmpty } from "@/features/provider-empty";
 import { windowPace } from "@/features/usage-pace";
 import { api, errorText, type Account, type AccountUsage, type AppPrefs, type UsageWindow } from "@/lib/desktop";
 import { localizeErrorMessage, translate, type Locale } from "@/lib/i18n";
+import { maskAccountLabel } from "@/lib/livestream";
 import { usePresentation } from "@/presentation";
 
 const windowLabel: Record<UsageWindow["kind"], string> = {
@@ -28,9 +29,13 @@ const windowLabel: Record<UsageWindow["kind"], string> = {
   monthly: "每月",
   weekly_opus: "每周 Opus",
   weekly_sonnet: "每周 Sonnet",
+  gemini_5h: "5 小时",
+  gemini_weekly: "每周",
+  claude_5h: "Claude 5 小时",
+  claude_weekly: "Claude 每周",
 };
 
-const sessionLimitProviders = new Set(["codex", "claude", "xai", "devin"]);
+const sessionLimitProviders = new Set(["codex", "claude", "xai", "devin", "antigravity", "kimi", "kimi-ai", "kimi.ai"]);
 
 type UsageOptions = Pick<AppPrefs, "usagePercentMode" | "usageResetMode" | "usageShowExtra" | "usageShowResets" | "usageAlwaysShowPacing">;
 
@@ -100,7 +105,9 @@ const UsageBars: FC<{ usage?: AccountUsage; loading: boolean; failed: boolean; o
   return (
     <div className="flex flex-1 flex-col gap-4 px-4 pb-4">
       {usage.error ? <p className="text-xs text-muted-foreground">{localizeErrorMessage(usage.error, locale)}</p> : null}
-      {!usage.error && !usage.windows?.length ? <p className="text-xs text-muted-foreground">{t("暂无额度窗口")}</p> : null}
+      {!usage.error && !usage.windows?.length ? (
+        <p className="text-sm text-muted-foreground">{usage.plan === "免费版" ? t("没有 5 小时和每周额度。") : t("暂无额度窗口")}</p>
+      ) : null}
       {(usage.windows ?? []).map((window) => {
         const pace = windowPace(window, options.usageAlwaysShowPacing, Date.now(), locale);
         const label = t(windowLabel[window.kind] ?? window.kind);
@@ -159,6 +166,7 @@ export const AccountsPanel: FC<{
   const loginActive = status.data?.loginActive ?? false;
   const prefs = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
   const usageEnabled = prefs.data?.prefs.usageEnabled ?? false;
+  const livestream = prefs.data?.prefs.livestream === true;
   const usageOptions = prefs.data?.prefs ?? defaultUsageOptions;
   const accounts = useQuery({
     queryKey: ["accounts", page],
@@ -279,9 +287,9 @@ export const AccountsPanel: FC<{
               <Card className="h-full">
                 <CardHeader className="p-4">
                   <CardTitle className="flex min-w-0 items-center gap-2 text-base leading-snug">
-                    <span className="min-w-0 flex-1 truncate">{account.label || account.id}</span>
+                    <span className="min-w-0 flex-1 truncate">{maskAccountLabel(account.label || account.id, livestream)}</span>
                     {usageByID.get(account.id)?.plan ? (
-                      <Badge>{usageByID.get(account.id)?.plan}</Badge>
+                      <Badge>{t(usageByID.get(account.id)?.plan ?? "")}</Badge>
                     ) : null}
                   </CardTitle>
                   <CardAction>
@@ -337,7 +345,7 @@ export const AccountsPanel: FC<{
           <AlertDialogHeader>
             <AlertDialogTitle>{t("删除这个账号？")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("{account} 会从账号目录移除。正在运行的服务也不再使用它。", { account: pendingDelete?.label || pendingDelete?.id || "" })}
+              {t("{account} 会从账号目录移除。正在运行的服务也不再使用它。", { account: maskAccountLabel(pendingDelete?.label || pendingDelete?.id || "", livestream) })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

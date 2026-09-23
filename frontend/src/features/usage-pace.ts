@@ -3,7 +3,7 @@ import { translate, type Locale } from "../lib/i18n.ts";
 
 export function windowPace(window: UsageWindow, alwaysShow: boolean, now = Date.now(), locale: Locale = "zh-CN") {
   if (window.used >= 100) return { tone: "danger", label: translate("额度已用尽", locale), tick: null };
-  const fallbackSeconds = window.kind === "5h" ? 5 * 3600
+  const fallbackSeconds = window.kind === "5h" || window.kind.endsWith("_5h") ? 5 * 3600
     : window.kind === "daily" ? 24 * 3600
     : window.kind === "monthly" ? 30 * 24 * 3600
     : 7 * 24 * 3600;

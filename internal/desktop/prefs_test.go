@@ -48,6 +48,7 @@ func TestAppPrefsRoundTrip(t *testing.T) {
 	in.UsageResetMode = "exact"
 	in.Language = "en"
 	in.Theme = "dark"
+	in.Livestream = true
 	if err := WriteAppPrefs(root, in); err != nil {
 		t.Fatal(err)
 	}

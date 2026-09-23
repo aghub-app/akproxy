@@ -100,6 +100,17 @@ const PresentationSettings: FC = () => {
         </Select>
         <FieldDescription>{t("选择后立即生效，重启后保持。")}</FieldDescription>
       </Field>
+      <Field>
+        <div className="flex items-center gap-3">
+          <Switch
+            disabled={save.isPending}
+            checked={status.data.prefs.livestream}
+            onCheckedChange={(checked) => save.mutate({ ...status.data.prefs, livestream: checked })}
+          />
+          <FieldLabel>{t("直播模式")}</FieldLabel>
+        </div>
+        <FieldDescription>{t("打开后，服务商账号卡片上的邮箱会被打码。")}</FieldDescription>
+      </Field>
     </div>
   );
 };

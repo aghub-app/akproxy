@@ -21,6 +21,7 @@ type AppPrefs struct {
 	UsageAlwaysShowPacing bool   `json:"usageAlwaysShowPacing"`
 	Language              string `json:"language"`
 	Theme                 string `json:"theme"`
+	Livestream            bool   `json:"livestream"`
 }
 
 const (
