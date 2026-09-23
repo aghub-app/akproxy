@@ -180,7 +180,7 @@ const IntervalField: FC<{
   const [customMode, setCustomMode] = useState(matched ? false : true);
   const preset = matched && !customMode ? String(hours) : "custom";
   return (
-    <Field>
+    <Field className={disabled ? "opacity-50" : undefined}>
       <FieldLabel>{t("检查间隔")}</FieldLabel>
       <div className="flex items-center gap-2">
         <Select

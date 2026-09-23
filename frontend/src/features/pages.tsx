@@ -143,9 +143,10 @@ const UsagePrefField: FC = () => {
       </div>
       <FieldDescription>{t("关闭后停止读取厂商额度。")}</FieldDescription>
       </Field>
+      <fieldset disabled={!prefs.usageEnabled} className="flex min-w-0 flex-col gap-6 disabled:opacity-50">
       <Field>
         <FieldLabel>{t("百分比显示")}</FieldLabel>
-        <Select disabled={save.isPending} value={prefs.usagePercentMode} onValueChange={(value) => {
+        <Select disabled={!prefs.usageEnabled || save.isPending} value={prefs.usagePercentMode} onValueChange={(value) => {
           if (value === "left" || value === "used") save.mutate({ ...prefs, usagePercentMode: value });
         }}>
           <SelectTrigger><SelectValue>{(value) => value === "used" ? t("已用") : t("剩余")}</SelectValue></SelectTrigger>
@@ -157,7 +158,7 @@ const UsagePrefField: FC = () => {
       </Field>
       <Field>
         <FieldLabel>{t("重置时间")}</FieldLabel>
-        <Select disabled={save.isPending} value={prefs.usageResetMode} onValueChange={(value) => {
+        <Select disabled={!prefs.usageEnabled || save.isPending} value={prefs.usageResetMode} onValueChange={(value) => {
           if (value === "countdown" || value === "exact") save.mutate({ ...prefs, usageResetMode: value });
         }}>
           <SelectTrigger><SelectValue>{(value) => value === "exact" ? t("具体时间") : t("倒计时")}</SelectValue></SelectTrigger>
@@ -169,25 +170,26 @@ const UsagePrefField: FC = () => {
       </Field>
       <Field>
         <div className="flex items-center gap-3">
-          <Switch disabled={save.isPending} checked={prefs.usageAlwaysShowPacing} onCheckedChange={(checked) => save.mutate({ ...prefs, usageAlwaysShowPacing: checked })} />
+          <Switch disabled={!prefs.usageEnabled || save.isPending} checked={prefs.usageAlwaysShowPacing} onCheckedChange={(checked) => save.mutate({ ...prefs, usageAlwaysShowPacing: checked })} />
           <FieldLabel>{t("始终显示使用节奏")}</FieldLabel>
         </div>
         <FieldDescription>{t("有足够窗口数据后，显示按当前速度推算的剩余额度；关闭时只提醒接近限额的窗口。")}</FieldDescription>
       </Field>
       <Field>
         <div className="flex items-center gap-3">
-          <Switch disabled={save.isPending} checked={prefs.usageShowExtra} onCheckedChange={(checked) => save.mutate({ ...prefs, usageShowExtra: checked })} />
+          <Switch disabled={!prefs.usageEnabled || save.isPending} checked={prefs.usageShowExtra} onCheckedChange={(checked) => save.mutate({ ...prefs, usageShowExtra: checked })} />
           <FieldLabel>{t("显示额外额度")}</FieldLabel>
         </div>
         <FieldDescription>{t("仅在厂商明确返回金额或积分时显示。")}</FieldDescription>
       </Field>
       <Field>
         <div className="flex items-center gap-3">
-          <Switch disabled={save.isPending} checked={prefs.usageShowResets} onCheckedChange={(checked) => save.mutate({ ...prefs, usageShowResets: checked })} />
+          <Switch disabled={!prefs.usageEnabled || save.isPending} checked={prefs.usageShowResets} onCheckedChange={(checked) => save.mutate({ ...prefs, usageShowResets: checked })} />
           <FieldLabel>{t("显示重置次数")}</FieldLabel>
         </div>
         <FieldDescription>{t("Codex 返回可用重置券数量时显示。")}</FieldDescription>
       </Field>
+      </fieldset>
     </div>
   );
 };
