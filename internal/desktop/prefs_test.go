@@ -9,14 +9,43 @@ import (
 func TestAppPrefsDefaults(t *testing.T) {
 	root := t.TempDir()
 	prefs := ReadAppPrefs(root)
-	if prefs != (AppPrefs{AutoUpdate: true, AutoCheck: true, CheckIntervalHours: 24}) {
+	if prefs != DefaultAppPrefs() {
 		t.Fatalf("missing file should yield defaults, got %+v", prefs)
+	}
+}
+
+func TestAppPrefsUpgradeKeepsDefaultsAndExplicitChoices(t *testing.T) {
+	for _, test := range []struct {
+		name         string
+		body         string
+		usageEnabled bool
+	}{
+		{"legacy", `{"autoUpdate":false,"autoCheck":true,"checkIntervalHours":6}`, true},
+		{"disabled", `{"autoUpdate":false,"autoCheck":true,"checkIntervalHours":6,"usageEnabled":false}`, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			if err := os.WriteFile(filepath.Join(root, "app.json"), []byte(test.body), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			want := DefaultAppPrefs()
+			want.AutoUpdate = false
+			want.CheckIntervalHours = 6
+			want.UsageEnabled = test.usageEnabled
+			if got := ReadAppPrefs(root); got != want {
+				t.Fatalf("preferences = %+v, want %+v", got, want)
+			}
+		})
 	}
 }
 
 func TestAppPrefsRoundTrip(t *testing.T) {
 	root := t.TempDir()
-	in := AppPrefs{AutoUpdate: false, AutoCheck: true, CheckIntervalHours: 6}
+	in := DefaultAppPrefs()
+	in.AutoUpdate = false
+	in.CheckIntervalHours = 6
+	in.UsagePercentMode = "used"
+	in.UsageResetMode = "exact"
 	if err := WriteAppPrefs(root, in); err != nil {
 		t.Fatal(err)
 	}

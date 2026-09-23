@@ -29,11 +29,15 @@ export type UsageWindow = {
   kind: string;
   used: number;
   resetsAt: string;
+  durationSeconds: number;
 };
 
 export type AccountUsage = {
   id: string;
+  plan: string;
   windows: UsageWindow[] | null;
+  extra?: { amount: number; currency: string; kind: string } | null;
+  resetCredits?: number | null;
   error: string;
 };
 

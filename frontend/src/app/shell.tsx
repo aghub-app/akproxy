@@ -1,6 +1,6 @@
 import { providerPages } from "@/lib/providers";
 import { HardDrivesIcon, HouseIcon, PlayIcon, StopIcon } from "@phosphor-icons/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FC } from "react";
 import { NavLink, Outlet } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -45,9 +45,28 @@ function SideLink({ item }: { item: typeof settingsPage }) {
 }
 
 const actionLabel = { start: "启动", stop: "停止", restart: "重启" } as const;
+const usagePages = ["codex", "grok", "claude", "devin"] as const;
 
 export const AppLayout: FC = () => {
   const client = useQueryClient();
+  const usagePrefs = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
+  const accountLists = useQueries({ queries: usagePages.map((page) => ({
+    queryKey: ["accounts", page],
+    queryFn: () => api.accounts(page),
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+  })) });
+  useQueries({ queries: usagePages.map((page, index) => ({
+    queryKey: ["account-usage", page],
+    queryFn: () => api.accountUsage(page),
+    enabled: usagePrefs.data?.prefs.usageEnabled === true && (accountLists[index].data?.length ?? 0) > 0,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+  })) });
   const status = useQuery({
     queryKey: ["status"],
     queryFn: api.status,

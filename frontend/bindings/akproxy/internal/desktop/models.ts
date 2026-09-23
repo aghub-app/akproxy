@@ -15,7 +15,10 @@ export interface Account {
  */
 export interface AccountUsage {
     "id": string;
+    "plan": string;
     "windows": UsageWindow[] | null;
+    "extra": UsageExtra | null;
+    "resetCredits": number | null;
     "error": string;
 }
 
@@ -27,6 +30,12 @@ export interface AppPrefs {
     "autoUpdate": boolean;
     "autoCheck": boolean;
     "checkIntervalHours": number;
+    "usageEnabled": boolean;
+    "usagePercentMode": string;
+    "usageResetMode": string;
+    "usageShowExtra": boolean;
+    "usageShowResets": boolean;
+    "usageAlwaysShowPacing": boolean;
 }
 
 /**
@@ -92,6 +101,12 @@ export interface Status {
     "loginActive": boolean;
 }
 
+export interface UsageExtra {
+    "amount": number;
+    "currency": string;
+    "kind": string;
+}
+
 /**
  * UsageWindow is one vendor rate-limit window. Used is the percent already consumed, 0–100.
  */
@@ -99,4 +114,5 @@ export interface UsageWindow {
     "kind": string;
     "used": number;
     "resetsAt": string;
+    "durationSeconds": number;
 }

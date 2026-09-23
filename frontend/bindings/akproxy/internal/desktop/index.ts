@@ -11,5 +11,6 @@ export type {
     OpenAIDraft,
     ServiceSettings,
     Status,
+    UsageExtra,
     UsageWindow
 } from "./models.js";

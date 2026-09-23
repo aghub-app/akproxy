@@ -1,6 +1,7 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FC, useEffect, useRef, useState } from "react";
 import { ClientKeyDisplay } from "@/components/client-key-display";
+import { useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Frame } from "@/components/ui/frame";
 import {
@@ -25,7 +26,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { toastManager } from "@/components/ui/toast";
 import { AccountsPanel } from "@/features/accounts";
 import { AboutTab } from "@/features/about";
-import { api, errorText, type ServiceSettings } from "@/lib/desktop";
+import { api, errorText, type AppPrefs, type ServiceSettings } from "@/lib/desktop";
 
 const strategies = [
   { value: "round-robin", label: "轮询" },
@@ -48,6 +49,93 @@ function notifyError(error: unknown) {
 const AboutTabContainer: FC = () => {
   const version = useQuery({ queryKey: ["version"], queryFn: api.version });
   return <AboutTab version={version.data} />;
+};
+
+const UsagePrefField: FC = () => {
+  const client = useQueryClient();
+  const status = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
+  const save = useMutation({
+    mutationFn: (prefs: AppPrefs) => api.saveUpdatePrefs(prefs),
+    onSuccess: (next) => {
+      client.setQueryData(["update-prefs"], next);
+      void client.invalidateQueries({ queryKey: ["account-usage"] });
+    },
+    onError: notifyError,
+  });
+  if (status.isError) {
+    return (
+      <div role="alert" className="flex items-center gap-3 text-sm">
+        <span>用量设置暂时读不到</span>
+        <Button variant="outline" onClick={() => void status.refetch()}>重试</Button>
+      </div>
+    );
+  }
+  if (!status.data) {
+    return <p className="text-muted-foreground text-sm">正在读取用量设置…</p>;
+  }
+  const prefs = status.data.prefs;
+  return (
+    <div className="flex max-w-xl flex-col gap-6">
+      <Field>
+      <div className="flex items-center gap-3">
+        <Switch
+          disabled={save.isPending}
+          checked={prefs.usageEnabled}
+          onCheckedChange={(checked) =>
+            save.mutate({ ...prefs, usageEnabled: checked })
+          }
+        />
+        <FieldLabel>额度显示</FieldLabel>
+      </div>
+      <FieldDescription>关闭后停止读取厂商额度。</FieldDescription>
+      </Field>
+      <Field>
+        <FieldLabel>百分比显示</FieldLabel>
+        <Select disabled={save.isPending} value={prefs.usagePercentMode} onValueChange={(value) => {
+          if (value === "left" || value === "used") save.mutate({ ...prefs, usagePercentMode: value });
+        }}>
+          <SelectTrigger><SelectValue>{(value) => value === "used" ? "已用" : "剩余"}</SelectValue></SelectTrigger>
+          <SelectPopup>
+            <SelectItem value="left">剩余</SelectItem>
+            <SelectItem value="used">已用</SelectItem>
+          </SelectPopup>
+        </Select>
+      </Field>
+      <Field>
+        <FieldLabel>重置时间</FieldLabel>
+        <Select disabled={save.isPending} value={prefs.usageResetMode} onValueChange={(value) => {
+          if (value === "countdown" || value === "exact") save.mutate({ ...prefs, usageResetMode: value });
+        }}>
+          <SelectTrigger><SelectValue>{(value) => value === "exact" ? "具体时间" : "倒计时"}</SelectValue></SelectTrigger>
+          <SelectPopup>
+            <SelectItem value="countdown">倒计时</SelectItem>
+            <SelectItem value="exact">具体时间</SelectItem>
+          </SelectPopup>
+        </Select>
+      </Field>
+      <Field>
+        <div className="flex items-center gap-3">
+          <Switch disabled={save.isPending} checked={prefs.usageAlwaysShowPacing} onCheckedChange={(checked) => save.mutate({ ...prefs, usageAlwaysShowPacing: checked })} />
+          <FieldLabel>始终显示使用节奏</FieldLabel>
+        </div>
+        <FieldDescription>有足够窗口数据后，显示按当前速度推算的剩余额度；关闭时只提醒接近限额的窗口。</FieldDescription>
+      </Field>
+      <Field>
+        <div className="flex items-center gap-3">
+          <Switch disabled={save.isPending} checked={prefs.usageShowExtra} onCheckedChange={(checked) => save.mutate({ ...prefs, usageShowExtra: checked })} />
+          <FieldLabel>显示额外额度</FieldLabel>
+        </div>
+        <FieldDescription>仅在厂商明确返回金额或积分时显示。</FieldDescription>
+      </Field>
+      <Field>
+        <div className="flex items-center gap-3">
+          <Switch disabled={save.isPending} checked={prefs.usageShowResets} onCheckedChange={(checked) => save.mutate({ ...prefs, usageShowResets: checked })} />
+          <FieldLabel>显示重置次数</FieldLabel>
+        </div>
+        <FieldDescription>Codex 返回可用重置券数量时显示。</FieldDescription>
+      </Field>
+    </div>
+  );
 };
 
 function canPersistService(next: ServiceSettings) {
@@ -169,6 +257,9 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
   const seq = useRef(0);
   const timer = useRef<number | null>(null);
   const writes = useRef(Promise.resolve());
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const tab = tabParam === "clients" || tabParam === "advanced" || tabParam === "usage" || tabParam === "about" ? tabParam : "listen";
 
   function write(snapshot: ServiceSettings) {
     if (!canPersistService(snapshot)) {
@@ -192,7 +283,6 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
       write(latest.current);
     }
   }, []);
-
   function persist(next: ServiceSettings, immediate: boolean) {
     latest.current = next;
     if (timer.current !== null) {
@@ -222,11 +312,16 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
   }
   return (
     <div className="flex flex-col gap-5">
-      <Tabs className="gap-6" defaultValue="listen">
+      <Tabs
+        className="gap-6"
+        value={tab}
+        onValueChange={(value) => setSearchParams(value ? { tab: String(value) } : {})}
+      >
         <TabsList>
           <TabsTab value="listen">监听</TabsTab>
           <TabsTab value="clients">密钥</TabsTab>
           <TabsTab value="advanced">高级</TabsTab>
+          <TabsTab value="usage">用量</TabsTab>
           <TabsTab value="about">关于</TabsTab>
         </TabsList>
         <TabsPanel value="listen" className="flex flex-col gap-5">
@@ -322,6 +417,9 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
               <FieldLabel>调试日志</FieldLabel>
             </div>
           </Field>
+        </TabsPanel>
+        <TabsPanel value="usage">
+          <UsagePrefField />
         </TabsPanel>
         <TabsPanel value="about">
           <AboutTabContainer />

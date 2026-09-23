@@ -10,9 +10,15 @@ import (
 // AppPrefs is the 更新偏好 owned by the 关于 page. It lives in app.json and
 // never touches config.yaml, whose parser drops unknown fields.
 type AppPrefs struct {
-	AutoUpdate         bool `json:"autoUpdate"`
-	AutoCheck          bool `json:"autoCheck"`
-	CheckIntervalHours int  `json:"checkIntervalHours"`
+	AutoUpdate            bool   `json:"autoUpdate"`
+	AutoCheck             bool   `json:"autoCheck"`
+	CheckIntervalHours    int    `json:"checkIntervalHours"`
+	UsageEnabled          bool   `json:"usageEnabled"`
+	UsagePercentMode      string `json:"usagePercentMode"`
+	UsageResetMode        string `json:"usageResetMode"`
+	UsageShowExtra        bool   `json:"usageShowExtra"`
+	UsageShowResets       bool   `json:"usageShowResets"`
+	UsageAlwaysShowPacing bool   `json:"usageAlwaysShowPacing"`
 }
 
 const (
@@ -22,7 +28,7 @@ const (
 
 // DefaultAppPrefs matches the historical built-in behavior.
 func DefaultAppPrefs() AppPrefs {
-	return AppPrefs{AutoUpdate: true, AutoCheck: true, CheckIntervalHours: DefaultCheckIntervalHours}
+	return AppPrefs{AutoUpdate: true, AutoCheck: true, CheckIntervalHours: DefaultCheckIntervalHours, UsageEnabled: true, UsagePercentMode: "left", UsageResetMode: "countdown", UsageShowExtra: true, UsageShowResets: true}
 }
 
 // Normalize clamps a parsed prefs value into the accepted range.
@@ -30,6 +36,12 @@ func NormalizeAppPrefs(in AppPrefs) AppPrefs {
 	out := in
 	if out.CheckIntervalHours < 1 || out.CheckIntervalHours > MaxCheckIntervalHours {
 		out.CheckIntervalHours = DefaultCheckIntervalHours
+	}
+	if out.UsagePercentMode != "left" && out.UsagePercentMode != "used" {
+		out.UsagePercentMode = "left"
+	}
+	if out.UsageResetMode != "countdown" && out.UsageResetMode != "exact" {
+		out.UsageResetMode = "countdown"
 	}
 	return out
 }
@@ -41,7 +53,7 @@ func ReadAppPrefs(root string) AppPrefs {
 	if err != nil {
 		return DefaultAppPrefs()
 	}
-	var prefs AppPrefs
+	prefs := DefaultAppPrefs()
 	if err := json.Unmarshal(body, &prefs); err != nil {
 		return DefaultAppPrefs()
 	}

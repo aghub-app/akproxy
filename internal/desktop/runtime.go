@@ -434,11 +434,11 @@ func (r *Runtime) AccountUsage(page string) ([]AccountUsage, error) {
 			defer wg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), limitsTimeout)
 			defer cancel()
-			windows, err := sessionLimits(ctx, record.Provider, record.Metadata)
-			if windows == nil {
-				windows = []UsageWindow{}
+			item, err := sessionLimits(ctx, record.Provider, record.Metadata)
+			if item.Windows == nil {
+				item.Windows = []UsageWindow{}
 			}
-			item := AccountUsage{ID: record.ID, Windows: windows}
+			item.ID = record.ID
 			if err != nil {
 				item.Error = err.Error()
 			}
