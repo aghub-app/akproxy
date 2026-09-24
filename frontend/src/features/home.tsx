@@ -78,7 +78,7 @@ const ConnectPanel: FC<{ address: string; clientKeys: string[]; clientKey: strin
   const sdkOption = sdkOptions.find((item) => item.id === sdk) ?? sdkOptions[0];
   const example = sdkExample(sdkOption.id, address, clientKey || "<API_KEY>");
   const visibleExample = sdkExample(sdkOption.id, address, visibleKey);
-  return <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+  return <div className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
     <CardFrame className="min-w-0">
       <CardFrameHeader className="px-3 py-2">
         <CardFrameTitle render={<h2 />}>{t("地址")}</CardFrameTitle>
