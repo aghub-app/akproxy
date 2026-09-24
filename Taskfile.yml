@@ -1,5 +1,9 @@
 version: '3'
 
+env:
+  # The design-skill submodule lives under vendor/, which is not Go's dependency vendor tree.
+  GOFLAGS: '-mod=mod'
+
 vars:
   BIN: 'build/bin/akproxy{{if eq OS "windows"}}.exe{{end}}'
   VERSION: '{{.VERSION | default "dev"}}'

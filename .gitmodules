@@ -1,0 +1,3 @@
+[submodule "vendor/eric-design-skill"]
+	path = vendor/eric-design-skill
+	url = https://github.com/AkaraChen/eric-design-skill.git

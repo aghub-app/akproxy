@@ -1,0 +1,20 @@
+{
+  "name": "eric-design-skill",
+  "interface": {
+    "displayName": "Eric Design Skills"
+  },
+  "plugins": [
+    {
+      "name": "eric-design",
+      "source": {
+        "source": "local",
+        "path": "./vendor/eric-design-skill"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
