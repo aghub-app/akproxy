@@ -56,8 +56,8 @@ func main() {
 		// The Dock caches bundle icons aggressively; set the icon at runtime so a
 		// new build shows up without flushing the icon cache.
 		icon := appIcon
-		if info := app.Env.Info(); info.OS == "darwin" && info.OSInfo != nil {
-			icon = dockIcon(appIcon, info.OSInfo.Version)
+		if app.Env.Info().OS == "darwin" {
+			icon = dockIcon(appIcon)
 		}
 		app.SetIcon(icon)
 		if version != "dev" {

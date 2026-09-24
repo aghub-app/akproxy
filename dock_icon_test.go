@@ -8,11 +8,11 @@ import (
 	"testing"
 )
 
-func TestDockIconPadsMacOS26(t *testing.T) {
+func TestDockIconPadsCurrentMacOS(t *testing.T) {
 	src := solidPNG(t, 32, 32, color.NRGBA{R: 200, G: 10, B: 20, A: 255})
-	padded := dockIcon(src, "27.0")
+	padded := dockIcon(src)
 	if bytes.Equal(padded, src) {
-		t.Fatal("macOS 27 icon was not padded")
+		t.Fatal("macOS icon was not padded")
 	}
 	img := decodePNG(t, padded)
 	if got := img.Bounds().Size(); got != image.Pt(dockIconCanvas, dockIconCanvas) {
@@ -26,12 +26,10 @@ func TestDockIconPadsMacOS26(t *testing.T) {
 	}
 }
 
-func TestDockIconLeavesOlderMacOSUntouched(t *testing.T) {
-	src := solidPNG(t, 8, 8, color.NRGBA{R: 1, A: 255})
-	for _, version := range []string{"15.6", "25.0", "", "Unknown", "beta"} {
-		if got := dockIcon(src, version); !bytes.Equal(got, src) {
-			t.Fatalf("version %q changed the icon", version)
-		}
+func TestDockIconLeavesInvalidPNGUntouched(t *testing.T) {
+	src := []byte("not a PNG")
+	if got := dockIcon(src); !bytes.Equal(got, src) {
+		t.Fatal("invalid PNG changed")
 	}
 }
 

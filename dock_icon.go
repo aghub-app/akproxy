@@ -6,42 +6,20 @@ import (
 	"image/color"
 	"image/png"
 	"math"
-	"strconv"
-	"strings"
 )
 
 const (
 	dockIconCanvas = 1024
 	dockIconMargin = 100
-	dockIconMacOS  = 26
 )
 
-// dockIcon is the bitmap passed to the Dock. macOS 26 draws a runtime icon
-// full-bleed, so the artwork is inset by 100px on the 1024 canvas. Older
-// releases, other systems, and unreadable versions keep the original bytes.
-func dockIcon(pngBytes []byte, productVersion string) []byte {
-	major, ok := macOSMajor(productVersion)
-	if !ok || major < dockIconMacOS {
-		return pngBytes
-	}
+// SetIcon draws this bitmap directly in the Dock, so leave space around the artwork.
+func dockIcon(pngBytes []byte) []byte {
 	inset, err := insetIcon(pngBytes, dockIconCanvas, dockIconMargin)
 	if err != nil {
 		return pngBytes
 	}
 	return inset
-}
-
-func macOSMajor(version string) (int, bool) {
-	version = strings.TrimSpace(version)
-	if version == "" || version == "Unknown" {
-		return 0, false
-	}
-	head, _, _ := strings.Cut(version, ".")
-	major, err := strconv.Atoi(head)
-	if err != nil {
-		return 0, false
-	}
-	return major, true
 }
 
 func insetIcon(pngBytes []byte, canvas, margin int) ([]byte, error) {
