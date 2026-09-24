@@ -3,3 +3,4 @@ node_modules
 frontend/dist
 plans/
 animation-plans/
+.DS_Store
