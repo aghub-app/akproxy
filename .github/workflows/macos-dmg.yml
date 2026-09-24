@@ -1,5 +1,9 @@
 name: release
 
+env:
+  # vendor/ contains a design-skill submodule, not Go dependencies.
+  GOFLAGS: -mod=mod
+
 on:
   push:
     tags:
