@@ -24,7 +24,9 @@
     "motion": "12.43.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-markdown": "10.1.0",
     "react-router": "^8.4.0",
+    "remark-gfm": "4.0.1",
     "sugar-high": "^2.4.1",
     "tailwind-merge": "^3.7.0"
   },

@@ -1,6 +1,8 @@
 import { Events } from "@wailsio/runtime";
 import { motion } from "motion/react";
 import { type FC, useEffect, useRef, useState } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -215,7 +217,14 @@ export const UpdateDialog: FC = () => {
             </div>
           ) : null}
           {phase !== "downloading" && notes ? (
-            <p className="max-h-40 overflow-auto px-6 pb-2 text-sm whitespace-pre-wrap">{notes}</p>
+            <div className="max-h-40 overflow-auto px-6 pb-2 text-sm leading-6 wrap-anywhere [&_a]:text-primary [&_a]:underline [&_h2]:mt-3 [&_h2]:font-semibold [&_h2]:text-base [&_li]:ml-5 [&_ol]:list-decimal [&_ul]:list-disc [&_p]:my-2 [&_img]:max-w-full">
+              <Markdown
+                remarkPlugins={[remarkGfm]}
+                components={{ a: ({ href, children }) => <a href={href} target="_blank" rel="noreferrer">{children}</a> }}
+              >
+                {notes}
+              </Markdown>
+            </div>
           ) : null}
         </motion.div>
         <DialogFooter>
