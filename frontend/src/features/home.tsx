@@ -4,7 +4,7 @@ import { Clipboard } from "@wailsio/runtime";
 import { motion } from "motion/react";
 import { type FC, useRef, useState } from "react";
 import { Link } from "react-router";
-import { ClientKeyDisplay, maskClientKey } from "@/components/client-key-display";
+import { maskClientKey } from "@/components/client-key-display";
 import { Button } from "@/components/ui/button";
 import { Card, CardFrame, CardFrameAction, CardFrameHeader, CardFrameTitle, CardPanel } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -102,12 +102,13 @@ const ConnectPanel: FC<{ address: string; clientKeys: string[]; clientKey: strin
             <SelectTrigger size="sm" className="w-52" aria-label={t("选择客户端密钥")}><SelectValue>{maskClientKey(clientKey)}</SelectValue></SelectTrigger>
             <SelectPopup>{clientKeys.map((key, index) => <SelectItem key={key} value={String(index)}>{maskClientKey(key)}</SelectItem>)}</SelectPopup>
           </Select> : null}
+          <Button type="button" variant="outline" size="sm" aria-pressed={showKey} disabled={!clientKey} onClick={() => setRevealedKey(showKey ? null : clientKey)}>{showKey ? t("隐藏密钥") : t("显示密钥")}</Button>
           <Button variant="outline" size="sm" disabled={!clientKey} onClick={() => void copyText(clientKey, t("已复制 API key"))}>{t("复制")}</Button>
         </CardFrameAction>
       </CardFrameHeader>
       <Card className="min-w-0 flex-1 overflow-hidden">
         <CardPanel className="flex min-w-0 items-center p-3 font-mono text-sm">
-          <ClientKeyDisplay value={clientKey} visible={showKey} onToggle={() => setRevealedKey(showKey ? null : clientKey)} />
+          <span className="min-w-0 truncate">{visibleKey}</span>
         </CardPanel>
       </Card>
     </CardFrame>
