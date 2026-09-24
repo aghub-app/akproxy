@@ -5,7 +5,6 @@ import { AnimatePresence } from "motion/react";
 import { type FC, type MouseEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AnimatedField } from "@/components/animated-field";
-import { Card, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import {
   NumberField,
@@ -136,22 +135,20 @@ export const AboutTab: FC<{ build: BuildInfo | undefined }> = ({ build }) => {
           onChange={(hours) => save.mutate({ ...current.prefs, checkIntervalHours: hours })}
         />
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle render={<h2 />} className="flex items-center gap-2 text-sm">
-            <GithubLogoIcon size={16} weight="duotone" aria-hidden />
-            {t("自豪地采用 MIT 协议在 GitHub 上开源")}
-          </CardTitle>
-        </CardHeader>
-        <CardPanel className="grid gap-3 text-sm text-primary sm:grid-cols-2">
-          <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy" onClick={openExternalLink}>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-5 text-sm">
+        <span className="flex items-center gap-2 font-medium text-muted-foreground">
+          <GithubLogoIcon size={18} weight="duotone" aria-hidden />
+          MIT
+        </span>
+        <div className="flex items-center gap-5">
+          <a className="underline underline-offset-4 hover:text-primary" href="https://github.com/aghub-app/akproxy" onClick={openExternalLink}>
             {t("源代码")}
           </a>
-          <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy/issues" onClick={openExternalLink}>
+          <a className="underline underline-offset-4 hover:text-primary" href="https://github.com/aghub-app/akproxy/issues" onClick={openExternalLink}>
             {t("问题反馈")}
           </a>
-        </CardPanel>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
