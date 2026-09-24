@@ -1,7 +1,8 @@
 import { PlayIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { Clipboard } from "@wailsio/runtime";
-import { type FC, useState } from "react";
+import { motion } from "motion/react";
+import { type FC, useRef, useState } from "react";
 import { Link } from "react-router";
 import { ClientKeyDisplay, maskClientKey } from "@/components/client-key-display";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { providerPages } from "@/lib/providers";
 import { currentLocale, translate } from "@/lib/i18n";
 import { usePresentation } from "@/presentation";
 import { homeModelsQueryOptions, homeQueryOptions } from "@/requests/home";
+import { useUIMotion } from "@/lib/ui-motion";
 
 async function copyText(value: string, title: string) {
   try {
@@ -37,19 +39,26 @@ const DoodleArrow: FC = () => (
   </svg>
 );
 
-const HomeStopped: FC = () => {
+type HomeEntrance = {
+  enter: false | { opacity: number; transform: string };
+  transition: ReturnType<typeof useUIMotion>["transition"];
+};
+
+const HomeStopped: FC<HomeEntrance> = ({ enter, transition }) => {
   const { t } = usePresentation();
   return (
-  <Empty className="-translate-y-8">
-    <EmptyHeader className="relative">
-      <EmptyMedia><PlayIcon size={40} weight="duotone" /></EmptyMedia>
-      <EmptyTitle>{t("启动服务")}</EmptyTitle>
-      <EmptyDescription>
-        {t("服务这会儿还停着。去窗口右上角点一下，它就在这台机器上跑起来。")}
-      </EmptyDescription>
-      <DoodleArrow />
-    </EmptyHeader>
-  </Empty>
+    <motion.div className="flex flex-1 flex-col" initial={enter} animate={{ opacity: 1, transform: "none" }} transition={transition}>
+      <Empty className="-translate-y-8">
+        <EmptyHeader className="relative">
+          <EmptyMedia><PlayIcon size={40} weight="duotone" /></EmptyMedia>
+          <EmptyTitle>{t("启动服务")}</EmptyTitle>
+          <EmptyDescription>
+            {t("服务这会儿还停着。去窗口右上角点一下，它就在这台机器上跑起来。")}
+          </EmptyDescription>
+          <DoodleArrow />
+        </EmptyHeader>
+      </Empty>
+    </motion.div>
   );
 };
 
@@ -144,6 +153,16 @@ export const HomePage: FC = () => {
   const [selectedKey, setSelectedKey] = useState("");
   const [revealedTestKey, setRevealedTestKey] = useState<string | null>(null);
   const data = home.data;
+  const state = data ? !data.hasCredentials ? "empty" : data.status.running ? "running" : "stopped" : null;
+  const lastState = useRef<string | null>(null);
+  const enteredState = useRef<string | null>(null);
+  if (state !== lastState.current) {
+    enteredState.current = lastState.current === null ? null : state;
+    lastState.current = state;
+  }
+  const animateState = enteredState.current === state;
+  const { reduced, transition } = useUIMotion(0.18);
+  const enter = animateState ? { opacity: 0, transform: reduced ? "none" : "translateY(6px)" } : false;
   const models = useQuery(homeModelsQueryOptions(
     !home.isError && data?.hasCredentials && data.status.running ? data.status.address : null,
   ));
@@ -156,7 +175,7 @@ export const HomePage: FC = () => {
   }
   if (!data) return <p className="text-sm text-muted-foreground">{t("正在读取首页…")}</p>;
   if (!data.hasCredentials) {
-    return <section className="flex flex-col gap-6">
+    return <motion.section className="flex flex-col gap-6" initial={enter} animate={{ opacity: 1, transform: "none" }} transition={transition}>
       <div><h1 className="text-xl font-semibold">{t("添加你的第一个上游")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{t("选择一个提供商，登录账号或配置 API key。")}</p></div>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
@@ -166,10 +185,10 @@ export const HomePage: FC = () => {
           </Card>
         ))}
       </div>
-    </section>;
+    </motion.section>;
   }
 
-  if (!data.status.running) return <HomeStopped />;
+  if (!data.status.running) return <HomeStopped enter={enter} transition={transition} />;
 
   const clientKeys = data.clientKeys ?? [];
   const clientKey = clientKeys.includes(selectedKey) ? selectedKey : (clientKeys[0] ?? "");
@@ -179,7 +198,7 @@ export const HomePage: FC = () => {
   const commands = curlCommands(data.status.address, clientKey || "<API_KEY>", model);
   const displayed = curlCommands(data.status.address, showKey ? (clientKey || "<API_KEY>") : "••••••••", model);
 
-  return <section className="flex flex-col gap-5">
+  return <motion.section className="flex flex-col gap-5" initial={enter} animate={{ opacity: 1, transform: "none" }} transition={transition}>
     <h1 className="text-xl font-semibold">{t("开始调用")}</h1>
     <Tabs className="gap-5" defaultValue="connect">
       <TabsList>
@@ -221,5 +240,5 @@ export const HomePage: FC = () => {
         </CardFrame>)}
       </TabsPanel>
     </Tabs>
-  </section>;
+  </motion.section>;
 };

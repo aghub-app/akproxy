@@ -1,4 +1,5 @@
 import { Events } from "@wailsio/runtime";
+import { motion } from "motion/react";
 import { type FC, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import { toastManager } from "@/components/ui/toast";
 import { api, rawErrorText } from "@/lib/desktop";
 import { currentLocale, localizeErrorMessage, translate } from "@/lib/i18n";
 import { usePresentation } from "@/presentation";
+import { useUIMotion } from "@/lib/ui-motion";
 
 type Phase = "closed" | "available" | "downloading" | "verifying" | "installing" | "ready" | "failed";
 
@@ -59,6 +61,8 @@ export const UpdateDialog: FC = () => {
   const [dismissed, setDismissed] = useState(false);
   const [retryAction, setRetryAction] = useState<"check" | "download" | "restart">("check");
   const phaseRef = useRef<Phase>("closed");
+  const renderedPhase = useRef<Phase>("closed");
+  const { transition: phaseTransition } = useUIMotion(0.15);
   const lastError = useRef("");
 
   function changePhase(next: Phase) {
@@ -163,6 +167,8 @@ export const UpdateDialog: FC = () => {
   }, []);
 
   const open = phase !== "closed" && !dismissed;
+  const fadePhase = open && renderedPhase.current !== "closed" && renderedPhase.current !== phase;
+  renderedPhase.current = phase;
   const title =
     phase === "available"
       ? t("发现新版本")
@@ -194,22 +200,24 @@ export const UpdateDialog: FC = () => {
       }}
     >
       <DialogPopup>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{detail}</DialogDescription>
-        </DialogHeader>
-        {phase === "downloading" ? (
-          <div className="px-6 pb-2">
-            <Progress value={progress}>
-              <ProgressTrack>
-                <ProgressIndicator />
-              </ProgressTrack>
-            </Progress>
-          </div>
-        ) : null}
-        {phase !== "downloading" && notes ? (
-          <p className="max-h-40 overflow-auto px-6 pb-2 text-sm whitespace-pre-wrap">{notes}</p>
-        ) : null}
+        <motion.div key={phase} initial={fadePhase ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={phaseTransition}>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{detail}</DialogDescription>
+          </DialogHeader>
+          {phase === "downloading" ? (
+            <div className="px-6 pb-2">
+              <Progress value={progress}>
+                <ProgressTrack>
+                  <ProgressIndicator />
+                </ProgressTrack>
+              </Progress>
+            </div>
+          ) : null}
+          {phase !== "downloading" && notes ? (
+            <p className="max-h-40 overflow-auto px-6 pb-2 text-sm whitespace-pre-wrap">{notes}</p>
+          ) : null}
+        </motion.div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setDismissed(true)}>
             {phase === "ready" ? t("稍后") : phase === "available" ? t("忽略") : t("关闭")}

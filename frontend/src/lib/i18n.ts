@@ -187,6 +187,8 @@ const english: Record<string, string> = {
   "填写 1 到 720 之间的小时数。": "Enter between 1 and 720 hours.",
   "自动检查发现新版本的节奏，改动立即生效。": "How often to check for new versions. Changes take effect immediately.",
   "问题反馈": "Report an issue",
+  "源代码": "Source code",
+  "自豪地采用 MIT 协议在 GitHub 上开源": "Proudly open source on GitHub under the MIT License",
   "已是最新版本": "Up to date",
   "可以重启以完成更新": "Restart to finish updating",
   "更新失败": "Update failed",

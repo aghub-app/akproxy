@@ -23,6 +23,11 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 
 ## Observable contracts
 
+### 界面状态动效
+
+- 首页主要状态、新增账号卡片、两项自定义设置字段，以及更新对话框的阶段说明可以用短暂动效提示状态变化；相同状态的后台刷新不得重播。
+- 动效不延迟操作。隐藏中的设置字段立即不可操作或聚焦。系统要求减少动态效果时，不移动或缩放内容，仅保留简短淡入。详见 `docs/prd/interface-state-motion.md` 和 `docs/adr/interface-state-motion.md`。
+
 ### Documentation harness
 
 - New product behavior is defined in `docs/prd/` before feature code lands.
@@ -62,7 +67,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 更新偏好（自动更新、自动检查更新、检查间隔）存在应用自己的偏好文件，不进 CLIProxyAPI 的 config.yaml；改动立即生效，重启后保持。
 - 语言与外观偏好也存在该偏好文件，不进入 CLIProxyAPI 的 config.yaml；旧文件缺失字段时使用跟随系统。
 - 自动检查更新关闭时，启动与周期检查都不发生，只剩手动检查。自动更新关闭时，自动检查发现新版本只提示并提供手动下载，不自动下载。手动检查始终检查并直接下载。
-- 设置页提供「关于」标签：头部信息区含应用图标、名称、版本、平台架构、上次检查结果与时间、手动检查入口；发现新版本时头部显示可点开对话框的提示。另含更新偏好与链接。
+- 设置页提供「关于」标签：头部信息区含应用图标、名称、版本、平台架构、上次检查结果与时间、手动检查入口；发现新版本时头部显示可点开对话框的提示。另含更新偏好与链接；链接在用户的默认浏览器中打开。
 - 关于页仅在 `dev` 版本旁显示该二进制的短提交 hash；缺失时显示不可用，不从运行时仓库推断。正式版本不显示 hash。
 - 采用 Wails 更新器下载和校验。检查中和已是最新不弹窗；有新版本、失败或可以重启时才提示。失败弹窗可「重试」重放失败前的动作。用户点击重启后安装，代理不自动恢复。
 - 更新不得改变配置和账号。校验信息缺失或不匹配时禁止安装。

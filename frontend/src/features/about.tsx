@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type FC, useState } from "react";
+import { GithubLogoIcon } from "@phosphor-icons/react";
+import { Browser } from "@wailsio/runtime";
+import { AnimatePresence } from "motion/react";
+import { type FC, type MouseEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AnimatedField } from "@/components/animated-field";
+import { Card, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import {
   NumberField,
@@ -37,11 +42,10 @@ function notifyError(error: unknown) {
   toastManager.add({ title: errorText(error), type: "error" });
 }
 
-const GithubMark: FC<{ size?: number }> = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
-  </svg>
-);
+function openExternalLink(event: MouseEvent<HTMLAnchorElement>) {
+  event.preventDefault();
+  void Browser.OpenURL(event.currentTarget.href).catch(notifyError);
+}
 
 export const AboutTab: FC<{ build: BuildInfo | undefined }> = ({ build }) => {
   const { t, locale } = usePresentation();
@@ -132,26 +136,22 @@ export const AboutTab: FC<{ build: BuildInfo | undefined }> = ({ build }) => {
           onChange={(hours) => save.mutate({ ...current.prefs, checkIntervalHours: hours })}
         />
       </div>
-      <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-        <a
-          className="flex items-center gap-2 underline-offset-4 hover:underline"
-          href="https://github.com/aghub-app/akproxy"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <GithubMark size={16} />
-          github.com/aghub-app/akproxy
-        </a>
-        <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy#readme" target="_blank" rel="noreferrer">
-          README
-        </a>
-        <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy/blob/main/LICENSE" target="_blank" rel="noreferrer">
-          LICENSE
-        </a>
-        <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy/issues" target="_blank" rel="noreferrer">
-          {t("问题反馈")}
-        </a>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle render={<h2 />} className="flex items-center gap-2 text-sm">
+            <GithubLogoIcon size={16} weight="duotone" aria-hidden />
+            {t("自豪地采用 MIT 协议在 GitHub 上开源")}
+          </CardTitle>
+        </CardHeader>
+        <CardPanel className="grid gap-3 text-sm text-primary sm:grid-cols-2">
+          <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy" onClick={openExternalLink}>
+            {t("源代码")}
+          </a>
+          <a className="underline-offset-4 hover:underline" href="https://github.com/aghub-app/akproxy/issues" onClick={openExternalLink}>
+            {t("问题反馈")}
+          </a>
+        </CardPanel>
+      </Card>
     </div>
   );
 };
@@ -211,26 +211,28 @@ const IntervalField: FC<{
             ))}
           </SelectPopup>
         </Select>
-        {preset === "custom" ? (
-          <NumberField
-            value={hours}
-            min={1}
-            max={720}
-            step={1}
-            disabled={disabled}
-            onValueChange={(value) => {
-              if (value !== null && Number.isInteger(value)) {
-                onChange(value);
-              }
-            }}
-          >
-            <NumberFieldGroup className="w-24">
-              <NumberFieldDecrement className="px-1.5" />
-              <NumberFieldInput className="px-1" />
-              <NumberFieldIncrement className="px-1.5" />
-            </NumberFieldGroup>
-          </NumberField>
-        ) : null}
+        <AnimatePresence initial={false}>
+          {preset === "custom" ? (
+            <AnimatedField key="custom-interval">{(present) => (
+              <NumberField
+                value={hours}
+                min={1}
+                max={720}
+                step={1}
+                disabled={disabled || !present}
+                onValueChange={(value) => {
+                  if (value !== null && Number.isInteger(value)) onChange(value);
+                }}
+              >
+                <NumberFieldGroup className="w-24">
+                  <NumberFieldDecrement className="px-1.5" />
+                  <NumberFieldInput className="px-1" />
+                  <NumberFieldIncrement className="px-1.5" />
+                </NumberFieldGroup>
+              </NumberField>
+            )}</AnimatedField>
+          ) : null}
+        </AnimatePresence>
       </div>
       <FieldDescription>
         {preset === "custom"

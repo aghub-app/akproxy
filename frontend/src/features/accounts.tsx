@@ -1,6 +1,7 @@
 import { ArrowsClockwiseIcon, DotsThreeIcon, TrashIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type FC, type ReactNode, useState } from "react";
+import { motion } from "motion/react";
+import { type FC, type ReactNode, useRef, useState } from "react";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -21,6 +22,7 @@ import { api, errorText, type Account, type AccountUsage, type AppPrefs, type Us
 import { localizeErrorMessage, translate, type Locale } from "@/lib/i18n";
 import { maskAccountLabel } from "@/lib/livestream";
 import { usePresentation } from "@/presentation";
+import { useUIMotion } from "@/lib/ui-motion";
 
 const windowLabel: Record<UsageWindow["kind"], string> = {
   "5h": "5 小时",
@@ -175,6 +177,18 @@ export const AccountsPanel: FC<{
     refetchOnMount: false,
     refetchInterval: status.data?.running ? 5000 : false,
   });
+  const previousAccountIds = useRef<Set<string> | null>(null);
+  const enteringAccountIds = useRef(new Set<string>());
+  const { reduced, transition: accountTransition } = useUIMotion(0.2);
+  if (accounts.data) {
+    const currentIds = new Set(accounts.data.map((account) => account.id));
+    if (previousAccountIds.current) {
+      for (const id of currentIds) {
+        if (!previousAccountIds.current.has(id)) enteringAccountIds.current.add(id);
+      }
+    }
+    previousAccountIds.current = currentIds;
+  }
   const hasSessionLimit = (accounts.data ?? []).some((account) =>
     sessionLimitProviders.has(account.provider),
   );
@@ -283,7 +297,14 @@ export const AccountsPanel: FC<{
       <div className="flex flex-wrap gap-2">{actions}</div>
       <ul className="grid grid-cols-2 items-start gap-3">
         {accounts.data.map((account) => (
-            <li className="min-w-0" key={account.id}>
+            <motion.li
+              className="min-w-0"
+              key={account.id}
+              initial={enteringAccountIds.current.has(account.id) ? { opacity: 0, transform: reduced ? "none" : "scale(.97)" } : false}
+              animate={{ opacity: 1, transform: "none" }}
+              transition={accountTransition}
+              onAnimationComplete={() => enteringAccountIds.current.delete(account.id)}
+            >
               <Card className="h-full">
                 <CardHeader className="p-4">
                   <CardTitle className="flex min-w-0 items-center gap-2 text-base leading-snug">
@@ -329,7 +350,7 @@ export const AccountsPanel: FC<{
                   />
                 ) : null}
               </Card>
-            </li>
+            </motion.li>
           ))}
         </ul>
       {filledExtra}

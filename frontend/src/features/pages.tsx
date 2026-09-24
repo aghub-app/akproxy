@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Clipboard } from "@wailsio/runtime";
+import { AnimatePresence } from "motion/react";
 import { type FC, useEffect, useRef, useState } from "react";
 import { ClientKeyDisplay } from "@/components/client-key-display";
+import { AnimatedField } from "@/components/animated-field";
 import { useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Frame } from "@/components/ui/frame";
@@ -417,13 +419,18 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
                 <SelectItem value="custom">{t("自定义地址")}</SelectItem>
               </SelectPopup>
             </Select>
-            {form.listenMode === "custom" ? (
-              <Input
-                value={form.customHost}
-                placeholder="192.168.1.8"
-                onChange={(event) => edit({ customHost: event.target.value })}
-              />
-            ) : null}
+            <AnimatePresence initial={false}>
+              {form.listenMode === "custom" ? (
+                <AnimatedField key="custom-host">
+                  {(present) => <Input
+                    value={form.customHost}
+                    placeholder="192.168.1.8"
+                    disabled={!present}
+                    onChange={(event) => edit({ customHost: event.target.value })}
+                  />}
+                </AnimatedField>
+              ) : null}
+            </AnimatePresence>
             <FieldDescription>
               {t("只本机会写成 127.0.0.1。所有网络接口意味着同一网络上的其他设备也能连接。")}
             </FieldDescription>

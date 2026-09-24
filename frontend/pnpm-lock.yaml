@@ -44,6 +44,9 @@ importers:
       lucide-react:
         specifier: ^1.47.0
         version: 1.47.0(react@19.3.0)
+      motion:
+        specifier: 12.43.0
+        version: 12.43.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react:
         specifier: ^19.1.1
         version: 19.3.0
