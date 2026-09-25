@@ -87,7 +87,18 @@ export const api = {
   login: (provider: string) => app.Login(provider),
   reauthorizeAccount: (id: string) => app.ReauthorizeAccount(id),
   cancelLogin: () => app.CancelLogin(),
-  accounts: async (page: string) => (await app.Accounts(page)) ?? [],
+  accounts: (page: string, signal?: AbortSignal) => {
+    const request = app.Accounts(page);
+    if (signal) {
+      const abort = () => request.cancel();
+      if (signal.aborted) {
+        abort();
+      } else {
+        signal.addEventListener("abort", abort, { once: true });
+      }
+    }
+    return request.then((rows) => rows ?? []);
+  },
   accountUsage: async (page: string) => (await app.AccountUsage(page)) ?? [],
   deleteAccount: (id: string) => app.DeleteAccount(id),
   buildInfo: () => app.BuildInfo(),

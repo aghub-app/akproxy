@@ -172,7 +172,7 @@ export const AccountsPanel: FC<{
   const usageOptions = prefs.data?.prefs ?? defaultUsageOptions;
   const accounts = useQuery({
     queryKey: ["accounts", page],
-    queryFn: () => api.accounts(page),
+    queryFn: ({ signal }) => api.accounts(page, signal),
     staleTime: 60_000,
     refetchOnMount: false,
     refetchInterval: status.data?.running ? 5000 : false,
@@ -212,8 +212,8 @@ export const AccountsPanel: FC<{
   async function login(id: string) {
     try {
       await api.login(id);
-      await client.invalidateQueries({ queryKey: ["accounts", page] });
-      await client.invalidateQueries({ queryKey: ["account-usage", page] });
+      await client.refetchQueries({ queryKey: ["accounts", page] });
+      await client.refetchQueries({ queryKey: ["account-usage", page] });
       toastManager.add({ title: t("登录完成"), type: "success" });
     } catch (error) {
       toastManager.add({ title: errorText(error), type: "error" });
@@ -223,8 +223,8 @@ export const AccountsPanel: FC<{
   async function reauthorize(id: string) {
     try {
       await api.reauthorizeAccount(id);
-      await client.invalidateQueries({ queryKey: ["accounts", page] });
-      await client.invalidateQueries({ queryKey: ["account-usage", page] });
+      await client.refetchQueries({ queryKey: ["accounts", page] });
+      await client.refetchQueries({ queryKey: ["account-usage", page] });
       toastManager.add({ title: t("重新授权完成"), type: "success" });
     } catch (error) {
       toastManager.add({ title: errorText(error, locale), type: "error" });
@@ -300,7 +300,7 @@ export const AccountsPanel: FC<{
             <motion.li
               className="min-w-0"
               key={account.id}
-              initial={enteringAccountIds.current.has(account.id) ? { opacity: 0, transform: reduced ? "none" : "scale(.97)" } : false}
+              initial={enteringAccountIds.current.has(account.id) && !document.hidden ? { opacity: 0, transform: reduced ? "none" : "scale(.97)" } : false}
               animate={{ opacity: 1, transform: "none" }}
               transition={accountTransition}
               onAnimationComplete={() => enteringAccountIds.current.delete(account.id)}

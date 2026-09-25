@@ -24,6 +24,9 @@ func NewApp() *App {
 func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
 	a.ctx = ctx
 	service, err := desktop.NewRuntime(func(event string, data any) {
+		if event == "login:done" {
+			presentMainWindow()
+		}
 		application.Get().Event.Emit(event, data)
 	})
 	if err != nil {
@@ -45,6 +48,22 @@ func (a *App) ready() error {
 		return errNotReady
 	}
 	return nil
+}
+
+// presentMainWindow brings the window forward after a browser login has been saved.
+// It runs before login:done reaches the renderer, so the new account paints while the window is visible.
+func presentMainWindow() {
+	app := application.Get()
+	if app == nil {
+		return
+	}
+	window, ok := app.Window.GetByName("main")
+	if !ok || window == nil {
+		return
+	}
+	window.UnMinimise()
+	window.Show()
+	window.Focus()
 }
 
 // SetPresentation keeps the native menu and window background in sync with the renderer.
