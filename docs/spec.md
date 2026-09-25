@@ -48,7 +48,7 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 成功写入的配置至少包含一把客户端密钥，且账号目录是应用自己的账号目录。违反任一条的写入不改文件，也不改变正在运行的服务。
 - 写入不得删除该页不编辑的已有配置。Codex、Grok、Claude、Gemini、Kimi、Devin 没有上游 API key 表单。配置文件里的 OpenAI 兼容项没有编辑页，保存其他页面时不得删除它们。
 - 监听配置只在启动或重启成功后成为已绑定监听。其他已写入配置在服务运行中热重载。
-- 浏览器登录写入应用自己的账号目录。界面不展示令牌。
+- 浏览器登录写入应用自己的账号目录。界面不展示令牌。登录或重新授权成功后，主窗口会显示并成为当前窗口，包括它被最小化或挡在其他窗口后面的情况；这次成功会刷新对应页面的账号列表和额度。失败或取消不改变窗口层级。详见 `docs/prd/local-proxy.md` 和 `docs/adr/login-success-window.md`。
 - 服务运行时，账号列表按 SDK 实时认证状态为需要重新授权的账号显示红色提醒和对应卡片的重新授权操作。重新授权仅能更新被选中的同一账号；登录到不同账号时不写入。服务未运行时不显示历史提醒。其他 SDK 错误或额度读取失败不等于需要重新授权。详见 `docs/prd/account-reauthorization.md` 和 `docs/adr/account-auth-status.md`。
 - 没有已登录账号的 Codex、Grok、Claude、Gemini、Kimi、Devin 页，在内容区中央显示该页图标、名称和添加操作。读取账号失败时不显示成空列表。
 - Codex、Claude、Grok、Gemini、Kimi、Devin 账号卡片显示该账号的套餐名（有数据时）和厂商会话额度百分比窗口：Codex 按 ChatGPT 返回的周期显示 5 小时、每周或每月窗口，Claude 来自 Anthropic 的 5 小时、每周，以及有数据时的每周 Opus 和每周 Sonnet，Grok 来自 xAI 的周窗口，Gemini 来自 Antigravity 的 Gemini 池与非 Gemini 池的 5 小时和每周窗口，Kimi 的中国站和国际站来自 Coding Plan 的 5 小时、每周和有数据时的每月窗口，没有可用窗口时套餐名显示为「免费版」，其下说明没有 5 小时和每周额度，Devin 来自 GetUserStatus 的每日和每周窗口。卡片标题空间不足时可省略账号邮箱，套餐名须完整显示。额度读取用该账号自己的登录令牌，令牌不出现在界面上。读取失败只影响这一张卡片。开发构建和生产构建均不注入示例数据。设置 → 用量的「额度显示」开关关闭后停止额度读取与刷新、隐藏「刷新额度」按钮；开关默认开，改动立即生效，重启后保持。详见 `docs/prd/provider-usage.md`、`docs/adr/provider-usage.md`、`docs/adr/gemini-quota.md` 和 `docs/adr/kimi-quota.md`。

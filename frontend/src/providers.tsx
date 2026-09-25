@@ -51,7 +51,8 @@ export function Providers({ children }: { children: ReactNode }) {
       }
     });
     const offLogin = Events.On("login:done", () => {
-      void client.invalidateQueries({ queryKey: ["accounts"] });
+      void client.refetchQueries({ queryKey: ["accounts"] });
+      void client.refetchQueries({ queryKey: ["account-usage"] });
     });
     const offUpdateChecked = Events.On("updates:checked", (event) => {
       client.setQueryData<UpdatePrefsStatus>(["update-prefs"], event.data as UpdatePrefsStatus);

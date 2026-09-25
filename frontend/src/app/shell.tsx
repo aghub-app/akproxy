@@ -56,7 +56,7 @@ export const AppLayout: FC = () => {
   const usagePrefs = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
   const accountLists = useQueries({ queries: usagePages.map((page) => ({
     queryKey: ["accounts", page],
-    queryFn: () => api.accounts(page),
+    queryFn: ({ signal }) => api.accounts(page, signal),
     staleTime: 60_000,
     refetchInterval: 60_000,
     refetchIntervalInBackground: true,
