@@ -312,7 +312,11 @@ func (r *Runtime) login(loginProvider string, target *reauthTarget) error {
 		r.loginMu.Unlock()
 		return fmt.Errorf("已经有一个登录在进行")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+	timeout := 6 * time.Minute
+	if loginProvider == "meta" {
+		timeout = 15 * time.Minute
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	r.loginCancel = cancel
 	r.loginMu.Unlock()
 	r.emit("server:status", mustStatus(r))
@@ -373,8 +377,10 @@ func (r *Runtime) loginWithSDK(ctx context.Context, provider string, target *rea
 	}
 	if target != nil {
 		store = sameAccountStore{Store: store, target: *target, authDir: r.paths.Auth}
+	} else if provider == "meta" {
+		store = metaCancelStore{Store: store}
 	}
-	manager := auth.NewManager(store, newAuthenticators()...)
+	manager := auth.NewManager(store, newAuthenticators(r.emit)...)
 	record, _, err := manager.Login(ctx, provider, cfg, &auth.LoginOptions{})
 	if err != nil {
 		return nil, err
@@ -626,6 +632,7 @@ var loginProviders = map[string]string{
 	"kimi":    "kimi",
 	"kimi-ai": "kimi-ai",
 	"devin":   "devin",
+	"meta":    "meta",
 }
 
 var accountProviders = map[string]map[string]bool{
@@ -635,9 +642,10 @@ var accountProviders = map[string]map[string]bool{
 	"gemini": {"antigravity": true},
 	"kimi":   {"kimi": true, "kimi-ai": true, "kimi.ai": true},
 	"devin":  {"devin": true},
+	"meta":   {"meta": true},
 }
 
-func newAuthenticators() []auth.Authenticator {
+func newAuthenticators(emit func(string, any)) []auth.Authenticator {
 	return []auth.Authenticator{
 		auth.NewCodexAuthenticator(),
 		auth.NewClaudeAuthenticator(),
@@ -646,6 +654,7 @@ func newAuthenticators() []auth.Authenticator {
 		auth.NewKimiAIAuthenticator(),
 		auth.NewXAIAuthenticator(),
 		auth.NewDevinAuthenticator(),
+		metaAuthenticator{emit: emit},
 	}
 }
 

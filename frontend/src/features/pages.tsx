@@ -511,7 +511,7 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
 };
 
 export const NativeProviderPage: FC<{
-  provider: "codex" | "grok" | "claude" | "gemini";
+  provider: "codex" | "grok" | "claude" | "gemini" | "meta";
   loginLabel: string;
 }> = ({ provider, loginLabel }) => {
   return <AccountsPanel page={provider} logins={[{ id: provider, label: loginLabel }]} />;
