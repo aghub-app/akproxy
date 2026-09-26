@@ -1,0 +1,944 @@
+---
+import { copy, locales, defaultLocale, localePath, type Locale } from "../i18n/copy";
+
+const locale = Astro.currentLocale as Locale;
+const t = copy[locale];
+const canonical = new URL(localePath(locale), Astro.site);
+const alternates = locales.map((l) => ({ lang: copy[l].htmlLang, href: new URL(localePath(l), Astro.site).href }));
+const fallback = new URL(localePath(defaultLocale), Astro.site).href;
+---
+<!DOCTYPE html>
+<html lang={t.htmlLang}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{t.title}</title>
+  <meta name="description" content={t.lede}>
+  <link rel="canonical" href={canonical.href}>
+  {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={a.href}>)}
+  <link rel="alternate" hreflang="x-default" href={fallback}>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="akproxy">
+  <meta property="og:title" content={t.title}>
+  <meta property="og:description" content={t.lede}>
+  <meta property="og:url" content={canonical.href}>
+  <meta property="og:locale" content={t.ogLocale}>
+  <meta property="og:image" content={new URL(t.ogImage, Astro.site).href}>
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content={t.title}>
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content={t.title}>
+  <meta name="twitter:description" content={t.lede}>
+  <meta name="twitter:image" content={new URL(t.ogImage, Astro.site).href}>
+  <meta name="theme-color" content="#16141C">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,400..650;1,400..650&family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style is:inline>
+    :root {
+      --paper: #f1f0f3;
+      --ink: #16141c;
+      --filament: #8f3ced;
+      --display: "Fraunces", "Songti SC", "Noto Serif SC", Palatino, "Palatino Linotype", serif;
+      --sans: "Familjen Grotesk", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --mono: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+      --line: color-mix(in srgb, var(--ink) 14%, transparent);
+      --mute: color-mix(in srgb, var(--ink) 66%, var(--paper));
+      --paper-dim: color-mix(in srgb, var(--paper) 64%, transparent);
+      --paper-line: color-mix(in srgb, var(--paper) 14%, transparent);
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-7: 48px;
+      --space-8: 64px;
+      --band: clamp(80px, 8.4vw, 120px);
+      --page: 1180px;
+      --gutter: clamp(20px, 4vw, 40px);
+      --poster: clamp(3.6rem, 19.5vw, 17.5rem);
+      --radius: 12px;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html[lang="zh"] {
+      --poster: clamp(3rem, 14.5vw, 12.25rem);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      overscroll-behavior-y: none;
+    }
+
+    html {
+      background: var(--paper);
+      color: var(--ink);
+      color-scheme: light;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      min-height: 100%;
+      background: var(--paper);
+      font-family: var(--sans);
+      font-size: 1.0625rem;
+      line-height: 1.55;
+      font-weight: 450;
+    }
+
+    button,
+    [role="button"],
+    a.button {
+      cursor: pointer;
+    }
+
+    ::selection {
+      background: var(--filament);
+      color: var(--paper);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--filament);
+      outline-offset: 3px;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    a {
+      color: inherit;
+      text-underline-offset: 0.25em;
+    }
+
+    p {
+      text-wrap: pretty;
+    }
+
+    h1,
+    h2,
+    h3 {
+      text-wrap: balance;
+    }
+
+    .skip {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .skip:focus {
+      position: fixed;
+      top: var(--space-3);
+      left: var(--space-3);
+      z-index: 5;
+      width: auto;
+      height: auto;
+      margin: 0;
+      padding: var(--space-2) var(--space-3);
+      overflow: visible;
+      clip: auto;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .wrap {
+      width: min(var(--page), calc(100% - var(--gutter) * 2));
+      margin-inline: auto;
+    }
+
+    /* Shared */
+
+    .poster {
+      margin: 0;
+      font-family: var(--display);
+      font-weight: 560;
+      font-size: var(--poster);
+      line-height: 0.84;
+      letter-spacing: -0.05em;
+      font-variation-settings: "opsz" 144, "SOFT" 30, "wght" 560;
+    }
+
+    html[lang="zh"] .poster {
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .poster > span {
+      display: block;
+      white-space: nowrap;
+    }
+
+    .accent {
+      font-style: italic;
+      color: var(--filament);
+      font-variation-settings: "opsz" 144, "SOFT" 20, "WONK" 0, "wght" 560;
+    }
+
+    @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+      .accent {
+        margin-inline: -0.1em;
+        padding-inline: 0.1em;
+        background: url("/public/ink.webp") 0% 50% / 220% auto var(--filament);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: ink-drift 26s ease-in-out infinite alternate;
+      }
+    }
+
+    @keyframes ink-drift {
+      to {
+        background-position: 100% 50%;
+      }
+    }
+
+    html[lang="zh"] .accent {
+      font-style: normal;
+      font-variation-settings: "opsz" 144, "SOFT" 20, "wght" 560;
+    }
+
+    .heading {
+      margin: 0;
+      font-size: clamp(1.5rem, 2.6vw, 2.125rem);
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      padding: 0 26px;
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--paper);
+      text-decoration: none;
+      font-weight: 650;
+      font-size: 1.0625rem;
+      letter-spacing: -0.01em;
+      transition: opacity 180ms var(--ease), transform 180ms var(--ease);
+    }
+
+    .button:hover {
+      opacity: 0.86;
+    }
+
+    .button:active {
+      transform: scale(0.97);
+    }
+
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-3) var(--space-5);
+    }
+
+    .cta .aside {
+      margin: 0;
+      font-size: 0.9375rem;
+      color: var(--mute);
+    }
+
+    .cta .aside a {
+      color: var(--ink);
+    }
+
+    /* Masthead */
+
+    .mast-inner {
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+
+    .word {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      font-weight: 650;
+      font-size: 1.1875rem;
+      letter-spacing: -0.03em;
+      text-decoration: none;
+    }
+
+    .mast nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+
+    .mast nav a,
+    .lang {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: inherit;
+      font: 600 0.9375rem/1 var(--sans);
+      text-decoration: none;
+    }
+
+    .mast nav a:hover,
+    .lang:hover {
+      text-decoration: underline;
+      text-underline-offset: 0.3em;
+    }
+
+    /* Hero */
+
+    .hero {
+      padding-block: clamp(24px, 4vw, 56px) var(--band);
+    }
+
+    .hero .poster .end {
+      text-align: right;
+    }
+
+    html[lang="zh"] .hero .poster .end {
+      text-align: left;
+    }
+
+    .hero-foot {
+      display: grid;
+      gap: var(--space-6);
+      margin-top: var(--space-5);
+    }
+
+    .lede {
+      margin: 0;
+      max-width: 34rem;
+      font-size: clamp(1.125rem, 1.5vw, 1.3125rem);
+      line-height: 1.45;
+    }
+
+    /* Story: six threads into one address, then how */
+
+    .story {
+      background: var(--ink);
+      color: var(--paper);
+      padding-top: var(--band);
+      overflow: hidden;
+    }
+
+    .story-title span {
+      display: block;
+    }
+
+    .story-title {
+      margin: 0;
+      font-family: var(--display);
+      font-weight: 560;
+      font-size: clamp(2.25rem, 4.6vw, 4rem);
+      line-height: 1.02;
+      letter-spacing: -0.035em;
+      font-variation-settings: "opsz" 144, "SOFT" 30, "wght" 560;
+    }
+
+    html[lang="zh"] .story-title {
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+
+    .threads {
+      --edge: max(var(--gutter), calc((100% - var(--page)) / 2));
+      position: relative;
+      margin-top: var(--space-7);
+    }
+
+    .threads-media {
+      position: relative;
+      aspect-ratio: 2400 / 885;
+    }
+
+    .threads-media img,
+    .threads-media canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .threads-media canvas {
+      opacity: 0;
+      transition: opacity 600ms var(--ease);
+    }
+
+    .threads.is-gl .threads-media canvas {
+      opacity: 1;
+    }
+
+    .threads-names {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2) var(--space-5);
+      width: min(var(--page), calc(100% - var(--gutter) * 2));
+      margin: var(--space-6) auto 0;
+      padding: 0;
+      list-style: none;
+      font-family: var(--display);
+      font-weight: 560;
+      font-size: clamp(1.5rem, 2.4vw, 2.25rem);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      font-variation-settings: "opsz" 72, "SOFT" 30, "wght" 560;
+    }
+
+    .outlet {
+      width: min(var(--page), calc(100% - var(--gutter) * 2));
+      margin: var(--space-6) auto 0;
+    }
+
+    .url-copy {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      padding: 18px 22px;
+      border: 1.5px solid var(--filament);
+      border-radius: 14px;
+      background: var(--ink);
+      color: inherit;
+      text-align: left;
+    }
+
+    .url-copy code {
+      font-family: var(--mono);
+      font-size: clamp(1rem, 2.1vw, 1.875rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: color-mix(in srgb, var(--filament) 55%, var(--paper));
+      white-space: nowrap;
+    }
+
+    .url-copy .hint {
+      position: absolute;
+      top: calc(100% + var(--space-2));
+      left: 0;
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      color: var(--paper-dim);
+      opacity: 0;
+      transition: opacity 180ms var(--ease);
+    }
+
+    .url-copy:hover .hint,
+    .url-copy:focus-visible .hint,
+    .url-copy.is-copied .hint {
+      opacity: 1;
+    }
+
+    .story-note {
+      margin: var(--space-5) 0 0;
+      max-width: 34rem;
+      color: var(--paper-dim);
+    }
+
+    .how {
+      margin-top: var(--band);
+    }
+
+    .steps {
+      margin: 0;
+      font-family: var(--display);
+      font-weight: 560;
+      font-size: clamp(2.25rem, 4.6vw, 4rem);
+      line-height: 1.02;
+      letter-spacing: -0.035em;
+      word-spacing: 0.06em;
+      font-variation-settings: "opsz" 144, "SOFT" 30, "wght" 560;
+    }
+
+    html[lang="zh"] .steps {
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+
+    .steps > span {
+      white-space: nowrap;
+    }
+
+    .steps sup {
+      margin-right: 0.12em;
+      font-size: 0.42em;
+      vertical-align: 0.95em;
+      color: var(--filament);
+    }
+
+    .product-note {
+      margin: var(--space-5) 0 0;
+      max-width: 32rem;
+      color: var(--paper-dim);
+    }
+
+    .window {
+      display: block;
+      width: calc(100% + min(120px, var(--gutter) * 3));
+      max-width: none;
+      margin-top: var(--space-8);
+      border-radius: var(--radius) var(--radius) 0 0;
+      box-shadow: 0 0 0 1px var(--paper-line);
+    }
+
+    /* FAQ */
+
+    .faq {
+      padding-block: var(--band);
+    }
+
+    .faq .heading {
+      margin-bottom: var(--space-7);
+    }
+
+    .faq-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid var(--line);
+    }
+
+    .doubt {
+      display: grid;
+      gap: var(--space-2);
+      padding-block: var(--space-6);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .doubt h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.35;
+      letter-spacing: -0.015em;
+    }
+
+    .doubt p {
+      margin: 0;
+      max-width: 38rem;
+      color: color-mix(in srgb, var(--ink) 78%, var(--paper));
+    }
+
+    /* Close */
+
+    .close {
+      background: var(--ink);
+      color: var(--paper);
+      padding-top: var(--band);
+    }
+
+    .close .poster {
+      font-size: clamp(4.5rem, 25vw, 22.5rem);
+    }
+
+    html[lang="zh"] .close .poster {
+      font-size: clamp(3rem, 16.5vw, 14.75rem);
+    }
+
+    .close .cta {
+      margin-top: clamp(40px, 6.5vw, 96px);
+    }
+
+    .close .cta .aside {
+      color: var(--paper-dim);
+    }
+
+    .close .button {
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .close .cta a:not(.button) {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .foot {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2) var(--space-5);
+      margin-top: clamp(120px, 14vw, 200px);
+      padding-block: var(--space-5);
+      border-top: 1px solid var(--paper-line);
+      color: var(--paper-dim);
+      font-size: 0.9375rem;
+    }
+
+    .credit {
+      margin: 0;
+    }
+
+    .foot nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 var(--space-5);
+    }
+
+    .foot nav a {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .foot nav a:hover {
+      color: var(--paper);
+    }
+
+    /* Motion */
+
+    .rise {
+      animation: rise 820ms var(--ease) both;
+    }
+
+    .d1 { animation-delay: 90ms; }
+    .d2 { animation-delay: 220ms; }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @supports (animation-timeline: view()) {
+      @media (prefers-reduced-motion: no-preference) {
+        .how {
+          perspective: 1600px;
+        }
+
+        .window {
+          transform-origin: 50% 0;
+          animation: settle linear both;
+          animation-timeline: view();
+          animation-range: entry 0% entry 90%;
+        }
+      }
+    }
+
+    @keyframes settle {
+      from {
+        opacity: 0.5;
+        transform: rotateX(28deg) translateY(40px) scale(0.94);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @media (max-width: 559px) {
+      .mast .hide-small {
+        display: none;
+      }
+
+      .hero .cta .button {
+        width: 100%;
+      }
+    }
+
+    @media (min-width: 880px) {
+      .hero-foot {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+      }
+
+      .threads-names {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: var(--edge);
+        display: block;
+        width: auto;
+        margin: 0;
+      }
+
+      .threads-names li {
+        position: absolute;
+        left: 0;
+        top: var(--y);
+        transform: translateY(calc(-100% - 0.12em));
+        white-space: nowrap;
+        text-shadow: 0 1px 12px var(--ink);
+      }
+
+      .outlet {
+        position: absolute;
+        top: 51.9%;
+        right: var(--edge);
+        width: auto;
+        margin: 0;
+        transform: translateY(-50%);
+      }
+
+      .threads::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: var(--edge);
+        background: linear-gradient(90deg, transparent, var(--ink) 70%);
+        pointer-events: none;
+      }
+
+      .doubt {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        column-gap: var(--space-5);
+        align-items: baseline;
+      }
+
+      .doubt h3 {
+        grid-column: 1 / 5;
+      }
+
+      .doubt p {
+        grid-column: 6 / -1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rise {
+        animation: none;
+      }
+
+      .button,
+      .url-copy .hint,
+      .threads-media canvas {
+        transition: none;
+      }
+
+      .accent {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <slot />
+  <script is:inline>
+    const latest = "https://github.com/aghub-app/akproxy/releases/latest/download/";
+    const target = (() => {
+      const ua = navigator.userAgent;
+      if (/iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return null;
+      if (/Mac/.test(ua)) return { os: "macOS", file: "akproxy.dmg" };
+      if (/Windows/.test(ua)) return { os: "Windows", file: "akproxy-windows-amd64.zip" };
+      if (/Linux/.test(ua)) return { os: "Linux", file: "akproxy-linux-amd64.tar.gz" };
+      return null;
+    })();
+
+    if (target) {
+      document.querySelectorAll("[data-download-href]").forEach((node) => {
+        node.setAttribute("href", latest + target.file);
+      });
+      document.querySelectorAll("[data-download]").forEach((node) => {
+        node.textContent = node.dataset.label.replace("{os}", target.os);
+        node.setAttribute("href", latest + target.file);
+      });
+    }
+
+    document.querySelectorAll("[data-copy]").forEach((node) => {
+      const hint = node.querySelector("[data-copy-hint]");
+      const label = hint.textContent;
+      let timer;
+      node.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(node.getAttribute("data-copy"));
+        } catch (_) {
+          window.getSelection().selectAllChildren(node.querySelector("code"));
+          return;
+        }
+        hint.textContent = hint.dataset.copied;
+        node.classList.add("is-copied");
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          hint.textContent = label;
+          node.classList.remove("is-copied");
+        }, 1600);
+      });
+    });
+
+    (() => {
+      const host = document.querySelector("[data-threads]");
+      const canvas = host && host.querySelector("canvas");
+      const image = host && host.querySelector("img");
+      const gl = canvas && canvas.getContext("webgl", { antialias: false, alpha: false });
+      if (!gl) return;
+
+      const vertex = `
+        attribute vec2 p;
+        varying vec2 v;
+        void main() {
+          v = vec2(p.x * 0.5 + 0.5, 0.5 - p.y * 0.5);
+          gl_Position = vec4(p, 0.0, 1.0);
+        }`;
+      const fragment = `
+        precision mediump float;
+        varying vec2 v;
+        uniform sampler2D tex;
+        uniform float time;
+        uniform float aspect;
+        uniform float hover;
+        uniform vec2 mouse;
+
+        float hash(vec2 q) { return fract(sin(dot(q, vec2(127.1, 311.7))) * 43758.5453); }
+        float noise(vec2 q) {
+          vec2 i = floor(q);
+          vec2 f = fract(q);
+          f = f * f * (3.0 - 2.0 * f);
+          return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                     mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+        }
+
+        void main() {
+          vec2 uv = v;
+          float loose = smoothstep(0.5, 0.0, v.x);
+          float sway = noise(vec2(v.x * 2.5 - time * 0.35, v.y * 3.0 + time * 0.08)) - 0.5;
+          uv.y += sway * 0.03 * loose;
+
+          vec2 d = v - mouse;
+          d.x *= aspect;
+          float lens = exp(-dot(d, d) * 16.0) * hover;
+          uv -= vec2(d.x / aspect, d.y) * lens * 0.12;
+
+          vec3 c = texture2D(tex, clamp(uv, 0.0, 1.0)).rgb;
+          float violet = smoothstep(0.04, 0.2, c.b - c.g) * smoothstep(0.35, 0.6, v.x);
+          float pulse = exp(-pow((v.x - (fract(time * 0.09) * 1.4 - 0.2)) * 9.0, 2.0));
+          c += c * violet * pulse * 0.9;
+          c += vec3(0.56, 0.24, 0.93) * lens * 0.05;
+          c += (hash(v * vec2(1733.0, 977.0) + fract(time)) - 0.5) * 0.025;
+          float edge = smoothstep(0.0, 0.1, v.y) * smoothstep(1.0, 0.9, v.y);
+          c = mix(vec3(0.086, 0.078, 0.11), c, edge);
+          gl_FragColor = vec4(c, 1.0);
+        }`;
+
+      const shader = (type, source) => {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, source);
+        gl.compileShader(s);
+        return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null;
+      };
+      const vs = shader(gl.VERTEX_SHADER, vertex);
+      const fs = shader(gl.FRAGMENT_SHADER, fragment);
+      if (!vs || !fs) return;
+      const program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+      gl.useProgram(program);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      const position = gl.getAttribLocation(program, "p");
+      gl.enableVertexAttribArray(position);
+      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+      const u = (name) => gl.getUniformLocation(program, name);
+      const uTime = u("time");
+      const uAspect = u("aspect");
+      const uHover = u("hover");
+      const uMouse = u("mouse");
+
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+      const pointer = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5, hover: 0, target: 0 };
+      let visible = false;
+      let frame = 0;
+      let start = performance.now();
+
+      const resize = () => {
+        const ratio = Math.min(devicePixelRatio || 1, 2);
+        const width = Math.round(canvas.clientWidth * ratio);
+        const height = Math.round(canvas.clientHeight * ratio);
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+          gl.viewport(0, 0, width, height);
+        }
+        gl.uniform1f(uAspect, width / Math.max(height, 1));
+      };
+
+      const draw = (now) => {
+        frame = 0;
+        resize();
+        pointer.x += (pointer.tx - pointer.x) * 0.08;
+        pointer.y += (pointer.ty - pointer.y) * 0.08;
+        pointer.hover += (pointer.target - pointer.hover) * 0.06;
+        gl.uniform1f(uTime, reduce.matches ? 0 : (now - start) / 1000);
+        gl.uniform2f(uMouse, pointer.x, pointer.y);
+        gl.uniform1f(uHover, reduce.matches ? 0 : pointer.hover);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        if (visible && !reduce.matches) frame = requestAnimationFrame(draw);
+      };
+
+      const wake = () => {
+        if (!frame) frame = requestAnimationFrame(draw);
+      };
+
+      const init = () => {
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+        draw(performance.now());
+        host.classList.add("is-gl");
+        new IntersectionObserver((entries) => {
+          visible = entries[0].isIntersecting;
+          if (visible) wake();
+        }).observe(host);
+        host.addEventListener("pointermove", (event) => {
+          const box = canvas.getBoundingClientRect();
+          pointer.tx = (event.clientX - box.left) / box.width;
+          pointer.ty = (event.clientY - box.top) / box.height;
+          pointer.target = 1;
+          wake();
+        });
+        host.addEventListener("pointerleave", () => {
+          pointer.target = 0;
+        });
+        addEventListener("resize", wake);
+        reduce.addEventListener("change", wake);
+      };
+
+      if (image.complete && image.naturalWidth) init();
+      else image.addEventListener("load", init, { once: true });
+    })();
+  </script>
+</body>
+</html>

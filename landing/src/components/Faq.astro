@@ -1,0 +1,32 @@
+---
+import { copy, type Locale } from "../i18n/copy";
+
+const t = copy[Astro.currentLocale as Locale];
+---
+    <section class="faq">
+      <div class="wrap">
+        <h2 class="heading">{t.worry}</h2>
+        <ul class="faq-list">
+          <li class="doubt">
+            <h3>{t.q1}</h3>
+            <p>{t.a1}</p>
+          </li>
+          <li class="doubt">
+            <h3>{t.q2}</h3>
+            <p>{t.a2}</p>
+          </li>
+          <li class="doubt">
+            <h3>{t.q3}</h3>
+            <p>{t.a3}</p>
+          </li>
+          <li class="doubt">
+            <h3>{t.q5}</h3>
+            <p>{t.a5}</p>
+          </li>
+          <li class="doubt">
+            <h3>{t.q6}</h3>
+            <p>{t.a6}</p>
+          </li>
+        </ul>
+      </div>
+    </section>
