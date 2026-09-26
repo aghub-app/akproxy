@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>akproxy — Stop paying twice for AI</title>
+  <meta name="description" content="You already pay for Codex, Claude, Gemini, Kimi, Grok, and Devin. Don't buy the API again. Use them in the other tool.">
+  <meta name="theme-color" content="#16141C">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,400..650;1,400..650&family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f1f0f3;
+      --ink: #16141c;
+      --filament: #8f3ced;
+      --display: "Fraunces", "Songti SC", "Noto Serif SC", Palatino, "Palatino Linotype", serif;
+      --sans: "Familjen Grotesk", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --mono: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+      --line: color-mix(in srgb, var(--ink) 14%, transparent);
+      --mute: color-mix(in srgb, var(--ink) 72%, var(--paper));
+      --paper-dim: color-mix(in srgb, var(--paper) 72%, transparent);
+      --paper-line: color-mix(in srgb, var(--paper) 22%, transparent);
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-7: 48px;
+      --space-8: 80px;
+      --space-9: 112px;
+      --page: 1180px;
+      --gutter: clamp(20px, 4vw, 40px);
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      overscroll-behavior-y: none;
+    }
+
+    html {
+      background: var(--paper);
+      color: var(--ink);
+      color-scheme: light;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      min-height: 100%;
+      font-family: var(--sans);
+      font-size: 1.0625rem;
+      line-height: 1.5;
+      font-weight: 450;
+    }
+
+    button,
+    [role="button"],
+    a.button {
+      cursor: pointer;
+    }
+
+    ::selection {
+      background: var(--filament);
+      color: var(--paper);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--filament);
+      outline-offset: 3px;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    p {
+      text-wrap: pretty;
+    }
+
+    h1,
+    h2,
+    h3 {
+      text-wrap: balance;
+    }
+
+    .skip {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .skip:focus {
+      position: fixed;
+      top: var(--space-3);
+      left: var(--space-3);
+      z-index: 5;
+      width: auto;
+      height: auto;
+      margin: 0;
+      padding: var(--space-2) var(--space-3);
+      overflow: visible;
+      clip: auto;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .wrap {
+      width: min(var(--page), calc(100% - var(--gutter) * 2));
+      margin-inline: auto;
+    }
+
+    .mast {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .mast-inner {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      padding-block: var(--space-3);
+    }
+
+    .word {
+      font-family: var(--display);
+      font-style: italic;
+      font-weight: 560;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
+      text-decoration: none;
+      font-variation-settings: "opsz" 72, "SOFT" 40, "wght" 560;
+    }
+
+    .mast-tools {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: var(--space-3) var(--space-5);
+    }
+
+    .platforms {
+      margin: 0;
+      color: var(--paper-dim);
+      font-size: 0.875rem;
+      letter-spacing: 0.01em;
+    }
+
+    .lang {
+      min-height: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--paper-line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--paper);
+      font: 600 0.9375rem/1 var(--sans);
+    }
+
+    .lang:hover {
+      border-color: var(--paper);
+    }
+
+    .hero {
+      padding-block: clamp(48px, 8vw, 96px) var(--space-8);
+    }
+
+    .mark {
+      width: 64px;
+      height: 64px;
+      flex: none;
+      border-radius: 22.4%;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--paper) 35%, transparent);
+    }
+
+    h1 {
+      margin: 0;
+      font-family: var(--display);
+      font-weight: 560;
+      font-size: clamp(4.25rem, 13vw, 8.75rem);
+      line-height: 0.82;
+      letter-spacing: -0.045em;
+      font-variation-settings: "opsz" 144, "SOFT" 30, "wght" 560;
+    }
+
+    h1 span {
+      display: block;
+    }
+
+    .drop {
+      padding-left: 11%;
+    }
+
+    .accent {
+      font-style: italic;
+      color: var(--filament);
+      font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 1, "wght" 560;
+    }
+
+    html[lang="zh"] .accent {
+      font-style: normal;
+      font-variation-settings: "opsz" 144, "SOFT" 20, "wght" 560;
+    }
+
+    html[lang="zh"] h1 {
+      font-size: clamp(3.5rem, 12vw, 7.5rem);
+      letter-spacing: -0.04em;
+    }
+
+    .split {
+      display: grid;
+      gap: var(--space-6);
+      margin-top: clamp(36px, 5vw, 64px);
+    }
+
+    .lede {
+      margin: 0;
+      max-width: 38rem;
+      font-size: clamp(1.125rem, 2vw, 1.35rem);
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-2) var(--space-5);
+      margin-top: var(--space-6);
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 22px;
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--paper);
+      text-decoration: none;
+      font-weight: 650;
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+      transition: background-color 180ms var(--ease), transform 180ms var(--ease);
+    }
+
+    .button:hover {
+      background: var(--filament);
+    }
+
+    .button:active {
+      transform: scale(0.98);
+    }
+
+    .textlink {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      font-weight: 600;
+      text-underline-offset: 0.22em;
+    }
+
+    .textlink:hover {
+      color: var(--filament);
+    }
+
+    .note {
+      margin: var(--space-4) 0 0;
+      color: var(--mute);
+      font-size: 0.9375rem;
+    }
+
+    .ticket {
+      position: relative;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-6);
+      padding: 26px 24px 22px 32px;
+      border-radius: 22px;
+      background: var(--ink);
+      color: var(--paper);
+      box-shadow: inset 0 0 0 1px var(--paper-line);
+    }
+
+    .ticket::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 18px;
+      bottom: 18px;
+      width: 14px;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, var(--paper) 5px, transparent 5.6px);
+      background-size: 14px 22px;
+      background-repeat: repeat-y;
+    }
+
+    .ticket-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+
+    .ticket-kicker {
+      margin: 6px 0 0;
+      font-size: 0.75rem;
+      font-weight: 650;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--paper-dim);
+    }
+
+    html[lang="zh"] .ticket-kicker {
+      letter-spacing: 0.08em;
+    }
+
+    .url {
+      margin: var(--space-3) 0 0;
+      font-family: var(--mono);
+      font-size: clamp(0.95rem, 1.6vw, 1.2rem);
+      font-weight: 400;
+      letter-spacing: -0.03em;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .ticket-foot {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+
+    .ticket-meta {
+      margin: 0;
+      max-width: 22rem;
+      color: var(--paper-dim);
+      font-size: 0.9375rem;
+    }
+
+    .lamp {
+      flex: none;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--filament);
+      box-shadow: 0 0 0 5px color-mix(in srgb, var(--filament) 28%, transparent);
+    }
+
+    .shots {
+      display: grid;
+      gap: var(--space-7);
+      padding-bottom: var(--space-9);
+    }
+
+    .shot {
+      display: grid;
+      gap: var(--space-4);
+      margin: 0;
+    }
+
+    .shot img {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+    }
+
+    .shot figcaption {
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .shot h3 {
+      margin: 0;
+      font-family: var(--display);
+      font-weight: 560;
+      font-size: clamp(1.35rem, 2.2vw, 1.6rem);
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      font-variation-settings: "opsz" 48, "SOFT" 30, "wght" 560;
+    }
+
+    .shot p {
+      margin: 0;
+      max-width: 34rem;
+      color: var(--mute);
+    }
+
+    .step {
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      color: var(--filament);
+    }
+
+    .band {
+      padding-bottom: var(--space-9);
+    }
+
+    .kicker {
+      margin: 0 0 var(--space-4);
+      font-size: 0.8125rem;
+      font-weight: 650;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--mute);
+    }
+
+    html[lang="zh"] .kicker {
+      letter-spacing: 0.06em;
+    }
+
+    .names {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      margin: 0;
+      font-family: var(--display);
+      font-weight: 520;
+      font-size: clamp(2.1rem, 5vw, 3.6rem);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      font-variation-settings: "opsz" 80, "SOFT" 20, "wght" 520;
+    }
+
+    .names span:not(:last-child)::after {
+      content: "·";
+      color: var(--filament);
+      padding-inline: 0.28em;
+      font-style: italic;
+    }
+
+    .aside {
+      margin: var(--space-5) 0 0;
+      max-width: 36rem;
+      color: var(--mute);
+    }
+
+    .doubts {
+      padding-bottom: var(--space-8);
+    }
+
+    .doubt {
+      display: grid;
+      gap: var(--space-3);
+      padding-block: clamp(28px, 4vw, 44px);
+      border-top: 1px solid var(--line);
+    }
+
+    .doubt:last-child {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .doubt h3 {
+      margin: 0;
+      font-family: var(--display);
+      font-weight: 560;
+      font-size: clamp(1.7rem, 3vw, 2.35rem);
+      letter-spacing: -0.035em;
+      line-height: 1.08;
+      font-variation-settings: "opsz" 72, "SOFT" 30, "wght" 560;
+    }
+
+    .doubt p {
+      margin: 0;
+      max-width: 40rem;
+      font-size: 1.0625rem;
+    }
+
+    .return {
+      background: var(--ink);
+      color: var(--paper);
+      padding-block: clamp(72px, 10vw, 120px);
+    }
+
+    .return-inner {
+      display: grid;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .return .kicker {
+      color: var(--paper-dim);
+    }
+
+    .return .button {
+      margin-top: var(--space-6);
+      min-width: 9.5rem;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .return .button:hover {
+      background: var(--filament);
+      color: var(--paper);
+    }
+
+    .return .note,
+    .return .source {
+      color: var(--paper-dim);
+    }
+
+    .return .source {
+      margin-top: var(--space-4);
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .return .source:hover {
+      color: var(--paper);
+    }
+
+    .return-line {
+      margin: 0;
+      font-family: var(--display);
+      font-style: italic;
+      font-weight: 520;
+      font-size: clamp(2rem, 4.6vw, 3.35rem);
+      line-height: 1.12;
+      letter-spacing: -0.035em;
+      font-variation-settings: "opsz" 100, "SOFT" 40, "wght" 520;
+    }
+
+    .return-line span {
+      display: block;
+    }
+
+    html[lang="zh"] .return-line {
+      font-style: normal;
+    }
+
+    .return-plain {
+      margin: var(--space-5) 0 0;
+      max-width: 34rem;
+      color: var(--paper-dim);
+    }
+
+    .mirror {
+      width: min(280px, 70%);
+      margin-top: var(--space-7);
+      color: var(--paper);
+    }
+
+    .foot {
+      padding-block: var(--space-6) var(--space-7);
+      border-top: 1px solid var(--line);
+    }
+
+    .foot-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4) var(--space-5);
+    }
+
+    .credit {
+      margin: 0;
+      color: var(--mute);
+      font-size: 0.9375rem;
+    }
+
+    .foot nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2) var(--space-5);
+    }
+
+    .foot nav a {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .foot nav a:hover {
+      color: var(--filament);
+    }
+
+    .rise {
+      animation: rise 720ms var(--ease) both;
+    }
+
+    .d1 { animation-delay: 70ms; }
+    .d2 { animation-delay: 140ms; }
+    .d3 { animation-delay: 240ms; }
+    .d4 { animation-delay: 360ms; }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @keyframes lamp-in {
+      from {
+        opacity: 0;
+        transform: scale(0.7);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .lamp {
+      animation: lamp-in 420ms var(--ease) 420ms both;
+    }
+
+    @media (max-width: 719px) {
+      .button {
+        width: 100%;
+      }
+
+      .drop {
+        padding-left: 7%;
+      }
+
+    }
+
+    @media (min-width: 880px) {
+      .split {
+        grid-template-columns: 3fr 4fr;
+        align-items: stretch;
+        gap: clamp(32px, 4vw, 64px);
+      }
+
+      .split-stub {
+        order: -1;
+      }
+
+      .ticket {
+        height: 100%;
+      }
+
+      .shots {
+        grid-template-columns: 1fr 1fr;
+        column-gap: clamp(24px, 3vw, 48px);
+      }
+
+      .doubt {
+        grid-template-columns: minmax(14rem, 0.7fr) 1.4fr;
+        column-gap: clamp(32px, 5vw, 72px);
+        align-items: baseline;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rise,
+      .lamp {
+        animation: none;
+      }
+
+      .button {
+        transition: background-color 180ms var(--ease);
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#content" data-i18n="skip">Skip to content</a>
+  <header class="mast">
+    <div class="wrap mast-inner">
+      <a class="word" href="#content">akproxy</a>
+      <div class="mast-tools">
+        <p class="platforms" data-i18n="platforms">macOS · Windows · Linux</p>
+        <button class="lang" type="button" data-lang-toggle>中文</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content">
+    <section class="hero">
+      <div class="wrap">
+        <h1>
+          <span class="rise" data-i18n="l1">Stop</span>
+          <span class="rise drop d1" data-i18n="l2">paying</span>
+          <span class="rise accent d2" data-i18n="l3">twice.</span>
+        </h1>
+
+        <div class="split">
+          <div class="split-copy rise d3">
+            <p class="lede" data-i18n="lede">You already pay for a pile of these. Don't buy the API again. Codex, Claude, Gemini, Kimi, Grok, and Devin can go to the other tool you're actually using.</p>
+            <div class="actions">
+              <a class="button" href="https://github.com/aghub-app/akproxy/releases/latest" data-download>Download</a>
+              <a class="textlink" href="https://github.com/aghub-app/akproxy" data-i18n="source">Source</a>
+            </div>
+            <p class="note"><span data-i18n="note">Free.</span> <a href="https://github.com/aghub-app/akproxy/releases/latest" data-i18n="allDownloads">Other platforms</a></p>
+          </div>
+          <div class="split-stub rise d4">
+            <div class="ticket">
+              <div class="ticket-top">
+                <div>
+                  <p class="ticket-kicker" data-i18n="ticket">Address</p>
+                  <p class="url">http://127.0.0.1:8317/v1</p>
+                </div>
+                <img class="mark" src="public/icon-round.png" width="64" height="64" alt="akproxy">
+              </div>
+              <div class="ticket-foot">
+                <p class="ticket-meta" data-i18n="ticketMeta">This is the default. If you changed it, Home shows the one you're using.</p>
+                <span class="lamp" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap shots">
+      <figure class="shot">
+        <img src="public/shot-usage.webp" width="1600" height="1192" loading="lazy" decoding="async" data-i18n-alt="shot1Alt" alt="The Grok page in akproxy with one signed-in account and its weekly quota">
+        <figcaption>
+          <span class="step">01</span>
+          <h3 data-i18n="shot1Title">Sign in with the browser</h3>
+          <p data-i18n="shot1Body">Add each account on its own page. The card shows the plan and how much of this week's quota is left.</p>
+        </figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="public/shot-connect.webp" width="1600" height="1192" loading="lazy" decoding="async" data-i18n-alt="shot2Alt" alt="The akproxy home page with the address, key, .env, and an OpenAI Python example">
+        <figcaption>
+          <span class="step">02</span>
+          <h3 data-i18n="shot2Title">Start, then copy two lines</h3>
+          <p data-i18n="shot2Body">Home gives the address and key, plus a .env and SDK examples. Paste them into your tool.</p>
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="band">
+      <div class="wrap">
+        <h2 class="kicker" data-i18n="sign">What you already pay for</h2>
+        <p class="names">
+          <span>Codex</span><span>Grok</span><span>Claude</span><span>Gemini</span><span>Kimi</span><span>Devin</span>
+        </p>
+        <p class="aside" data-i18n="signNote">The official apps still work. If the tool you want only speaks the OpenAI API, sign in in the browser and give it this one address.</p>
+      </div>
+    </section>
+
+    <section class="doubts">
+      <div class="wrap">
+        <h2 class="kicker" data-i18n="worry">FAQ</h2>
+        <article class="doubt">
+          <h3 data-i18n="q1">What does akproxy do?</h3>
+          <p data-i18n="a1">It runs a small server on your computer. Tools that only speak the OpenAI API point at it and use the Codex, Claude, Gemini, Kimi, Grok, and Devin subscriptions you already pay for. Sign in once in the browser, then paste the address and key into the tool.</p>
+        </article>
+        <article class="doubt">
+          <h3 data-i18n="q2">Where do my requests go?</h3>
+          <p data-i18n="a2">Only to the provider you signed in to. akproxy passes along what your tool sends and hands the reply back. It runs on your own machine and keeps your login there. There is no akproxy server in between.</p>
+        </article>
+        <article class="doubt">
+          <h3 data-i18n="q3">Could my account get banned?</h3>
+          <p data-i18n="a3">It could. Requests go out on your own account, from your own computer, not a shared pool. But each provider has its own rules about using a subscription outside its official app, so we can't promise it won't happen.</p>
+        </article>
+        <article class="doubt">
+          <h3 data-i18n="q4">Is it free?</h3>
+          <p data-i18n="a4">Yes. akproxy costs nothing. You only pay for the subscriptions you already have.</p>
+        </article>
+        <article class="doubt">
+          <h3 data-i18n="q5">Which tools can use it?</h3>
+          <p data-i18n="a5">Any tool that lets you set an OpenAI base URL and API key. Home shows both, plus a .env and SDK examples you can copy.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="return">
+      <div class="wrap return-inner">
+        <h2 class="kicker" data-i18n="closeKicker">The code is public</h2>
+        <p class="return-line">
+          <span data-i18n="close1">Don't pay several times</span>
+          <span data-i18n="close2">for the API.</span>
+        </p>
+        <a class="button" href="https://github.com/aghub-app/akproxy/releases/latest" data-download>Download</a>
+        <p class="note"><span data-i18n="note">Free.</span> <a href="https://github.com/aghub-app/akproxy/releases/latest" data-i18n="allDownloads">Other platforms</a></p>
+        <a class="source" href="https://github.com/aghub-app/akproxy" data-i18n="sourceLine">Read the code</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-row">
+      <p class="credit"><span data-i18n="credit">Made by</span> <a href="https://github.com/akarachen">@akarachen</a></p>
+      <nav data-i18n-aria="footNav" aria-label="Links">
+        <a href="https://github.com/aghub-app/akproxy/releases" data-i18n="footReleases">Releases</a>
+        <a href="https://github.com/aghub-app/akproxy/issues" data-i18n="footIssues">Report a problem</a>
+        <a href="https://github.com/aghub-app/akproxy">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    const copy = {
+      en: {
+        title: "akproxy — Don't buy the API again",
+        skip: "Skip to content",
+        platforms: "macOS · Windows · Linux",
+        l1: "Stop",
+        l2: "paying",
+        l3: "twice.",
+        lede: "You already pay for a pile of these. Don't buy the API again. Codex, Claude, Gemini, Kimi, Grok, and Devin can go to the other tool you're actually using.",
+        download: "Download",
+        source: "Source",
+        note: "Free.",
+        allDownloads: "Other platforms",
+        downloadFor: "Download for {os}",
+        shot1Title: "Sign in with the browser",
+        shot1Body: "Add each account on its own page. The card shows the plan and how much of this week's quota is left.",
+        shot1Alt: "The Grok page in akproxy with one signed-in account and its weekly quota",
+        shot2Title: "Start, then copy two lines",
+        shot2Body: "Home gives the address and key, plus a .env and SDK examples. Paste them into your tool.",
+        shot2Alt: "The akproxy home page with the address, key, .env, and an OpenAI Python example",
+        ticket: "Address",
+        ticketMeta: "This is the default. If you changed it, Home shows the one you're using.",
+        sign: "What you already pay for",
+        signNote: "The official apps still work. If the tool you want only speaks the OpenAI API, sign in in the browser and give it this one address.",
+        worry: "FAQ",
+        q1: "What does akproxy do?",
+        a1: "It runs a small server on your computer. Tools that only speak the OpenAI API point at it and use the Codex, Claude, Gemini, Kimi, Grok, and Devin subscriptions you already pay for. Sign in once in the browser, then paste the address and key into the tool.",
+        q2: "Where do my requests go?",
+        a2: "Only to the provider you signed in to. akproxy passes along what your tool sends and hands the reply back. It runs on your own machine and keeps your login there. There is no akproxy server in between.",
+        q3: "Could my account get banned?",
+        a3: "It could. Requests go out on your own account, from your own computer, not a shared pool. But each provider has its own rules about using a subscription outside its official app, so we can't promise it won't happen.",
+        q4: "Is it free?",
+        a4: "Yes. akproxy costs nothing. You only pay for the subscriptions you already have.",
+        q5: "Which tools can use it?",
+        a5: "Any tool that lets you set an OpenAI base URL and API key. Home shows both, plus a .env and SDK examples you can copy.",
+        closeKicker: "The code is public",
+        close1: "Don't pay several times",
+        close2: "for the API.",
+        sourceLine: "Read the code",
+        credit: "Made by",
+        footNav: "Links",
+        footReleases: "Releases",
+        footIssues: "Report a problem",
+        langButton: "中文",
+        langLabel: "显示中文"
+      },
+      zh: {
+        title: "akproxy — 别再为 API 另付一份",
+        skip: "跳到正文",
+        platforms: "macOS · Windows · Linux",
+        l1: "别为",
+        l2: "同一件事",
+        l3: "付两次。",
+        lede: "订阅买了一堆，别再为 API 另付一份。Codex、Claude、Gemini、Kimi、Grok、Devin 这些，拿去给别的工具用就行。",
+        download: "下载",
+        source: "源码",
+        note: "免费。",
+        allDownloads: "其他平台",
+        downloadFor: "下载 {os} 版",
+        shot1Title: "在浏览器里登录",
+        shot1Body: "每家在自己的页面添加账号。卡片上能看到套餐，以及这周额度还剩多少。",
+        shot1Alt: "akproxy 的 Grok 页面，有一个已登录账号和它的每周额度",
+        shot2Title: "启动，然后复制两行",
+        shot2Body: "首页给出地址和密钥，还有 .env 和 SDK 示例，贴进你的工具就行。",
+        shot2Alt: "akproxy 首页，展示地址、密钥、.env 和 OpenAI Python 示例",
+        ticket: "地址",
+        ticketMeta: "默认是这个。你要是改过，首页显示的是你现在用的地址。",
+        sign: "你已经在付的",
+        signNote: "官方客户端照常用。想拿去给只认 OpenAI 接口的工具，就在浏览器里登一下，工具那边填这一个地址。",
+        worry: "常见问题",
+        q1: "akproxy 是做什么的？",
+        a1: "它在你电脑上跑一个本地服务。只认 OpenAI 接口的工具连上它，就能用上你已经在付的 Codex、Claude、Gemini、Kimi、Grok、Devin 订阅。在浏览器里登录一次，再把地址和密钥填进工具。",
+        q2: "请求会发到哪里？",
+        a2: "只发给你登录的那一家。akproxy 把工具发来的请求转过去，再把回复交回工具。服务跑在你自己的电脑上，登录信息也只存在本机，中间没有 akproxy 的服务器。",
+        q3: "会不会被封号？",
+        a3: "有可能。请求走的是你自己的账号，从你自己的电脑发出，不和别人共用。但各家对在官方客户端以外使用订阅都有自己的规定，我们没法保证不被封号。",
+        q4: "要钱吗？",
+        a4: "不要。akproxy 本身免费，你只付已经在付的那些订阅。",
+        q5: "哪些工具能用？",
+        a5: "能填 OpenAI 接口地址和 API key 的工具都行。首页会给出这两项，还有能直接复制的 .env 和 SDK 示例。",
+        closeKicker: "代码是公开的",
+        close1: "不要为 API 订阅",
+        close2: "付好几次钱。",
+        sourceLine: "看代码",
+        credit: "作者",
+        footNav: "链接",
+        footReleases: "版本记录",
+        footIssues: "反馈问题",
+        langButton: "English",
+        langLabel: "Show English"
+      }
+    };
+
+    const toggle = document.querySelector("[data-lang-toggle]");
+    const latest = "https://github.com/aghub-app/akproxy/releases/latest/download/";
+    const target = (() => {
+      const ua = navigator.userAgent;
+      if (/iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return null;
+      if (/Mac/.test(ua)) return { os: "macOS", file: "akproxy.dmg" };
+      if (/Windows/.test(ua)) return { os: "Windows", file: "akproxy-windows-amd64.zip" };
+      if (/Linux/.test(ua)) return { os: "Linux", file: "akproxy-linux-amd64.tar.gz" };
+      return null;
+    })();
+    let lang = "en";
+
+    try {
+      const saved = localStorage.getItem("akproxy-landing-lang");
+      if (saved === "en" || saved === "zh") lang = saved;
+      else if (navigator.language.toLowerCase().startsWith("zh")) lang = "zh";
+    } catch (_) {}
+
+    function apply(next) {
+      lang = next;
+      const t = copy[lang];
+      document.documentElement.lang = lang;
+      document.title = t.title;
+      const description = document.querySelector('meta[name="description"]');
+      if (description) description.setAttribute("content", t.lede);
+      document.querySelectorAll("[data-i18n]").forEach((node) => {
+        const key = node.getAttribute("data-i18n");
+        if (key && t[key] != null) node.textContent = t[key];
+      });
+      document.querySelectorAll("[data-i18n-alt]").forEach((node) => {
+        const key = node.getAttribute("data-i18n-alt");
+        if (key && t[key] != null) node.setAttribute("alt", t[key]);
+      });
+      document.querySelectorAll("[data-download]").forEach((node) => {
+        node.textContent = target ? t.downloadFor.replace("{os}", target.os) : t.download;
+        if (target) node.setAttribute("href", latest + target.file);
+      });
+      document.querySelectorAll("[data-i18n-aria]").forEach((node) => {
+        const key = node.getAttribute("data-i18n-aria");
+        if (key && t[key] != null) node.setAttribute("aria-label", t[key]);
+      });
+      toggle.textContent = t.langButton;
+      toggle.setAttribute("aria-label", t.langLabel);
+      try {
+        localStorage.setItem("akproxy-landing-lang", lang);
+      } catch (_) {}
+    }
+
+    toggle.addEventListener("click", () => {
+      apply(lang === "en" ? "zh" : "en");
+    });
+
+    apply(lang);
+  </script>
+</body>
+</html>
