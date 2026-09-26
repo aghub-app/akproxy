@@ -1,7 +1,8 @@
 import { ArrowsClockwiseIcon, DotsThreeIcon, TrashIcon } from "@phosphor-icons/react";
+import { Browser, Clipboard, Events } from "@wailsio/runtime";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { type FC, type ReactNode, useRef, useState } from "react";
+import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogPopup, DialogTitle } from "@/components/ui/dialog";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@/components/ui/menu";
 import { Progress, ProgressIndicator, ProgressTrack } from "@/components/ui/progress";
 import { toastManager } from "@/components/ui/toast";
@@ -35,9 +37,10 @@ const windowLabel: Record<UsageWindow["kind"], string> = {
   gemini_weekly: "每周",
   claude_5h: "Claude 5 小时",
   claude_weekly: "Claude 每周",
+  rolling: "滚动窗口",
 };
 
-const sessionLimitProviders = new Set(["codex", "claude", "xai", "devin", "antigravity", "kimi", "kimi-ai", "kimi.ai"]);
+const sessionLimitProviders = new Set(["codex", "claude", "xai", "devin", "antigravity", "kimi", "kimi-ai", "kimi.ai", "meta"]);
 
 type UsageOptions = Pick<AppPrefs, "usagePercentMode" | "usageResetMode" | "usageShowExtra" | "usageShowResets" | "usageAlwaysShowPacing">;
 
@@ -112,7 +115,11 @@ const UsageBars: FC<{ usage?: AccountUsage; loading: boolean; failed: boolean; o
       ) : null}
       {(usage.windows ?? []).map((window) => {
         const pace = windowPace(window, options.usageAlwaysShowPacing, Date.now(), locale);
-        const label = t(windowLabel[window.kind] ?? window.kind);
+        const label = window.kind === "rolling" && window.durationSeconds > 0
+          ? window.durationSeconds % 3600 === 0
+            ? t("{count} 小时滚动窗口", { count: window.durationSeconds / 3600 })
+            : t("{count} 分钟滚动窗口", { count: Math.round(window.durationSeconds / 60) })
+          : t(windowLabel[window.kind] ?? window.kind);
         return (
           <div className="flex flex-col gap-2" key={window.kind}>
             <div className="flex items-center justify-between gap-2">
@@ -164,6 +171,26 @@ export const AccountsPanel: FC<{
   const { t, locale } = usePresentation();
   const client = useQueryClient();
   const [pendingDelete, setPendingDelete] = useState<Account | null>(null);
+  const [metaCode, setMetaCode] = useState<{ code: string; url: string } | null>(null);
+  const [metaCopied, setMetaCopied] = useState<boolean | null>(null);
+  const metaLoginRef = useRef(false);
+
+  useEffect(() => () => {
+    if (metaLoginRef.current) void api.cancelLogin();
+  }, []);
+
+  useEffect(() => {
+    if (page !== "meta") return;
+    return Events.On("login:meta-code", (event) => {
+      const code = event.data as { code: string; url: string };
+      setMetaCode(code);
+      setMetaCopied(null);
+      void Clipboard.SetText(code.code).then(
+        () => { setMetaCopied(true); toastManager.add({ title: t("验证码已复制"), type: "success" }); },
+        () => { setMetaCopied(false); toastManager.add({ title: t("自动复制失败，请手动复制"), type: "error" }); },
+      );
+    });
+  }, [page, t]);
   const status = useQuery({ queryKey: ["status"], queryFn: api.status, refetchInterval: 2000 });
   const loginActive = status.data?.loginActive ?? false;
   const prefs = useQuery({ queryKey: ["update-prefs"], queryFn: api.updatePrefStatus });
@@ -210,24 +237,34 @@ export const AccountsPanel: FC<{
   });
 
   async function login(id: string) {
+    if (page === "meta") metaLoginRef.current = true;
     try {
       await api.login(id);
+      setMetaCode(null);
       await client.refetchQueries({ queryKey: ["accounts", page] });
       await client.refetchQueries({ queryKey: ["account-usage", page] });
       toastManager.add({ title: t("登录完成"), type: "success" });
     } catch (error) {
+      setMetaCode(null);
       toastManager.add({ title: errorText(error), type: "error" });
+    } finally {
+      metaLoginRef.current = false;
     }
   }
 
   async function reauthorize(id: string) {
+    if (page === "meta") metaLoginRef.current = true;
     try {
       await api.reauthorizeAccount(id);
+      setMetaCode(null);
       await client.refetchQueries({ queryKey: ["accounts", page] });
       await client.refetchQueries({ queryKey: ["account-usage", page] });
       toastManager.add({ title: t("重新授权完成"), type: "success" });
     } catch (error) {
+      setMetaCode(null);
       toastManager.add({ title: errorText(error, locale), type: "error" });
+    } finally {
+      metaLoginRef.current = false;
     }
   }
 
@@ -277,6 +314,40 @@ export const AccountsPanel: FC<{
     </>
   );
 
+  const metaDialog = (
+      <Dialog open={metaCode !== null} onOpenChange={(open) => {
+        if (!open && metaCode) {
+          setMetaCode(null);
+          void api.cancelLogin().catch((error: unknown) => toastManager.add({ title: errorText(error), type: "error" }));
+        }
+      }}>
+        <DialogPopup>
+          <DialogHeader>
+            <DialogTitle>{t("授权 Meta 账号")}</DialogTitle>
+            <DialogDescription>{metaCopied === true
+              ? t("验证码已复制。打开浏览器后，如需输入验证码，可直接粘贴。")
+              : metaCopied === false ? t("自动复制失败，请手动复制") : t("正在复制验证码…")}</DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            <code className="block rounded-lg border bg-muted px-4 py-3 text-center text-xl tracking-widest select-all">{metaCode?.code}</code>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              if (!metaCode) return;
+              void Clipboard.SetText(metaCode.code).then(
+                () => { setMetaCopied(true); toastManager.add({ title: t("验证码已复制"), type: "success" }); },
+                () => toastManager.add({ title: t("复制失败"), type: "error" }),
+              );
+            }}>{t("复制验证码")}</Button>
+            <a href={metaCode?.url ?? "#"} className={buttonVariants({ variant: "default" })} onClick={(event) => {
+              event.preventDefault();
+              if (metaCode) void Browser.OpenURL(metaCode.url).catch((error: unknown) => toastManager.add({ title: errorText(error), type: "error" }));
+            }}>{t("打开浏览器")}</a>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+  );
+
   if (accounts.isError && !accounts.data) {
     return (
       <div role="alert" className="flex flex-col items-start gap-3">
@@ -289,7 +360,7 @@ export const AccountsPanel: FC<{
     return <p className="text-muted-foreground text-sm">{t("正在读取账号…")}</p>;
   }
   if (accounts.data.length === 0) {
-    return <ProviderEmpty page={page}>{actions}</ProviderEmpty>;
+    return <><ProviderEmpty page={page}>{actions}</ProviderEmpty>{metaDialog}</>;
   }
 
   return (
@@ -354,6 +425,7 @@ export const AccountsPanel: FC<{
           ))}
         </ul>
       {filledExtra}
+      {metaDialog}
       <AlertDialog
         open={pendingDelete !== null}
         onOpenChange={(open) => {

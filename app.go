@@ -33,7 +33,17 @@ func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) 
 		return err
 	}
 	a.desktop = service
+	a.syncCLIInstall()
 	return nil
+}
+
+func (a *App) syncCLIInstall() {
+	if scheduler == nil {
+		return
+	}
+	enabled := scheduler.Status().Prefs.CLIEnabled
+	err := desktop.ApplyCLIInstall(enabled, version)
+	desktop.RememberCLIError(err)
 }
 
 func (a *App) ServiceShutdown() error {
@@ -217,6 +227,28 @@ func (a *App) Home() (desktop.HomeSnapshot, error) {
 		return desktop.HomeSnapshot{}, err
 	}
 	return a.desktop.Home()
+}
+
+// CLIStatus reports whether the terminal command is enabled and the latest install error.
+func (a *App) CLIStatus() (desktop.CLIStatus, error) {
+	if err := a.ready(); err != nil {
+		return desktop.CLIStatus{}, err
+	}
+	if scheduler == nil {
+		return desktop.CLIStatus{}, errNotReady
+	}
+	return desktop.CurrentCLIStatus(scheduler.Status().Prefs.CLIEnabled), nil
+}
+
+// SetCLIEnabled installs or removes the terminal command and saves the preference.
+func (a *App) SetCLIEnabled(enabled bool) (desktop.CLIStatus, error) {
+	if err := a.ready(); err != nil {
+		return desktop.CLIStatus{}, err
+	}
+	if scheduler == nil {
+		return desktop.CLIStatus{}, errNotReady
+	}
+	return scheduler.SetCLIEnabled(enabled)
 }
 
 // HomeModels reads models from the running local proxy.

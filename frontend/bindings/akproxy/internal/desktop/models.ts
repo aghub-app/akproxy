@@ -40,6 +40,15 @@ export interface AppPrefs {
     "language": string;
     "theme": string;
     "livestream": boolean;
+    "cliEnabled": boolean;
+}
+
+/**
+ * CLIStatus is the command-line switch and the latest install failure.
+ */
+export interface CLIStatus {
+    "enabled": boolean;
+    "error": string;
 }
 
 /**

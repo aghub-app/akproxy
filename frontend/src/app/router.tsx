@@ -29,6 +29,11 @@ function GeminiRoute() {
   return <NativeProviderPage provider="gemini" loginLabel={t("添加 Gemini 账号")} />;
 }
 
+function MetaRoute() {
+  const { t } = usePresentation();
+  return <NativeProviderPage provider="meta" loginLabel={t("添加 Meta 账号")} />;
+}
+
 export const router = createHashRouter([
   {
     path: "/",
@@ -43,6 +48,7 @@ export const router = createHashRouter([
       { path: "gemini", element: <GeminiRoute /> },
       { path: "kimi", element: <KimiPage /> },
       { path: "devin", element: <DevinPage /> },
+      { path: "meta", element: <MetaRoute /> },
       { path: "openai", element: <Navigate to="/" replace /> },
       { path: "yaml", element: <Navigate to="/settings" replace /> },
     ],

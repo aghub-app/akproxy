@@ -106,6 +106,8 @@ export const api = {
   applyUpdate: () => app.ApplyUpdate(),
   updatePrefStatus: () => app.UpdatePrefStatus(),
   saveUpdatePrefs: (input: AppPrefs) => app.SaveUpdatePrefs(input),
+  cliStatus: () => app.CLIStatus(),
+  setCLIEnabled: (enabled: boolean) => app.SetCLIEnabled(enabled),
   setPresentation: (language: "zh-CN" | "en", dark: boolean) => app.SetPresentation(language, dark),
   downloadPendingUpdate: () => app.DownloadPendingUpdate(),
 };
