@@ -22,6 +22,7 @@ type AppPrefs struct {
 	Language              string `json:"language"`
 	Theme                 string `json:"theme"`
 	Livestream            bool   `json:"livestream"`
+	CLIEnabled            bool   `json:"cliEnabled"`
 }
 
 const (
@@ -31,7 +32,7 @@ const (
 
 // DefaultAppPrefs matches the historical built-in behavior.
 func DefaultAppPrefs() AppPrefs {
-	return AppPrefs{AutoUpdate: true, AutoCheck: true, CheckIntervalHours: DefaultCheckIntervalHours, UsageEnabled: true, UsagePercentMode: "left", UsageResetMode: "countdown", UsageShowExtra: true, UsageShowResets: true, Language: "system", Theme: "system"}
+	return AppPrefs{AutoUpdate: true, AutoCheck: true, CheckIntervalHours: DefaultCheckIntervalHours, UsageEnabled: true, UsagePercentMode: "left", UsageResetMode: "countdown", UsageShowExtra: true, UsageShowResets: true, Language: "system", Theme: "system", CLIEnabled: true}
 }
 
 // Normalize clamps a parsed prefs value into the accepted range.

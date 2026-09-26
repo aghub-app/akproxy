@@ -264,6 +264,19 @@ const english: Record<string, string> = {
   "服务启动失败": "Could not start the service",
   "登录失败": "Sign-in failed",
   "界面语言无效": "Invalid interface language",
+  "命令行": "Command line",
+  "终端命令": "Terminal command",
+  "打开后，终端里可以直接使用 akproxy。关闭后不再安装，并移除已经加上的命令。": "When on, akproxy is available in the terminal. When off, it is removed and not installed again.",
+  "打开设置": "Open Settings",
+  "命令行暂时读不到": "Command line settings are unavailable",
+  "正在读取命令行设置…": "Loading command line settings…",
+  "找不到随附的命令行程序": "The bundled command-line program is missing",
+  "无法创建命令目录": "Could not create the command directory",
+  "无法替换已有的 akproxy 命令": "Could not replace the existing akproxy command",
+  "无法安装 akproxy 命令": "Could not install the akproxy command",
+  "无法移除 akproxy 命令": "Could not remove the akproxy command",
+  "无法写入终端 PATH": "Could not update the terminal PATH",
+  "找不到用户目录": "Could not find the user directory",
 };
 
 export function translate(source: string, locale: Locale, values?: Record<string, string | number>): string {

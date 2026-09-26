@@ -44,6 +44,13 @@ export function BuildInfo(): $CancellablePromise<$models.BuildInfo> {
 }
 
 /**
+ * CLIStatus reports whether the terminal command is enabled and the latest install error.
+ */
+export function CLIStatus(): $CancellablePromise<desktop$0.CLIStatus> {
+    return $Call.ByID(3160989891);
+}
+
+/**
  * CancelLogin stops the login that is waiting.
  */
 export function CancelLogin(): $CancellablePromise<void> {
@@ -151,6 +158,13 @@ export function SaveUpdatePrefs($in: desktop$0.AppPrefs): $CancellablePromise<$m
  */
 export function ServiceSettings(): $CancellablePromise<desktop$0.ServiceSettings> {
     return $Call.ByID(640618321);
+}
+
+/**
+ * SetCLIEnabled installs or removes the terminal command and saves the preference.
+ */
+export function SetCLIEnabled(enabled: boolean): $CancellablePromise<desktop$0.CLIStatus> {
+    return $Call.ByID(2622304804, enabled);
 }
 
 /**

@@ -58,6 +58,8 @@ Out of scope until explicitly specified: anything not yet accepted in a PRD.
 - 账号用量卡片可显示厂商明确返回的额外额度与重置次数。缺失附加指标不显示假零值。设置的「用量」页可选择已用/剩余百分比、倒计时/具体时间、使用节奏，并分别控制附加行可见性；关闭额度显示时子选项禁用并保留原值，偏好即时生效、重启保持。详见 `docs/prd/provider-usage.md`。
 - 额度显示开启时，有已保存账号的 Codex、Claude、Grok、Gemini、Kimi、Devin 额度在应用运行期间独立于页面导航定期读取；切换页面立即显示已读到的结果，首次请求未完成时才显示读取状态。关闭开关后停止后台额度请求。
 - 设置页的语言可选跟随系统、简体中文、英语；外观可选跟随系统、浅色、深色。两项默认跟随系统、立即生效、重启保持。系统语言不受支持时回退简体中文。只翻译应用自有文案。外观里的直播模式默认关闭；打开后服务商账号卡片和删除确认中的邮箱显示为固定打码，不改账号数据。详情见 `docs/prd/language-appearance.md`。
+- 设置页有「命令行」标签。随附的命令行程序默认装进当前用户的 PATH，不请求管理员权限。应用每次启动比对已安装命令的 `--version` 和当前应用版本；一致则保留，对不上就删掉再装。开发版本每次启动都覆盖安装。安装或移除失败时 toast 报错，并有按钮打开这个标签。关掉开关后不再安装，并移除这次加上的命令。详见 `docs/prd/cli.md` 和 `docs/adr/cli-path-install.md`。
+- `akproxy model` 用配置里的代理地址和第一把客户端密钥读取模型列表，并用 gum choose 的默认样式让用户选一个。确认后写入数据目录 `cli.json` 的 `model.id`。取消或失败不改已有选择，也不启动代理。`akproxy claude`、`codex`、`opencode`、`pi` 在没有模型 id 时失败并提示先运行 `akproxy model`。没有应用配置时提示先打开 akproxy。这四条命令用所选模型和第一把客户端密钥启动对应程序，参数原样往后传，不改用户原来的配置，也不在找不到程序时自动安装。详见 `docs/adr/cli-launch-env.md` 和 `docs/adr/cli-model-picker.md`。
 
 ## System-wide constraints
 
