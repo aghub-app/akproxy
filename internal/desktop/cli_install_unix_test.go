@@ -96,7 +96,7 @@ func TestCLIInstallKeepsMatchingVersion(t *testing.T) {
 	if err != nil || !strings.Contains(string(body), "1.2.3") {
 		t.Fatalf("matching version should stay: %q %v", body, err)
 	}
-	profile, err := os.ReadFile(filepath.Join(home, ".zprofile"))
+	profile, err := os.ReadFile(shellStartupFiles(home)[0])
 	if err != nil || !strings.Contains(string(profile), cliPathBegin) {
 		t.Fatalf("PATH should still be ensured: %q %v", profile, err)
 	}

@@ -61,15 +61,19 @@ jobs:
         run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.24
 
       - name: Build
+        id: build
         run: wails3 task build
 
       - name: Go tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: go test ./...
 
       - name: Frontend tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: pnpm --dir frontend test
 
       - name: End-to-end tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         env:
           # Windows keeps the user PATH in HKCU; the tests restore it afterwards.
           AKPROXY_E2E: "1"
