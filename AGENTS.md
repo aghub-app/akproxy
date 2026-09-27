@@ -32,6 +32,8 @@ Before any commit, review staged, unstaged, and untracked changes against `docs/
 - `wails3 task build` — build the renderer and desktop app (macOS `.app` included).
 - `wails3 task package` — build and package the macOS DMG.
 - `go test ./internal/desktop/` — run config and listen-button tests.
+- `go test -tags e2e ./e2e/` — run the CLI end to end; set `AKPROXY_E2E_APP` to the built desktop executable to include the startup install flow (on Windows also `AKPROXY_E2E=1`, which edits the real user PATH).
+- `pnpm --dir frontend test` — run renderer unit tests.
 - `pnpm --dir frontend run build` — typecheck and build the renderer.
 - `pnpm --dir landing run dev` / `pnpm --dir landing run build` — preview or build the Astro landing site into `landing/dist/`.
 
