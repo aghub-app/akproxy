@@ -144,7 +144,7 @@ func removeInstalledCLI(home string) error {
 	if dest != cliCommandPath(home) {
 		return fmt.Errorf("无法移除 akproxy 命令")
 	}
-	if err := os.Remove(dest); err != nil && !os.IsNotExist(err) {
+	if err := removeCLIBinary(dest); err != nil {
 		return fmt.Errorf("无法移除 akproxy 命令: %w", err)
 	}
 	if err := os.Remove(marker); err != nil && !os.IsNotExist(err) {

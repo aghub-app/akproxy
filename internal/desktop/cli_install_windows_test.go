@@ -107,6 +107,8 @@ func freshShellVersion(t *testing.T) (string, error) {
 		"PATH=" + strings.Join(dirs, ";"),
 		"PATHEXT=.COM;.EXE;.BAT;.CMD",
 		"SystemRoot=" + os.Getenv("SystemRoot"),
+		"APPDATA=" + os.Getenv("APPDATA"),
+		"USERPROFILE=" + os.Getenv("USERPROFILE"),
 	}
 	out, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(out)), err
@@ -191,5 +193,13 @@ func TestWindowsCLIUpgradeWhileOldCommandRuns(t *testing.T) {
 	}
 	if got := installedCLIVersion(dest); got != "2.0.0" {
 		t.Fatalf("installed version = %q", got)
+	}
+
+	// Turning the switch off while the old copy still runs removes the command.
+	if err := syncCLIInstall(home, "", false, "2.0.0"); err != nil {
+		t.Fatalf("remove while old command runs: %v", err)
+	}
+	if _, err := os.Stat(dest); !os.IsNotExist(err) {
+		t.Fatalf("command should be removed, err=%v", err)
 	}
 }

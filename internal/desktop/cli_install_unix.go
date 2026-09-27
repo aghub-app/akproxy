@@ -21,6 +21,13 @@ func installCLIBinary(bundled, dest string) error {
 	return nil
 }
 
+func removeCLIBinary(dest string) error {
+	if err := os.Remove(dest); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
+}
+
 func ensureUserPath(home string) error {
 	return ensureShellPath(home)
 }

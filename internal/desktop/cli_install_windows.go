@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -16,6 +17,9 @@ import (
 func installCLIBinary(bundled, dest string) error {
 	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
 		return fmt.Errorf("无法创建命令目录: %w", err)
+	}
+	if err := moveAsideCLI(dest); err != nil {
+		return fmt.Errorf("无法替换已有的 akproxy 命令: %w", err)
 	}
 	in, err := os.Open(bundled)
 	if err != nil {
@@ -34,6 +38,31 @@ func installCLIBinary(bundled, dest string) error {
 	if closeErr != nil {
 		return fmt.Errorf("无法安装 akproxy 命令: %w", closeErr)
 	}
+	return nil
+}
+
+// Windows cannot overwrite or delete an executable that a terminal is still
+// running, but it can rename it. The old copy is removed on a later install.
+func moveAsideCLI(dest string) error {
+	clearOldCLI(dest)
+	if _, err := os.Lstat(dest); os.IsNotExist(err) {
+		return nil
+	}
+	return os.Rename(dest, fmt.Sprintf("%s.old-%d", dest, time.Now().UnixNano()))
+}
+
+func clearOldCLI(dest string) {
+	old, _ := filepath.Glob(dest + ".old-*")
+	for _, path := range old {
+		_ = os.Remove(path)
+	}
+}
+
+func removeCLIBinary(dest string) error {
+	if err := moveAsideCLI(dest); err != nil {
+		return err
+	}
+	clearOldCLI(dest)
 	return nil
 }
 
