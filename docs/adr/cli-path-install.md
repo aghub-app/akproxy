@@ -32,3 +32,5 @@
 ## 验证
 
 - 临时主目录上的安装、重复安装、覆盖、版本一致时保留、版本不一致和开发版本时替换、关闭后移除，以及没有标记时保留外来文件，由 `go test ./internal/desktop/` 覆盖。
+- Windows 上替换正在运行的旧命令、注册表 PATH 只写一次，由 `AKPROXY_E2E=1 go test ./internal/desktop/` 在 Windows 上覆盖。
+- 端到端：`go test -tags e2e ./e2e/` 在临时主目录里运行真实的命令行程序。设置 `AKPROXY_E2E_APP` 为构建好的桌面程序时，还会启动应用，确认新开的终端能运行 `akproxy` 并启动 agent，关掉开关后命令和 PATH 项被移除。`.github/workflows/ci.yml` 在 macOS、Linux、Windows 上都跑这一套。

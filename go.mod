@@ -5,6 +5,7 @@ go 1.26.7
 require (
 	charm.land/bubbletea/v2 v2.0.10
 	charm.land/gum/v2 v2.0.2
+	github.com/creack/pty v1.1.24
 	github.com/router-for-me/CLIProxyAPI/v7 v7.3.12
 	github.com/spf13/cobra v1.10.1
 	github.com/wailsapp/wails/v3 v3.0.0-beta.24
