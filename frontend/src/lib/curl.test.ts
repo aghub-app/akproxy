@@ -37,7 +37,8 @@ test("openai env example is a dotenv file for the python client", () => {
   assert.equal(openaiEnv("http://127.0.0.1:8317/", key).includes("export "), false);
 });
 
-test("copied commands preserve credentials and JSON through POSIX shell quoting", () => {
+// Windows argv passing mangles the embedded newline before sh sees it.
+test("copied commands preserve credentials and JSON through POSIX shell quoting", { skip: process.platform === "win32" }, () => {
   const key = "secret'$(echo injected)\"`echo injected`";
   const model = "model'\"\\\n$(echo injected)";
   const commands = curlCommands("http://127.0.0.1:8317/", key, model);

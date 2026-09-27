@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -41,12 +42,12 @@ func launchApp(t *testing.T, sb *sandbox) func() {
 	return stop
 }
 
-func eventually(t *testing.T, what string, ok func() bool) {
+func eventually(t *testing.T, what string, ok func() bool, explain func() string) {
 	t.Helper()
 	deadline := time.Now().Add(90 * time.Second)
 	for !ok() {
 		if time.Now().After(deadline) {
-			t.Fatalf("timed out waiting for %s", what)
+			t.Fatalf("timed out waiting for %s\n%s", what, explain())
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
@@ -68,10 +69,12 @@ func TestAppInstallsCommandForNewTerminals(t *testing.T) {
 	}
 
 	stop := launchApp(t, sb)
+	var last string
 	eventually(t, "akproxy command installed", func() bool {
 		got, err := freshShell(t, sb, nil, "akproxy --version")
+		last = fmt.Sprintf("new terminal `akproxy --version` = %q %v", got, err)
 		return err == nil && got == want
-	})
+	}, func() string { return last + "\n" + describeInstall(t, sb) })
 
 	// Claude usually lives in ~/.local/bin too; any agent on PATH works.
 	sb.installAgent(t, filepath.Join(sb.home, ".local", "bin"), "claude")
@@ -99,7 +102,7 @@ func TestAppInstallsCommandForNewTerminals(t *testing.T) {
 	eventually(t, "akproxy command removed", func() bool {
 		_, err := os.Stat(commandPath(sb))
 		return os.IsNotExist(err) && !userPathHasCommandDir(t, sb)
-	})
+	}, func() string { return describeInstall(t, sb) })
 	stop()
 	if _, err := os.Stat(filepath.Join(sb.home, ".local", "bin", exe("claude"))); err != nil {
 		t.Fatalf("removal must leave other commands alone: %v", err)
@@ -107,6 +110,23 @@ func TestAppInstallsCommandForNewTerminals(t *testing.T) {
 	if got, err := freshShell(t, sb, nil, "akproxy --version"); err == nil {
 		t.Fatalf("akproxy still runs in a new terminal: %s", got)
 	}
+}
+
+// describeInstall reports what the app left behind, for timeout messages.
+func describeInstall(t *testing.T, sb *sandbox) string {
+	var b strings.Builder
+	entries, err := os.ReadDir(filepath.Join(sb.home, ".local", "bin"))
+	fmt.Fprintf(&b, "~/.local/bin: err=%v", err)
+	for _, entry := range entries {
+		fmt.Fprintf(&b, " %s", entry.Name())
+	}
+	fmt.Fprintf(&b, "\nuser PATH has ~/.local/bin: %v", userPathHasCommandDir(t, sb))
+	root, err := os.ReadDir(sb.paths.Root)
+	fmt.Fprintf(&b, "\napp data %s: err=%v", sb.paths.Root, err)
+	for _, entry := range root {
+		fmt.Fprintf(&b, " %s", entry.Name())
+	}
+	return b.String()
 }
 
 func trimLines(out []byte) string {
