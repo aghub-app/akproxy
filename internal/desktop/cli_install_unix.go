@@ -2,23 +2,10 @@
 
 package desktop
 
-import (
-	"fmt"
-	"os"
-	"path/filepath"
-)
+import "os"
 
-func installCLIBinary(bundled, dest string) error {
-	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
-		return fmt.Errorf("无法创建命令目录: %w", err)
-	}
-	if err := os.Remove(dest); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("无法替换已有的 akproxy 命令: %w", err)
-	}
-	if err := os.Symlink(bundled, dest); err != nil {
-		return fmt.Errorf("无法安装 akproxy 命令: %w", err)
-	}
-	return nil
+func replaceCLIBinary(tmp, dest string) error {
+	return os.Rename(tmp, dest)
 }
 
 func removeCLIBinary(dest string) error {

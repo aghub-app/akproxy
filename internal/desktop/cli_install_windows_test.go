@@ -4,6 +4,7 @@ package desktop
 
 import (
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -59,6 +60,10 @@ func buildCLI(t *testing.T, version string) string {
 		t.Fatalf("build cli: %v\n%s", err, body)
 	}
 	return out
+}
+
+func fileCLI(path string) CLISource {
+	return func() (io.ReadCloser, error) { return os.Open(path) }
 }
 
 func userPathEntries(t *testing.T) []string {
@@ -120,7 +125,7 @@ func TestWindowsCLIInstallE2E(t *testing.T) {
 	dir := filepath.Join(home, ".local", "bin")
 	bundled := buildCLI(t, "1.2.3")
 
-	if err := syncCLIInstall(home, bundled, true, "1.2.3"); err != nil {
+	if err := syncCLIInstall(home, fileCLI(bundled), true, "1.2.3"); err != nil {
 		t.Fatalf("install: %v", err)
 	}
 	if got := installedCLIVersion(cliCommandPath(home)); got != "1.2.3" {
@@ -134,7 +139,7 @@ func TestWindowsCLIInstallE2E(t *testing.T) {
 	}
 
 	// Relaunching the same version keeps the command and does not repeat PATH.
-	if err := syncCLIInstall(home, bundled, true, "1.2.3"); err != nil {
+	if err := syncCLIInstall(home, fileCLI(bundled), true, "1.2.3"); err != nil {
 		t.Fatalf("second install: %v", err)
 	}
 	if n := countDir(userPathEntries(t), dir); n != 1 {
@@ -143,14 +148,14 @@ func TestWindowsCLIInstallE2E(t *testing.T) {
 
 	// An app update replaces the older command.
 	next := buildCLI(t, "1.2.4")
-	if err := syncCLIInstall(home, next, true, "1.2.4"); err != nil {
+	if err := syncCLIInstall(home, fileCLI(next), true, "1.2.4"); err != nil {
 		t.Fatalf("upgrade: %v", err)
 	}
 	if got, err := freshShellVersion(t); err != nil || got != "1.2.4" {
 		t.Fatalf("new terminal after upgrade = %q %v", got, err)
 	}
 
-	if err := syncCLIInstall(home, "", false, "1.2.4"); err != nil {
+	if err := syncCLIInstall(home, nil, false, "1.2.4"); err != nil {
 		t.Fatalf("remove: %v", err)
 	}
 	if _, err := os.Stat(cliCommandPath(home)); !os.IsNotExist(err) {
@@ -188,7 +193,7 @@ func TestWindowsCLIUpgradeWhileOldCommandRuns(t *testing.T) {
 	})
 
 	bundled := buildCLI(t, "2.0.0")
-	if err := syncCLIInstall(home, bundled, true, "2.0.0"); err != nil {
+	if err := syncCLIInstall(home, fileCLI(bundled), true, "2.0.0"); err != nil {
 		t.Fatalf("upgrade while old command runs: %v", err)
 	}
 	if got := installedCLIVersion(dest); got != "2.0.0" {
@@ -196,7 +201,7 @@ func TestWindowsCLIUpgradeWhileOldCommandRuns(t *testing.T) {
 	}
 
 	// Turning the switch off while the old copy still runs removes the command.
-	if err := syncCLIInstall(home, "", false, "2.0.0"); err != nil {
+	if err := syncCLIInstall(home, nil, false, "2.0.0"); err != nil {
 		t.Fatalf("remove while old command runs: %v", err)
 	}
 	if _, err := os.Stat(dest); !os.IsNotExist(err) {

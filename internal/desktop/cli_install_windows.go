@@ -4,7 +4,6 @@ package desktop
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -14,31 +13,11 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func installCLIBinary(bundled, dest string) error {
-	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
-		return fmt.Errorf("无法创建命令目录: %w", err)
-	}
+func replaceCLIBinary(tmp, dest string) error {
 	if err := moveAsideCLI(dest); err != nil {
-		return fmt.Errorf("无法替换已有的 akproxy 命令: %w", err)
+		return err
 	}
-	in, err := os.Open(bundled)
-	if err != nil {
-		return fmt.Errorf("找不到随附的命令行程序: %w", err)
-	}
-	defer in.Close()
-	out, err := os.OpenFile(dest, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
-	if err != nil {
-		return fmt.Errorf("无法替换已有的 akproxy 命令: %w", err)
-	}
-	_, copyErr := io.Copy(out, in)
-	closeErr := out.Close()
-	if copyErr != nil {
-		return fmt.Errorf("无法安装 akproxy 命令: %w", copyErr)
-	}
-	if closeErr != nil {
-		return fmt.Errorf("无法安装 akproxy 命令: %w", closeErr)
-	}
-	return nil
+	return os.Rename(tmp, dest)
 }
 
 // Windows cannot overwrite or delete an executable that a terminal is still

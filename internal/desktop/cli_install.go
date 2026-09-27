@@ -1,8 +1,12 @@
 package desktop
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -47,29 +51,25 @@ func RememberCLIError(err error) {
 	cliInstall.error = err.Error()
 }
 
-// ApplyCLIInstall puts the bundled CLI on the user PATH, or removes it.
-// version is the running app version. "dev" always replaces the installed command.
-// Any other version replaces it only when `akproxy --version` does not match.
-func ApplyCLIInstall(enabled bool, version string) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("找不到用户目录: %w", err)
-	}
-	bundled := ""
-	if enabled {
-		bundled, err = BundledCLI()
+// CLISource opens the command-line program that gets installed.
+type CLISource func() (io.ReadCloser, error)
+
+// GzipCLI reads a gzip-compressed CLI embedded in the desktop program.
+func GzipCLI(body []byte) CLISource {
+	return func() (io.ReadCloser, error) {
+		reader, err := gzip.NewReader(bytes.NewReader(body))
 		if err != nil {
-			return err
+			return nil, fmt.Errorf("随附的命令行程序已损坏: %w", err)
 		}
+		return reader, nil
 	}
-	return syncCLIInstall(home, bundled, enabled, version)
 }
 
-// BundledCLI is the CLI shipped beside the desktop executable.
-func BundledCLI() (string, error) {
+// SiblingCLI reads the CLI that development builds place beside the desktop executable.
+func SiblingCLI() (io.ReadCloser, error) {
 	exe, err := os.Executable()
 	if err != nil {
-		return "", fmt.Errorf("找不到随附的命令行程序: %w", err)
+		return nil, fmt.Errorf("找不到随附的命令行程序: %w", err)
 	}
 	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
 		exe = resolved
@@ -78,12 +78,22 @@ func BundledCLI() (string, error) {
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
-	candidate := filepath.Join(filepath.Dir(exe), name)
-	info, err := os.Stat(candidate)
-	if err != nil || info.IsDir() {
-		return "", fmt.Errorf("找不到随附的命令行程序")
+	file, err := os.Open(filepath.Join(filepath.Dir(exe), name))
+	if err != nil {
+		return nil, fmt.Errorf("找不到随附的命令行程序")
 	}
-	return candidate, nil
+	return file, nil
+}
+
+// ApplyCLIInstall puts the bundled CLI on the user PATH, or removes it.
+// version is the running app version. "dev" always replaces the installed command.
+// Any other version replaces it only when `akproxy --version` does not match.
+func ApplyCLIInstall(enabled bool, version string, source CLISource) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("找不到用户目录: %w", err)
+	}
+	return syncCLIInstall(home, source, enabled, version)
 }
 
 func cliCommandPath(home string) string {
@@ -108,13 +118,13 @@ func installedCLIVersion(path string) string {
 	return strings.TrimSpace(string(out))
 }
 
-func syncCLIInstall(home, bundled string, enabled bool, version string) error {
+func syncCLIInstall(home string, source CLISource, enabled bool, version string) error {
 	if enabled {
 		dest := cliCommandPath(home)
 		if version != "dev" && installedCLIVersion(dest) == version {
 			return ensureUserPath(home)
 		}
-		if err := installCLIBinary(bundled, dest); err != nil {
+		if err := installCLIBinary(source, dest); err != nil {
 			return err
 		}
 		if err := os.WriteFile(cliMarkerPath(home), []byte(dest+"\n"), 0o644); err != nil {
@@ -129,6 +139,36 @@ func syncCLIInstall(home, bundled string, enabled bool, version string) error {
 		return err
 	}
 	return removeUserPath(home)
+}
+
+// installCLIBinary writes the CLI beside dest, then swaps it into place, so a
+// failed write never leaves a half-written command.
+func installCLIBinary(source CLISource, dest string) error {
+	dir := filepath.Dir(dest)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("无法创建命令目录: %w", err)
+	}
+	in, err := source()
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.CreateTemp(dir, ".akproxy-new-*")
+	if err != nil {
+		return fmt.Errorf("无法安装 akproxy 命令: %w", err)
+	}
+	tmp := out.Name()
+	_, copyErr := io.Copy(out, in)
+	closeErr := out.Close()
+	if err := errors.Join(copyErr, closeErr, os.Chmod(tmp, 0o755)); err != nil {
+		os.Remove(tmp)
+		return fmt.Errorf("无法安装 akproxy 命令: %w", err)
+	}
+	if err := replaceCLIBinary(tmp, dest); err != nil {
+		os.Remove(tmp)
+		return fmt.Errorf("无法替换已有的 akproxy 命令: %w", err)
+	}
+	return nil
 }
 
 func removeInstalledCLI(home string) error {

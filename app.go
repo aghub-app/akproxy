@@ -42,7 +42,7 @@ func (a *App) syncCLIInstall() {
 		return
 	}
 	enabled := scheduler.Status().Prefs.CLIEnabled
-	err := desktop.ApplyCLIInstall(enabled, version)
+	err := desktop.ApplyCLIInstall(enabled, version, bundledCLI)
 	desktop.RememberCLIError(err)
 }
 
