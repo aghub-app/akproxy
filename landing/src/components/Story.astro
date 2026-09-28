@@ -1,0 +1,38 @@
+---
+import { copy, type Locale } from "../i18n/copy";
+
+const t = copy[Astro.currentLocale as Locale];
+---
+    <section class="story">
+      <div class="wrap">
+        <h2 class="story-title"><span>{t.routeA}</span> <span>{t.routeB}</span></h2>
+      </div>
+      <div class="threads" data-threads>
+        <div class="threads-media">
+          <img src="/public/threads.webp" width="2400" height="885" decoding="async" alt={t.threadsAlt}>
+          <canvas aria-hidden="true"></canvas>
+        </div>
+        <ul class="threads-names" aria-label={t.sign}>
+          <li style="--y: 15.0%">Codex</li>
+          <li style="--y: 26.3%">Grok</li>
+          <li style="--y: 38.6%">Claude</li>
+          <li style="--y: 51.9%">Gemini</li>
+          <li style="--y: 66.5%">Kimi</li>
+          <li style="--y: 79.5%">Devin</li>
+        </ul>
+        <div class="outlet">
+          <button class="url-copy" type="button" data-copy="http://127.0.0.1:8317/v1">
+            <code>http://127.0.0.1:8317/v1</code>
+            <span class="hint" data-copy-hint data-copied={t.copied}>{t.copy}</span>
+          </button>
+        </div>
+      </div>
+      <div class="wrap">
+        <p class="story-note">{t.signNote}</p>
+        <div class="how">
+          <h2 class="steps"><span><sup>1</sup><span>{t.flow1}</span></span> <span><sup>2</sup><span>{t.flow2}</span></span> <span><sup>3</sup><span>{t.flow3}</span></span></h2>
+          <p class="product-note">{t.productNote}</p>
+          <img class="window" src={t.shotConnect} width="2240" height="1244" loading="lazy" decoding="async" alt={t.shotConnectAlt}>
+        </div>
+      </div>
+    </section>

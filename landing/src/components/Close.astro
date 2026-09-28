@@ -1,0 +1,22 @@
+---
+import { copy, type Locale } from "../i18n/copy";
+
+const t = copy[Astro.currentLocale as Locale];
+---
+  <footer class="close">
+    <div class="wrap">
+      <p class="poster"><span><span>{t.closeA}</span> <span class="accent">{t.closeB}</span></span></p>
+      <div class="cta">
+        <a class="button" href="https://github.com/aghub-app/akproxy/releases/latest" data-download data-label={t.downloadFor}>{t.download}</a>
+        <p class="aside">{t.closeNote}</p>
+      </div>
+      <div class="foot">
+        <p class="credit"><span>{t.credit}</span> <a href="https://github.com/akarachen">@akarachen</a></p>
+        <nav aria-label={t.footNav}>
+          <a href="https://github.com/aghub-app/akproxy/releases">{t.footReleases}</a>
+          <a href="https://github.com/aghub-app/akproxy/issues">{t.footIssues}</a>
+          <a href="https://github.com/aghub-app/akproxy">{t.sourceLine}</a>
+        </nav>
+      </div>
+    </div>
+  </footer>

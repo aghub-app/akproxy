@@ -1,0 +1,8 @@
+# Only the Astro landing site is deployed to Netlify.
+[build]
+  base = "landing"
+  command = "pnpm run build"
+  publish = "landing/dist"
+
+[build.environment]
+  NODE_VERSION = "24"

@@ -33,6 +33,7 @@ Before any commit, review staged, unstaged, and untracked changes against `docs/
 - `wails3 task package` — build and package the macOS DMG.
 - `go test ./internal/desktop/` — run config and listen-button tests.
 - `pnpm --dir frontend run build` — typecheck and build the renderer.
+- `pnpm --dir landing run dev` / `pnpm --dir landing run build` — preview or build the Astro landing site into `landing/dist/`.
 
 Wails Go module and CLI are pinned to `v3.0.0-beta.24`; the frontend runtime is `3.0.0-beta.24`. Install the CLI with `go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.24`. On this Mac use Apple's compiler (`CC=/usr/bin/clang`, `CXX=/usr/bin/clang++`) so Go can find SDK headers.
 

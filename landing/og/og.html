@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Open Graph card. Serve landing/ over HTTP, open og/og.html?lang=en|zh at 1200x630, screenshot to static/public/og-<lang>.jpg. -->
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..650&family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..700&family=IBM+Plex+Mono:wght@400;500&display=block" rel="stylesheet">
+<style>
+  :root { --paper:#f1f0f3; --ink:#16141c; --filament:#8f3ced; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; background: var(--ink); overflow: hidden; }
+  body { position: relative; color: var(--paper); font-family: "Familjen Grotesk", "PingFang SC", sans-serif; -webkit-font-smoothing: antialiased; }
+  .threads { position: absolute; left: -160px; right: -60px; bottom: -150px; height: 400px; background: url("../static/public/threads.webp") 0% 60% / cover no-repeat; opacity: 0.95; }
+  .fade { position: absolute; inset: 0; background: linear-gradient(180deg, var(--ink) 0 52%, rgb(22 20 28 / 0.15) 78%, rgb(22 20 28 / 0) 100%); }
+  .top { position: absolute; left: 72px; right: 72px; top: 56px; display: flex; justify-content: space-between; align-items: baseline; font-weight: 650; font-size: 30px; letter-spacing: -0.03em; }
+  .top span { font-family: "IBM Plex Mono", monospace; font-weight: 400; font-size: 22px; letter-spacing: -0.02em; color: rgb(241 240 243 / 0.62); }
+  h1 { position: absolute; left: 68px; top: 110px; width: fit-content; font-family: "Fraunces", "Songti SC", serif; font-weight: 560; font-size: 150px; line-height: 0.86; letter-spacing: -0.05em; font-variation-settings: "opsz" 144, "SOFT" 30, "wght" 560; }
+  h1 span { display: block; white-space: nowrap; }
+  .accent { font-style: italic; text-align: right; margin-right: -0.1em; padding-inline: 0.1em; background: url("../static/public/ink.webp") 30% 50% / 220% auto; -webkit-background-clip: text; background-clip: text; color: transparent; font-variation-settings: "opsz" 144, "SOFT" 20, "WONK" 0, "wght" 560; }
+  html[lang="zh"] h1 { top: 118px; font-size: 118px; line-height: 1.06; letter-spacing: -0.02em; }
+  html[lang="zh"] .accent { font-style: normal; text-align: left; }
+</style>
+</head>
+<body>
+  <div class="threads"></div>
+  <div class="fade"></div>
+  <div class="top">akproxy <span>akproxy.akr.moe</span></div>
+  <h1><span id="a"></span><span class="accent" id="b"></span></h1>
+  <script>
+    const lang = new URLSearchParams(location.search).get("lang") || "en";
+    const t = { en: ["Stop paying", "twice."], zh: ["别为同一件事", "付两次。"] }[lang];
+    document.documentElement.lang = lang;
+    document.getElementById("a").textContent = t[0];
+    document.getElementById("b").textContent = t[1];
+  </script>
+</body>
+</html>

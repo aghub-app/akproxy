@@ -1,0 +1,18 @@
+---
+import { copy, localePath, type Locale } from "../i18n/copy";
+
+const locale = Astro.currentLocale as Locale;
+const t = copy[locale];
+const other: Locale = locale === "zh" ? "en" : "zh";
+---
+  <a class="skip" href="#content">{t.skip}</a>
+  <header class="mast">
+    <div class="wrap mast-inner">
+      <a class="word" href="#content">akproxy</a>
+      <nav aria-label={t.mastNav}>
+        <a class="hide-small" href="https://github.com/aghub-app/akproxy">GitHub</a>
+        <a class="lang" href={localePath(other)} hreflang={copy[other].htmlLang} lang={copy[other].htmlLang} aria-label={t.langLabel}>{t.langButton}</a>
+        <a href="https://github.com/aghub-app/akproxy/releases/latest" data-download-href>{t.download}</a>
+      </nav>
+    </div>
+  </header>
