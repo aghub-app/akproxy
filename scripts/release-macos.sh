@@ -51,11 +51,18 @@ other_arch=amd64
 if [[ "$(go env GOARCH)" == amd64 ]]; then other_arch=arm64; fi
 GOARCH="$other_arch" CGO_ENABLED=1 CGO_CFLAGS=-mmacosx-version-min=12.0 CGO_LDFLAGS=-mmacosx-version-min=12.0 \
   go build -tags production -ldflags "-s -w -X main.version=$VERSION" -o build/bin/akproxy-other .
+GOARCH="$other_arch" CGO_ENABLED=1 CGO_CFLAGS=-mmacosx-version-min=12.0 CGO_LDFLAGS=-mmacosx-version-min=12.0 \
+  go build -ldflags "-X akproxy/internal/cli.Version=$VERSION" -o build/bin/akproxy-cli-other ./cmd/akproxy
 lipo -create build/bin/akproxy build/bin/akproxy-other -output build/bin/akproxy-universal
+lipo -create build/bin/akproxy-cli build/bin/akproxy-cli-other -output build/bin/akproxy-cli-universal
 cp build/bin/akproxy-universal build/bin/akproxy
+cp build/bin/akproxy-cli-universal build/bin/akproxy-cli
 bash scripts/package-app.sh "$VERSION"
 
 app=build/bin/akproxy.app
+# Notarization rejects nested executables that keep the ad-hoc signature, so
+# sign the bundled CLI before sealing the app.
+codesign --force --options runtime --timestamp --keychain "$keychain" --sign "$AKPROXY_SIGNING_IDENTITY" "$app/Contents/MacOS/akproxy-cli"
 codesign --force --options runtime --timestamp --keychain "$keychain" --sign "$AKPROXY_SIGNING_IDENTITY" "$app"
 codesign --verify --strict "$app"
 ditto -c -k --keepParent "$app" build/bin/akproxy-notary.zip
