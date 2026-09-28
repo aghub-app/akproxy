@@ -10,7 +10,7 @@
 
 用 Wails 做窗口。在同一个进程里嵌入 `github.com/router-for-me/CLIProxyAPI/v7` 的公开 SDK，由这个进程启动、热重载和停止 HTTP 服务，并调用 SDK 的浏览器登录。
 
-登录只注册这份产品要用的认证器：Codex、xAI（Grok）、Claude、Antigravity（Gemini 页）、Kimi 的 kimi.com 与 kimi.ai、Devin。不注册 Meta。
+登录注册这份产品要用的认证器：Codex、xAI（Grok）、Claude、Antigravity（Gemini 页）、Kimi 的 kimi.com 与 kimi.ai、Devin。Meta 的设备码需要展示在桌面弹窗，按 `meta-device-oauth.md` 在应用内适配协议，仍由 SDK 管理账号与代理。
 
 ## 备选
 

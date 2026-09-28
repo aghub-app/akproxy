@@ -4,6 +4,7 @@ import DevinColor from "@lobehub/icons/es/Devin/components/Color";
 import GeminiColor from "@lobehub/icons/es/Gemini/components/Color";
 import GrokMono from "@lobehub/icons/es/Grok/components/Mono";
 import KimiMono from "@lobehub/icons/es/Kimi/components/Mono";
+import MetaAIColor from "@lobehub/icons/es/MetaAI/components/Color";
 import type { FC } from "react";
 
 export const providerPages: { to: string; label: string; icon: FC<{ size?: number }> }[] = [
@@ -13,4 +14,5 @@ export const providerPages: { to: string; label: string; icon: FC<{ size?: numbe
   { to: "/gemini", label: "Gemini", icon: GeminiColor },
   { to: "/kimi", label: "Kimi", icon: KimiMono },
   { to: "/devin", label: "Devin", icon: DevinColor },
+  { to: "/meta", label: "Meta", icon: MetaAIColor },
 ];

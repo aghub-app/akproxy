@@ -60,7 +60,7 @@ func needsReauthorization(record *coreauth.Auth) bool {
 
 func reauthProvider(provider string) (string, bool) {
 	switch provider {
-	case "codex", "claude", "kimi", "kimi-ai", "devin":
+	case "codex", "claude", "kimi", "kimi-ai", "devin", "meta":
 		return provider, true
 	case "xai":
 		return "xai", true

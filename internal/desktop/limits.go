@@ -42,7 +42,7 @@ type UsageExtra struct {
 
 func supportsSessionLimit(provider string) bool {
 	switch provider {
-	case "codex", "claude", "xai", "devin", "antigravity", "kimi", "kimi-ai", "kimi.ai":
+	case "codex", "claude", "xai", "devin", "antigravity", "kimi", "kimi-ai", "kimi.ai", "meta":
 		return true
 	default:
 		return false
@@ -69,6 +69,8 @@ func sessionLimits(ctx context.Context, provider string, metadata map[string]any
 		return fetchAntigravityLimits(ctx, metadata)
 	case "kimi", "kimi-ai", "kimi.ai":
 		return fetchKimiLimits(ctx, provider, metadata)
+	case "meta":
+		return fetchMetaLimits(ctx, metadata)
 	default:
 		return AccountUsage{}, fmt.Errorf("这个平台没有额度接口")
 	}
