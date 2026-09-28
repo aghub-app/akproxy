@@ -5,6 +5,7 @@ export type {
     Account,
     AccountUsage,
     AppPrefs,
+    CLIStatus,
     HomeSnapshot,
     KeyDraft,
     ModelDraft,

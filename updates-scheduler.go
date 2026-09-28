@@ -215,6 +215,23 @@ func (s *updateScheduler) Status() UpdatePrefsStatus {
 	}
 }
 
+// SetCLIEnabled saves the command-line switch and installs or removes it.
+func (s *updateScheduler) SetCLIEnabled(enabled bool) (desktop.CLIStatus, error) {
+	s.mu.Lock()
+	prefs := s.prefs
+	prefs.CLIEnabled = enabled
+	if err := desktop.WriteAppPrefs(prefsRoot(), prefs); err != nil {
+		s.mu.Unlock()
+		return desktop.CLIStatus{}, err
+	}
+	s.prefs = desktop.NormalizeAppPrefs(prefs)
+	s.mu.Unlock()
+	err := desktop.ApplyCLIInstall(enabled, version)
+	desktop.RememberCLIError(err)
+	status := desktop.CurrentCLIStatus(enabled)
+	return status, err
+}
+
 // Save applies the 关于 page's prefs. Turning auto-check on fires a check
 // immediately; other changes rearm the timer from now.
 func (s *updateScheduler) Save(in desktop.AppPrefs) (UpdatePrefsStatus, error) {

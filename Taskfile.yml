@@ -29,6 +29,7 @@ tasks:
       CGO_LDFLAGS: '{{if eq OS "darwin"}}-mmacosx-version-min=12.0{{else}}{{.CGO_LDFLAGS}}{{end}}'
     cmds:
       - go build -tags '{{if eq .DEV "true"}}dev{{else}}production{{end}}' -ldflags '{{if ne .DEV "true"}}-s -w {{end}}-X main.version={{.VERSION}}{{if eq .VERSION "dev"}} -X main.buildRevision={{.GIT_REVISION}}{{end}} {{if eq OS "windows"}}-H windowsgui{{end}}' -o '{{.BIN}}' .
+      - go build -ldflags '-X akproxy/internal/cli.Version={{.VERSION}}' -o 'build/bin/akproxy-cli{{if eq OS "windows"}}.exe{{end}}' ./cmd/akproxy
       - cmd: bash scripts/package-app.sh '{{.VERSION}}'
         platforms: [darwin]
 

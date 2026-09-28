@@ -38,13 +38,13 @@ func ReadService(cfg *config.Config) ServiceSettings {
 		port = defaultPort
 	}
 	return ServiceSettings{
-		ListenMode:            mode,
-		CustomHost:            custom,
-		Port:                  port,
-		ClientAPIKeys:         append([]string(nil), cfg.APIKeys...),
-		ProxyURL:              cfg.ProxyURL,
-		RoutingStrategy:       strategy,
-		Debug:                 cfg.Debug,
+		ListenMode:      mode,
+		CustomHost:      custom,
+		Port:            port,
+		ClientAPIKeys:   append([]string(nil), cfg.APIKeys...),
+		ProxyURL:        cfg.ProxyURL,
+		RoutingStrategy: strategy,
+		Debug:           cfg.Debug,
 	}
 }
 
@@ -203,6 +203,19 @@ func ControlAction(running bool, bound, saved Listen) string {
 		return "restart"
 	}
 	return "stop"
+}
+
+// ClientBaseURL is the proxy origin stored in the app config.
+func ClientBaseURL(configPath string) (string, error) {
+	cfg, err := loadConfig(configPath)
+	if err != nil {
+		return "", err
+	}
+	address, _ := ClientURL(SavedListen(cfg))
+	if address == "" {
+		return "", fmt.Errorf("服务地址无效")
+	}
+	return address, nil
 }
 
 // ClientURL is the address a local client should call.

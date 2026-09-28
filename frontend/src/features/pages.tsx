@@ -29,6 +29,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { toastManager } from "@/components/ui/toast";
 import { AccountsPanel } from "@/features/accounts";
 import { AboutTab } from "@/features/about";
+import { CLISettings } from "@/features/cli-settings";
 import { api, errorText, type AppPrefs, type ServiceSettings } from "@/lib/desktop";
 import { usePresentation } from "@/presentation";
 
@@ -331,7 +332,7 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
   const writes = useRef(Promise.resolve());
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const tab = tabParam === "clients" || tabParam === "advanced" || tabParam === "usage" || tabParam === "appearance" || tabParam === "about" ? tabParam : "listen";
+  const tab = tabParam === "clients" || tabParam === "advanced" || tabParam === "usage" || tabParam === "appearance" || tabParam === "about" || tabParam === "cli" ? tabParam : "listen";
 
   function write(snapshot: ServiceSettings) {
     if (!canPersistService(snapshot)) {
@@ -395,6 +396,7 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
           <TabsTab value="advanced">{t("高级")}</TabsTab>
           <TabsTab value="usage">{t("用量")}</TabsTab>
           <TabsTab value="appearance">{t("外观")}</TabsTab>
+          <TabsTab value="cli">{t("命令行")}</TabsTab>
           <TabsTab value="about">{t("关于")}</TabsTab>
         </TabsList>
         <TabsPanel value="listen" className="flex flex-col gap-5">
@@ -501,6 +503,9 @@ const ServiceForm: FC<{ initial: ServiceSettings }> = ({ initial }) => {
         </TabsPanel>
         <TabsPanel value="appearance">
           <PresentationSettings />
+        </TabsPanel>
+        <TabsPanel value="cli">
+          <CLISettings />
         </TabsPanel>
         <TabsPanel value="about">
           <AboutTabContainer />

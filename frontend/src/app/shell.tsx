@@ -26,6 +26,7 @@ const mainPages = [
 ];
 
 const settingsPage = { to: "/settings", label: "设置", icon: SettingsIcon };
+let cliInstallToastShown = false;
 
 function SideLink({ item }: { item: typeof settingsPage }) {
   const Icon = item.icon;
@@ -75,6 +76,25 @@ export const AppLayout: FC = () => {
     () => Events.On("app:about", () => navigate("/settings?tab=about")),
     [navigate],
   );
+  useEffect(() => {
+    if (cliInstallToastShown) {
+      return;
+    }
+    cliInstallToastShown = true;
+    void api.cliStatus().then((status) => {
+      if (!status.error) {
+        return;
+      }
+      toastManager.add({
+        title: errorText(status.error),
+        type: "error",
+        actionProps: {
+          children: t("打开设置"),
+          onClick: () => navigate("/settings?tab=cli"),
+        },
+      });
+    }).catch(() => undefined);
+  }, [navigate, t]);
   const status = useQuery({
     queryKey: ["status"],
     queryFn: api.status,

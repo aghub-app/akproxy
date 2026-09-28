@@ -79,11 +79,35 @@ func (r *Runtime) HomeModels() ([]string, error) {
 	if len(home.ClientKeys) == 0 || home.ClientKeys[0] == "" {
 		return nil, fmt.Errorf("没有客户端密钥")
 	}
-	req, err := http.NewRequest(http.MethodGet, home.Status.Address+"/v1/models", nil)
+	return FetchModels(home.Status.Address, home.ClientKeys[0])
+}
+
+// ClientCredential is the saved proxy origin and the first client key.
+func ClientCredential(configPath string) (string, string, error) {
+	cfg, err := loadConfig(configPath)
+	if err != nil {
+		return "", "", err
+	}
+	address, _ := ClientURL(SavedListen(cfg))
+	if address == "" {
+		return "", "", fmt.Errorf("服务地址无效")
+	}
+	for _, key := range cfg.APIKeys {
+		key = strings.TrimSpace(key)
+		if key != "" {
+			return address, key, nil
+		}
+	}
+	return "", "", fmt.Errorf("没有客户端密钥")
+}
+
+// FetchModels reads /v1/models from a running proxy.
+func FetchModels(address, apiKey string) ([]string, error) {
+	req, err := http.NewRequest(http.MethodGet, address+"/v1/models", nil)
 	if err != nil {
 		return nil, fmt.Errorf("服务地址无效")
 	}
-	req.Header.Set("Authorization", "Bearer "+home.ClientKeys[0])
+	req.Header.Set("Authorization", "Bearer "+apiKey)
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.Proxy = nil
 	defer transport.CloseIdleConnections()

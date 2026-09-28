@@ -32,8 +32,12 @@ func TestAppPrefsUpgradeKeepsDefaultsAndExplicitChoices(t *testing.T) {
 			want.AutoUpdate = false
 			want.CheckIntervalHours = 6
 			want.UsageEnabled = test.usageEnabled
-			if got := ReadAppPrefs(root); got != want {
+			got := ReadAppPrefs(root)
+			if got != want {
 				t.Fatalf("preferences = %+v, want %+v", got, want)
+			}
+			if !got.CLIEnabled {
+				t.Fatal("missing cliEnabled should stay on")
 			}
 		})
 	}

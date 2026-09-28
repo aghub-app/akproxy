@@ -109,6 +109,7 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
             File "/oname=${PRODUCT_EXECUTABLE}" "${ARG_WAILS_ARM64_BINARY}"
         ${EndIf}
     !endif
+    File "/oname=akproxy-cli.exe" "..\..\bin\akproxy-cli.exe"
 !macroend
 
 !macro wails.writeUninstaller
