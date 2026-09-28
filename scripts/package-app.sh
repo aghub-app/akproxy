@@ -15,4 +15,7 @@ if [[ "${1:-dev}" != dev ]]; then
   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $1" "$app/Contents/Info.plist"
   /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $1" "$app/Contents/Info.plist"
 fi
+# Sealing the app does not sign nested executables, and a lipo-merged CLI has
+# no signature at all.
+codesign --force --sign - "$app/Contents/MacOS/akproxy-cli"
 codesign --force --sign - "$app"
