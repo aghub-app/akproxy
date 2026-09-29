@@ -226,7 +226,7 @@ func (s *updateScheduler) SetCLIEnabled(enabled bool) (desktop.CLIStatus, error)
 	}
 	s.prefs = desktop.NormalizeAppPrefs(prefs)
 	s.mu.Unlock()
-	err := desktop.ApplyCLIInstall(enabled, version)
+	err := desktop.ApplyCLIInstall(enabled, version, bundledCLI)
 	desktop.RememberCLIError(err)
 	status := desktop.CurrentCLIStatus(enabled)
 	return status, err

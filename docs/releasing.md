@@ -43,7 +43,7 @@ macOS 应用应复制到可写安装目录，不要直接从只读 DMG 运行更
 
 ## 本地 macOS 更新测试
 
-`go test -race ./internal/updates ./internal/ci` 覆盖真实官方 provider/更新器的版本过滤、资产选择、缺失/错误校验和、损坏 ZIP、HTTP 错误及下载后等待重启。`go test ./...` 覆盖其余后端；`wails3 task build` 覆盖绑定、前端和桌面构建。CI YAML 使用 `actionlint .github/workflows/macos-dmg.yml` 检查。
+`go test -race ./internal/updates ./internal/ci` 覆盖真实官方 provider/更新器的版本过滤、资产选择、缺失/错误校验和、损坏 ZIP、HTTP 错误及下载后等待重启。`go test ./...` 覆盖其余后端；`wails3 task build` 覆盖绑定、前端和桌面构建。CI YAML 使用 `actionlint .github/workflows/macos-dmg.yml` 检查。`.github/workflows/ci.yml` 在 macOS、Linux、Windows 上构建应用，跑 `go test ./...`、前端测试和 `go test -tags e2e ./e2e/`。
 
 真实窗口测试使用 `scripts/update-fixture.mjs`，仅监听 `127.0.0.1`，模拟 GitHub Releases API：
 

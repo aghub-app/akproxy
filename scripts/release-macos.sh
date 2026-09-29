@@ -49,6 +49,9 @@ fi
 # The normal build already produced the host architecture.
 other_arch=amd64
 if [[ "$(go env GOARCH)" == amd64 ]]; then other_arch=arm64; fi
+# Each slice embeds a CLI of its own architecture (see cli_bundle.go).
+GOARCH="$other_arch" CGO_ENABLED=0 go build -ldflags "-s -w -X akproxy/internal/cli.Version=$VERSION" -o build/bin/akproxy-cli-other ./cmd/akproxy
+go run scripts/gzip.go build/bin/akproxy-cli-other build/bin/akproxy-cli.gz
 GOARCH="$other_arch" CGO_ENABLED=1 CGO_CFLAGS=-mmacosx-version-min=12.0 CGO_LDFLAGS=-mmacosx-version-min=12.0 \
   go build -tags production -ldflags "-s -w -X main.version=$VERSION" -o build/bin/akproxy-other .
 GOARCH="$other_arch" CGO_ENABLED=1 CGO_CFLAGS=-mmacosx-version-min=12.0 CGO_LDFLAGS=-mmacosx-version-min=12.0 \

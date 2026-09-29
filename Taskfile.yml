@@ -21,15 +21,22 @@ tasks:
       - pnpm --dir frontend install --frozen-lockfile
       - pnpm --dir frontend run build
 
+  cli:
+    env:
+      CGO_ENABLED: '0'
+    cmds:
+      - go build -ldflags '{{if ne .DEV "true"}}-s -w {{end}}-X akproxy/internal/cli.Version={{.VERSION}}' -o 'build/bin/akproxy-cli{{if eq OS "windows"}}.exe{{end}}' ./cmd/akproxy
+      # Production builds embed this copy; see cli_bundle.go.
+      - go run scripts/gzip.go 'build/bin/akproxy-cli{{if eq OS "windows"}}.exe{{end}}' build/bin/akproxy-cli.gz
+
   build:
-    deps: [frontend]
+    deps: [frontend, cli]
     env:
       MACOSX_DEPLOYMENT_TARGET: '12.0'
       CGO_CFLAGS: '{{if eq OS "darwin"}}-mmacosx-version-min=12.0{{else}}{{.CGO_CFLAGS}}{{end}}'
       CGO_LDFLAGS: '{{if eq OS "darwin"}}-mmacosx-version-min=12.0{{else}}{{.CGO_LDFLAGS}}{{end}}'
     cmds:
       - go build -tags '{{if eq .DEV "true"}}dev{{else}}production{{end}}' -ldflags '{{if ne .DEV "true"}}-s -w {{end}}-X main.version={{.VERSION}}{{if eq .VERSION "dev"}} -X main.buildRevision={{.GIT_REVISION}}{{end}} {{if eq OS "windows"}}-H windowsgui{{end}}' -o '{{.BIN}}' .
-      - go build -ldflags '-X akproxy/internal/cli.Version={{.VERSION}}' -o 'build/bin/akproxy-cli{{if eq OS "windows"}}.exe{{end}}' ./cmd/akproxy
       - cmd: bash scripts/package-app.sh '{{.VERSION}}'
         platforms: [darwin]
 

@@ -1,0 +1,85 @@
+name: ci
+
+env:
+  # vendor/ contains a design-skill submodule, not Go dependencies.
+  GOFLAGS: -mod=mod
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            app: build/bin/akproxy.app/Contents/MacOS/akproxy
+          - runner: ubuntu-24.04
+            app: build/bin/akproxy
+          - runner: windows-latest
+            app: build/bin/akproxy.exe
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          version: "12.5.1"
+          package_json_file: frontend/package.json
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Linux native dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev libx11-dev pkg-config xvfb
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.24
+
+      - name: Build
+        id: build
+        run: wails3 task build
+
+      - name: Go tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: go test ./...
+
+      - name: Frontend tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: pnpm --dir frontend test
+
+      - name: End-to-end tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          # Windows keeps the user PATH in HKCU; the tests restore it afterwards.
+          AKPROXY_E2E: "1"
+          AKPROXY_E2E_APP: ${{ github.workspace }}/${{ matrix.app }}
+        run: |
+          # -p 1: both packages edit the same user PATH on Windows.
+          run=(go test -tags e2e -p 1 -count=1 -v ./e2e/ ./internal/desktop/)
+          if [[ "$RUNNER_OS" == Linux ]]; then run=(xvfb-run -a "${run[@]}"); fi
+          "${run[@]}"

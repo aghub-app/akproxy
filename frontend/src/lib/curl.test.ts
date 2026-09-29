@@ -37,13 +37,14 @@ test("openai env example is a dotenv file for the python client", () => {
   assert.equal(openaiEnv("http://127.0.0.1:8317/", key).includes("export "), false);
 });
 
-test("copied commands preserve credentials and JSON through POSIX shell quoting", () => {
+// Windows argv passing mangles the embedded newline before sh sees it.
+test("copied commands preserve credentials and JSON through POSIX shell quoting", { skip: process.platform === "win32" }, () => {
   const key = "secret'$(echo injected)\"`echo injected`";
   const model = "model'\"\\\n$(echo injected)";
   const commands = curlCommands("http://127.0.0.1:8317/", key, model);
   const paths = ["/v1/models", "/v1/chat/completions", "/v1/responses"];
   commands.forEach(({ command }, index) => {
-    const args = execFileSync("/bin/sh", ["-c", 'curl() { printf "%s\\0" "$@"; };\n' + command], { encoding: "utf8" }).split("\0").slice(0, -1);
+    const args = execFileSync("sh", ["-c", 'curl() { printf "%s\\0" "$@"; };\n' + command], { encoding: "utf8" }).split("\0").slice(0, -1);
     assert.equal(args[0], "http://127.0.0.1:8317" + paths[index]);
     assert.equal(args[2], "Authorization: Bearer " + key);
     if (index > 0) {
