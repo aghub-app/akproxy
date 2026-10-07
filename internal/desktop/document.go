@@ -3,7 +3,7 @@ package desktop
 import (
 	"fmt"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/config"
+	"github.com/router-for-me/CLIProxyAPI/v8/sdk/config"
 )
 
 func loadConfig(path string) (*config.Config, error) {

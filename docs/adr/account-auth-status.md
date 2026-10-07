@@ -9,7 +9,7 @@
 ## 决定
 
 - 创建服务时注入并持有同一个 SDK core auth manager。沿用 SDK 的文件存储和公开 selector，初始化时同步当前路由策略与会话亲和配置；配置热重载仍由 SDK 更新 selector。服务停止或退出时不再向账号列表提供该 manager。
-- `Accounts` 继续从账号目录读取账号身份和展示名，仅服务运行时用 SDK manager 的同 ID 状态补充 `needsReauthorization`。只把 `StatusError` 且 `StatusMessage` 为 `unauthorized` 或 `invalid_grant` 的账号映射为 true。其他错误、未知状态或没有运行时记录都为 false。不把 SDK 错误原文或令牌交给前端。
+- `Accounts` 继续从账号目录读取账号身份和展示名，仅服务运行时用 SDK manager 的同 ID 状态补充 `needsReauthorization`。只把 `StatusError` 且 `StatusMessage` 为 `unauthorized`、`unauthorized (refresh token invalid)` 或 `invalid_grant` 的账号映射为 true。v8 的 `unauthorized (refresh token invalid)` 表示访问令牌已被拒绝且刷新凭据也不可用；`invalid grant (retrying)` 等可重试状态不触发提醒。其他错误、未知状态或没有运行时记录都为 false。不把 SDK 错误原文或令牌交给前端。
 - 重新授权复用现有 SDK 浏览器认证器和单登录槽。在持久化边界校验返回的 provider 与账号 ID；不匹配时拒绝写入，避免新增其他账号或覆盖原账号。成功后 SDK 的账号目录监视与现有查询刷新接管新凭据。
 - 前端复用账号列表查询和原卡片。运行期间定期读取账号列表；服务状态切换时立即刷新。提醒不落盘。
 

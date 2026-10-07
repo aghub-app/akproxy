@@ -1,6 +1,6 @@
 package desktop
 
-import "github.com/router-for-me/CLIProxyAPI/v7/sdk/config"
+import "github.com/router-for-me/CLIProxyAPI/v8/sdk/config"
 
 // ServiceSettings returns the 服务 page.
 func (r *Runtime) ServiceSettings() (ServiceSettings, error) {

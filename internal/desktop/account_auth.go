@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/config"
+	coreauth "github.com/router-for-me/CLIProxyAPI/v8/sdk/cliproxy/auth"
+	"github.com/router-for-me/CLIProxyAPI/v8/sdk/config"
 )
 
 type reauthTarget struct {
@@ -51,7 +51,7 @@ func needsReauthorization(record *coreauth.Auth) bool {
 		return false
 	}
 	switch strings.ToLower(strings.TrimSpace(record.StatusMessage)) {
-	case "unauthorized", "invalid_grant":
+	case "unauthorized", "unauthorized (refresh token invalid)", "invalid_grant":
 		return true
 	default:
 		return false

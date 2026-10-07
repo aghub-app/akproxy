@@ -172,8 +172,8 @@ github.com/refraction-networking/utls v1.8.2 h1:j4Q1gJj0xngdeH+Ox/qND11aEfhpgoEv
 github.com/refraction-networking/utls v1.8.2/go.mod h1:jkSOEkLqn+S/jtpEHPOsVv/4V4EVnelwbMQl4vCWXAM=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
 github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
-github.com/router-for-me/CLIProxyAPI/v7 v7.3.12 h1:Xz5zcwblPOQxbjKJxvqZs9rdAK8wrEbnhcx6tiLnIGg=
-github.com/router-for-me/CLIProxyAPI/v7 v7.3.12/go.mod h1:GGRX8CS3050BThOf8ZCs6DjSUyp/JwEupBnI2jRPVcY=
+github.com/router-for-me/CLIProxyAPI/v8 v8.0.20 h1:pLlcuPjwxuMsS80s47k2Ek+Qdn5XortDf924PYQO61E=
+github.com/router-for-me/CLIProxyAPI/v8 v8.0.20/go.mod h1:j1Mtcj0TrC66O1JwbSBB03lY3uYPx4J7yHNvU6nDBCo=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
