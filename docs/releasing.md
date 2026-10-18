@@ -7,7 +7,7 @@
 1. 打开「钥匙串访问」→「证书助理」→「从证书颁发机构请求证书」。填写开发者邮箱，常用名称用 `akproxy Developer ID`，CA 邮箱留空，选择「存储到磁盘」。这次新建 CSR 和私钥，不使用旧 CSR。
 2. 到 [Apple Developer Certificates](https://developer.apple.com/account/resources/certificates/list) 点 `+`，选择 **Developer ID Application**（不是 Apple Development、Apple Distribution 或 Developer ID Installer），上传新 CSR，下载 `.cer`。若达到证书数量上限，先停下来确认，不撤销现有应用证书腾位置。
 3. 双击导入 `.cer`；在「我的证书」确认该证书可展开且带有这次生成的私钥。只导出这一组为 `akproxy-developer-id.p12`，设置新的强密码。证书和私钥不能放进项目目录；密码保存在密码管理器，不发到聊天或日志里。
-4. 在 Apple 账户生成一个标记为 `akproxy notarization` 的新 App 专用密码，用于公证。这是独立可撤销的凭据，不是仅有 akproxy 权限的凭据。
+4. 在 App Store Connect →「用户和访问」→「集成」→「App Store Connect API」生成标记为 `akproxy notarization` 的 Team API Key，角色 Developer 即可，下载 `.p8`（只能下载一次），记下 Key ID 和 Issuer ID。这是公证的首选凭据：它按团队授权，不受某个 Apple 账户自身协议状态影响。
 5. 在仓库 Settings → Secrets and variables → Actions 创建以下 **repository secrets**。不要放到 organization secrets 共享给其他仓库。
 
 | Secret | 内容 |
@@ -15,9 +15,14 @@
 | `AKPROXY_CERTIFICATE_BASE64` | 专用 p12 的单行 Base64 |
 | `AKPROXY_CERTIFICATE_PASSWORD` | p12 导出密码 |
 | `AKPROXY_SIGNING_IDENTITY` | 新证书的 SHA-1 指纹，避免同名证书歧义 |
-| `AKPROXY_APPLE_ID` | 公证用 Apple 账户邮箱 |
-| `AKPROXY_APPLE_TEAM_ID` | 该证书所属 Team ID |
-| `AKPROXY_APPLE_APP_PASSWORD` | 新建的 akproxy 公证 App 专用密码 |
+| `AKPROXY_NOTARY_KEY_P8_BASE64` | 公证 API Key `.p8` 的单行 Base64 |
+| `AKPROXY_NOTARY_KEY_ID` | 该 API Key 的 Key ID |
+| `AKPROXY_NOTARY_ISSUER_ID` | Team API Key 的 Issuer ID；Individual API Key 留空 |
+| `AKPROXY_APPLE_ID` | 回退路径：公证用 Apple 账户邮箱 |
+| `AKPROXY_APPLE_TEAM_ID` | 回退路径：该证书所属 Team ID |
+| `AKPROXY_APPLE_APP_PASSWORD` | 回退路径：akproxy 公证 App 专用密码 |
+
+`AKPROXY_NOTARY_KEY_P8_BASE64` 与 `AKPROXY_NOTARY_KEY_ID` 都配置时走 API Key；否则回退到 Apple ID + App 专用密码，该路径依赖此 Apple 账户自身的协议状态，需要时在 Apple 账户生成 App 专用密码（独立可撤销，不是仅有 akproxy 权限的凭据）。API Key 的 `.p8` 同样不能进项目目录，用 `base64 -i` 管道送入 secret。
 
 `security find-identity -v -p codesigning` 可查看证书指纹；必须和新 `.cer` 的指纹核对，不能只凭相同的 Developer ID 名称选择。p12 可用 `base64 -i /绝对路径/akproxy-developer-id.p12 | tr -d '\n' | gh secret set AKPROXY_CERTIFICATE_BASE64 --repo aghub-app/akproxy` 直接送入指定仓库，不打印内容。其他 secret 使用 `gh secret set NAME --repo aghub-app/akproxy` 的交互输入，不把密码放进命令行历史。
 
@@ -46,6 +51,8 @@ macOS 应用应复制到可写安装目录，不要直接从只读 DMG 运行更
 `xcrun notarytool` 返回 `HTTP status code: 403` 且包含 `A required agreement is missing or has expired` 时，问题在 Apple 账户而不在签名材料：该团队没有生效中的协议，通常是 Apple 更新开发者计划许可协议后需要重新接受。账号持有人需登录 [App Store Connect](https://appstoreconnect.apple.com) 的「商务」→「协议、税务和银行业务」接受待签署协议（`developer.apple.com/account` 上的协议横幅同样可进入），并确认开发者计划会员资格仍在有效期内。协议生效后重跑发布工作流即可，不需要更换证书或 App 专用密码。
 
 `scripts/release-macos.sh` 在导入钥匙串和编译之前用 `notarytool history` 探测这组公证凭据，命中该 403 时立即退出并给出上述提示，避免等完整构建后才失败。其他探测失败只警告并继续，仍以真正的提交结果为准。
+
+同一团队的其他应用公证正常、而这条流水线持续 403 时，先怀疑 Apple ID + App 专用密码这条认证路径，而不是团队协议：改用上表的 `AKPROXY_NOTARY_*` API Key 后重跑，该路径按团队授权，不依赖某个 Apple 账户自身的协议接受状态。切换只需要配置 secret，不需要换证书或重签。
 
 ## 本地 macOS 更新测试
 

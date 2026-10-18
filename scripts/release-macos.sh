@@ -7,15 +7,46 @@ cd "$(dirname "$0")/.."
 : "${AKPROXY_CERTIFICATE_BASE64:?akproxy certificate required}"
 : "${AKPROXY_CERTIFICATE_PASSWORD:?akproxy certificate password required}"
 : "${AKPROXY_SIGNING_IDENTITY:?akproxy certificate SHA-1 required}"
-: "${AKPROXY_APPLE_ID:?Apple ID required}"
-: "${AKPROXY_APPLE_TEAM_ID:?Apple team ID required}"
-: "${AKPROXY_APPLE_APP_PASSWORD:?akproxy notarization password required}"
+original_keychains=()
+signing_dir="$(mktemp -d)"
+keychain="$signing_dir/akproxy.keychain-db"
+keychain_password="$(openssl rand -hex 32)"
+cleanup() {
+  # Only restore a list we actually captured: setting it to empty would clear it.
+  if (( ${#original_keychains[@]} > 0 )); then
+    security list-keychains -d user -s "${original_keychains[@]}" >/dev/null 2>&1 || true
+  fi
+  security delete-keychain "$keychain" >/dev/null 2>&1 || true
+  rm -f "$signing_dir/akproxy.p12" "$signing_dir/DeveloperIDCA.cer" "$signing_dir/DeveloperIDG2CA.cer" "$signing_dir/AuthKey.p8"
+  rmdir "$signing_dir" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+# Notarization credentials. An App Store Connect API key is preferred when
+# configured: it is team-scoped, while the Apple ID pair also depends on that
+# account's own agreement state. Team API keys carry an issuer ID; individual
+# API keys must omit it.
+notary_auth=()
+if [[ -n "${AKPROXY_NOTARY_KEY_P8_BASE64:-}" || -n "${AKPROXY_NOTARY_KEY_ID:-}" ]]; then
+  : "${AKPROXY_NOTARY_KEY_P8_BASE64:?notary API key required}"
+  : "${AKPROXY_NOTARY_KEY_ID:?notary API key ID required}"
+  printf '%s' "$AKPROXY_NOTARY_KEY_P8_BASE64" | base64 --decode > "$signing_dir/AuthKey.p8"
+  chmod 600 "$signing_dir/AuthKey.p8"
+  notary_auth=(--key "$signing_dir/AuthKey.p8" --key-id "$AKPROXY_NOTARY_KEY_ID")
+  if [[ -n "${AKPROXY_NOTARY_ISSUER_ID:-}" ]]; then
+    notary_auth+=(--issuer "$AKPROXY_NOTARY_ISSUER_ID")
+  fi
+else
+  : "${AKPROXY_APPLE_ID:?Apple ID required}"
+  : "${AKPROXY_APPLE_TEAM_ID:?Apple team ID required}"
+  : "${AKPROXY_APPLE_APP_PASSWORD:?akproxy notarization password required}"
+  notary_auth=(--apple-id "$AKPROXY_APPLE_ID" --team-id "$AKPROXY_APPLE_TEAM_ID" --password "$AKPROXY_APPLE_APP_PASSWORD")
+fi
 
 # The notary service answers HTTP 403 for the whole team while no Apple
 # agreement is in effect, so probe it before spending minutes on the build.
 # Any other probe failure only warns: the submission below is the real gate.
-if ! notary_probe="$(xcrun notarytool history --apple-id "$AKPROXY_APPLE_ID" \
-      --team-id "$AKPROXY_APPLE_TEAM_ID" --password "$AKPROXY_APPLE_APP_PASSWORD" 2>&1)"; then
+if ! notary_probe="$(xcrun notarytool history "${notary_auth[@]}" 2>&1)"; then
   if [[ "$notary_probe" == *"required agreement"* ]]; then
     echo 'The Apple team has no in-effect agreement; the Account Holder must accept it in App Store Connect before notarization can succeed.' >&2
     exit 1
@@ -24,20 +55,9 @@ if ! notary_probe="$(xcrun notarytool history --apple-id "$AKPROXY_APPLE_ID" \
 fi
 
 # Use an isolated keychain; never import release keys into the login keychain.
-original_keychains=()
 while read -r existing_keychain; do
   original_keychains+=("${existing_keychain//\"/}")
 done < <(security list-keychains -d user)
-signing_dir="$(mktemp -d)"
-keychain="$signing_dir/akproxy.keychain-db"
-keychain_password="$(openssl rand -hex 32)"
-cleanup() {
-  security list-keychains -d user -s "${original_keychains[@]}" >/dev/null 2>&1 || true
-  security delete-keychain "$keychain" >/dev/null 2>&1 || true
-  rm -f "$signing_dir/akproxy.p12" "$signing_dir/DeveloperIDCA.cer" "$signing_dir/DeveloperIDG2CA.cer"
-  rmdir "$signing_dir" 2>/dev/null || true
-}
-trap cleanup EXIT
 printf '%s' "$AKPROXY_CERTIFICATE_BASE64" | base64 --decode > "$signing_dir/akproxy.p12"
 security create-keychain -p "$keychain_password" "$keychain"
 security set-keychain-settings -lut 21600 "$keychain"
@@ -78,8 +98,7 @@ codesign --force --options runtime --timestamp --keychain "$keychain" --sign "$A
 codesign --force --options runtime --timestamp --keychain "$keychain" --sign "$AKPROXY_SIGNING_IDENTITY" "$app"
 codesign --verify --strict "$app"
 ditto -c -k --keepParent "$app" build/bin/akproxy-notary.zip
-xcrun notarytool submit build/bin/akproxy-notary.zip --apple-id "$AKPROXY_APPLE_ID" \
-  --team-id "$AKPROXY_APPLE_TEAM_ID" --password "$AKPROXY_APPLE_APP_PASSWORD" --wait --timeout 30m
+xcrun notarytool submit build/bin/akproxy-notary.zip "${notary_auth[@]}" --wait --timeout 30m
 xcrun stapler staple "$app"
 xcrun stapler validate "$app"
 spctl --assess --type execute "$app"
