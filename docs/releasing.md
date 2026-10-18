@@ -7,7 +7,7 @@
 1. 打开「钥匙串访问」→「证书助理」→「从证书颁发机构请求证书」。填写开发者邮箱，常用名称用 `akproxy Developer ID`，CA 邮箱留空，选择「存储到磁盘」。这次新建 CSR 和私钥，不使用旧 CSR。
 2. 到 [Apple Developer Certificates](https://developer.apple.com/account/resources/certificates/list) 点 `+`，选择 **Developer ID Application**（不是 Apple Development、Apple Distribution 或 Developer ID Installer），上传新 CSR，下载 `.cer`。若达到证书数量上限，先停下来确认，不撤销现有应用证书腾位置。
 3. 双击导入 `.cer`；在「我的证书」确认该证书可展开且带有这次生成的私钥。只导出这一组为 `akproxy-developer-id.p12`，设置新的强密码。证书和私钥不能放进项目目录；密码保存在密码管理器，不发到聊天或日志里。
-4. 在 App Store Connect →「用户和访问」→「集成」→「App Store Connect API」生成标记为 `akproxy notarization` 的 Team API Key，角色 Developer 即可，下载 `.p8`（只能下载一次），记下 Key ID 和 Issuer ID。这是公证的首选凭据：它按团队授权，不受某个 Apple 账户自身协议状态影响。
+4. 在 App Store Connect →「用户和访问」→「集成」→「App Store Connect API」生成标记为 `akproxy notarization` 的 Team API Key，角色 Developer 即可，下载 `.p8`（只能下载一次），记下 Key ID 和 Issuer ID。这是公证的首选凭据：按团队授权、可独立撤销、不依赖某个 Apple 账户的密码。注意它不能绕过团队协议问题——协议未生效时，API Key 与 App 专用密码返回同一个 403。
 5. 在仓库 Settings → Secrets and variables → Actions 创建以下 **repository secrets**。不要放到 organization secrets 共享给其他仓库。
 
 | Secret | 内容 |
@@ -52,7 +52,7 @@ macOS 应用应复制到可写安装目录，不要直接从只读 DMG 运行更
 
 `scripts/release-macos.sh` 在导入钥匙串和编译之前用 `notarytool history` 探测这组公证凭据，命中该 403 时立即退出并给出上述提示，避免等完整构建后才失败。其他探测失败只警告并继续，仍以真正的提交结果为准。
 
-同一团队的其他应用公证正常、而这条流水线持续 403 时，先怀疑 Apple ID + App 专用密码这条认证路径，而不是团队协议：改用上表的 `AKPROXY_NOTARY_*` API Key 后重跑，该路径按团队授权，不依赖某个 Apple 账户自身的协议接受状态。切换只需要配置 secret，不需要换证书或重签。
+该 403 是**团队级**的：App 专用密码与 App Store Connect API Key 会得到完全相同的答复，换认证方式不能绕过（2026-10-18 实测）。出现该错误时不要换凭据，先确认账号持有人的协议状态：App Store Connect 的「商务」→「协议、税务和银行业务」里对应行的当前状态，以及自己的角色（「用户和访问」中显示 Account Holder 还是 Admin/Developer）。只有 Account Holder 能接受团队协议。
 
 ## 本地 macOS 更新测试
 
