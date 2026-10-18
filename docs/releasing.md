@@ -41,6 +41,12 @@ CI 将这组材料及 Apple 官方 Developer ID 中间证书导入一次性钥�
 
 macOS 应用应复制到可写安装目录，不要直接从只读 DMG 运行更新。Windows/Linux 当前不做本机原生验收；Windows 未接入 Authenticode。开发版 `dev` 不执行更新。
 
+## 公证失败排查
+
+`xcrun notarytool` 返回 `HTTP status code: 403` 且包含 `A required agreement is missing or has expired` 时，问题在 Apple 账户而不在签名材料：该团队没有生效中的协议，通常是 Apple 更新开发者计划许可协议后需要重新接受。账号持有人需登录 [App Store Connect](https://appstoreconnect.apple.com) 的「商务」→「协议、税务和银行业务」接受待签署协议（`developer.apple.com/account` 上的协议横幅同样可进入），并确认开发者计划会员资格仍在有效期内。协议生效后重跑发布工作流即可，不需要更换证书或 App 专用密码。
+
+`scripts/release-macos.sh` 在导入钥匙串和编译之前用 `notarytool history` 探测这组公证凭据，命中该 403 时立即退出并给出上述提示，避免等完整构建后才失败。其他探测失败只警告并继续，仍以真正的提交结果为准。
+
 ## 本地 macOS 更新测试
 
 `go test -race ./internal/updates ./internal/ci` 覆盖真实官方 provider/更新器的版本过滤、资产选择、缺失/错误校验和、损坏 ZIP、HTTP 错误及下载后等待重启。`go test ./...` 覆盖其余后端；`wails3 task build` 覆盖绑定、前端和桌面构建。CI YAML 使用 `actionlint .github/workflows/macos-dmg.yml` 检查。

@@ -11,6 +11,18 @@ cd "$(dirname "$0")/.."
 : "${AKPROXY_APPLE_TEAM_ID:?Apple team ID required}"
 : "${AKPROXY_APPLE_APP_PASSWORD:?akproxy notarization password required}"
 
+# The notary service answers HTTP 403 for the whole team while no Apple
+# agreement is in effect, so probe it before spending minutes on the build.
+# Any other probe failure only warns: the submission below is the real gate.
+if ! notary_probe="$(xcrun notarytool history --apple-id "$AKPROXY_APPLE_ID" \
+      --team-id "$AKPROXY_APPLE_TEAM_ID" --password "$AKPROXY_APPLE_APP_PASSWORD" 2>&1)"; then
+  if [[ "$notary_probe" == *"required agreement"* ]]; then
+    echo 'The Apple team has no in-effect agreement; the Account Holder must accept it in App Store Connect before notarization can succeed.' >&2
+    exit 1
+  fi
+  echo "warning: notarization probe failed, continuing: $notary_probe" >&2
+fi
+
 # Use an isolated keychain; never import release keys into the login keychain.
 original_keychains=()
 while read -r existing_keychain; do
