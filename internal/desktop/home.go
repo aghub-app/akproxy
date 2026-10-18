@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/auth"
+	"github.com/router-for-me/CLIProxyAPI/v8/sdk/auth"
 )
 
 // HomeSnapshot contains client-facing setup data, never upstream secrets.

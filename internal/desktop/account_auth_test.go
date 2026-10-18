@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/config"
+	coreauth "github.com/router-for-me/CLIProxyAPI/v8/sdk/cliproxy/auth"
+	"github.com/router-for-me/CLIProxyAPI/v8/sdk/config"
 )
 
 func TestAccountsReportsSDKStatusOnlyWhileRunning(t *testing.T) {
@@ -49,7 +49,10 @@ func TestAccountReauthorizationUsesOnlySDKAuthErrors(t *testing.T) {
 		want    bool
 	}{
 		{"unauthorized", true},
+		{"unauthorized (refresh token invalid)", true},
 		{"invalid_grant", true},
+		{"invalid grant (retrying)", false},
+		{"unauthorized: temporary proxy error", false},
 		{"token expired", false},
 		{"quota exhausted", false},
 		{"transient upstream error", false},
